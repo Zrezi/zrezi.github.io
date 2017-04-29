@@ -90,17 +90,26 @@
 				<li>USB flash drive</li>
 				<li>USB keyboard</li>
 				<li>Computer with Unix installed already</li>
-				<li>A Wii and a TV... obviously</li>
+				<li>A Wii, Wiimote and a TV... obviously</li>
 			</ul>
 
 			<h4>Updating your Wii to Version 4.3</h4>
 			<ul>
-				<li></li>
+				<li>If you know how to update, you can skip this step!</li>
+				<li>Start up your Wii, and navigate to the Settings</li>
+				<li>Choose the right option, "Wii System Settings"</li>
+				<li>Scroll right through the options until you find Internet</li>
+				<li>Make sure that your Wii is connected to the internet via a wireless connection by either selecting a previous connection option, or by setting up a new connection point</li>
+				<li>Once you have working WiFi, return to the system settings and choose "Wii System Update" (it's on the third page of options)</li>
+				<li>Wait for the Wii to update. This may take upwards of 10 minutes depending on your internet connection speed</li>
+				<li>After it updates, it should reboot <i>(I think)</i>, and return to the main Wii Menu</li>
+				<li>Confirm the update by going back to "Wii System Settings", and in the top right of the menu you should see "Wii System 4.3X", where X is your Wii System country's version</li>
 			</ul>
 			
 			<h4>Installing Homebrew (Without Bootmii!)</h4>
 			<ul>
-				<li></li>
+				<li>Before you try to install Homebrew, you <i>need</i> to make sure that your Wii is updated to 4.3. If the last step was unsuccessful, do not continue</li>
+				<li>This is a somewhat lengthy process, I recommend you follow <a href="http://www.wikihow.com/Install-Homebrew-on-Wii-Menu-4.3">this</a> guide, but <b>DO NOT INSTALL BOOTMII YET</b></li>
 			</ul>
 			
 			<h4>Installing IOS236</h4>
@@ -120,32 +129,129 @@
 
 			<h4>Run the Whiite Installer</h4>
 			<ul>
-				<li></li>
+				<li>We will be using the installer for the <i>sole purpose</i> of how it partitions your SD card. I have been unsuccessful in trying to manually partition the SD card, even when it matches the layout of how the installer does it</li>
 			</ul>
 
 			<h4>Wipe the SD card</h4>
 			<ul>
-				<li></li>
+				<li>Unplug the SD card from your Wii, and reconnect it to your computer</li>
+				<li>When plugged in, you should find that two separate partitions have been created by the installer
+					<ul>
+						<li>boot</li>
+						<li>whiite</li>
+					</ul>
+				</li>
+				<li>Using terminal, the path to the mounted partitions should be something like "/media/$USER/boot/" and "/media/$USER/whiite/"</li>
+				<li>We need to remove all files on both partitions. Using the terminal, run:
+					<ul>
+						<li><code>rm -rf /media/$USER/boot/*</code></li>
+						<li><code>rm -rf /media/$USER/whiite/*</code></li>
+					</ul>
+				</li>
+				<li>Confirm that the files have been removed by either <code>ls</code>'ing in terminal, or navigating to the partitions with your file manager</li>
+				<div class="box">
+					<i>
+					<p>Note: When unplugging the SD card from your computer, make sure to eject it safely. For me, when performing copy and deletes from the SD from my computer, the terminal commands would end but the SD card would still be performing actions. If you do not eject safely, you risk corrupting the filesystem or the kernel</p>
+					</i>
+				</div>
 			</ul>
 
 			<h4>Add Bootmii</h4>
 			<ul>
-				<li></li>
+				<li>Remember the folder you copied from your SD card when you initially installed bootmii? Copy that entire folder into the SD card's boot partition</li>
+				<li>We will be overwriting the ppcboot.elf file in the bootmii folder, so we can delete it first via terminal:
+					<ul>
+						<li><code>rm /media/$USER/boot/bootmii/ppcboot.elf</code></li>
+					</ul>
+				</li>
 			</ul>
 
 			<h4>Get the Correct Kernel</h4>
 			<ul>
-				<li></li>
+				<li>The filestructure of the SD card should look like this:
+					<ul>
+						<li>boot
+							<ul>
+								<li>bootmii
+									<ul>
+										<li>armboot.bin</li>
+										<li>bootmii.ini</li>
+									</ul>
+								</li>
+							</ul>
+						</li>
+						<li>whiite</li>
+					</ul>
+				</li>
+				<li>Go to <a href="http://www.gc-linux.org/wiki/WL:whiite-linux#Featured_kernel_images">this</a> location and download the kernel version that best fits your TV and Wii setup. I would say 99 out of 100 times you're going to want to use the 5<sup>th</sup> option, "<a href="http://downloads.sourceforge.net/gc-linux/mikep5-zImage-2.6.32.mini.480p(NTSC).elf">mikep5-zImage-2.6.32.mini.480p(NTSC).elf</a>"</li>
+				<li>Move the .elf file into the bootmii folder on your SD card, either with the <code>mv</code> terminal command or by dragging and dropping the file</li>
+				<li>Rename the file "ppcboot.elf"
+					<ul>
+						<li><code>mv /media/$USER/boot/bootmii/mikep5-zImage-2.6.32.mini.480p(NTSC).elf /media/$USER/boot/bootmii/ppcboot.elf</code></li>
+					</ul>
+				</li>
 			</ul>
 
 			<h4>Get the Updated Filesystem</h4>
 			<ul>
-				<li></li>
+				<li>Download <a href="http://downloads.sf.net/gc-linux/debian-lenny-5.0%2Bwhiite-1.10.tar.bz2">this</a> file</li>
+				<li>Navigate to the whiite directory on your SD card
+					<ul>
+						<li><code>cd /media/$USER/whiite</code></li>
+					</ul>
+				</li>
+				<li>Untar the downloaded file into this location using the terminal
+					<ul>
+						<li><code>sudo tar -xjvf /home/$USER/Downloads/debian-lenny-5.0+whiite-1.10.tar.bz2</code></li>
+					</ul>
+				</li>
+				<li>Wait for the untarring process to finish, it may take ~10 seconds to complete</li>
+				<li>Eject the drive safely, and wait for confirmation that you're able to unplug before you do so. Again, not safely removing the SD card from your computer risks corruption of the filesystem</li>
 			</ul>
 
 			<h4>Plug it into the Wii</h4>
 			<ul>
-				<li></li>
+				<li>At this point the filestructure of the SD card should look like this:
+					<ul>
+						<li>boot
+							<ul>
+								<li>bootmii
+									<ul>
+										<li>armboot.bin</li>
+										<li>bootmii.ini</li>
+										<li>ppcboot.elf</li>
+									</ul>
+								</li>
+							</ul>
+						</li>
+						<li>whiite
+							<ul>
+								<li>bin</li>
+								<li>boot</li>
+								<li>debootstrap</li>
+								<li>dev</li>
+								<li>etc</li>
+								<li>home</li>
+								<li>initrd</li>
+								<li>lib</li>
+								<li>lost+found</li>
+								<li>media</li>
+								<li>mnt</li>
+								<li>opt</li>
+								<li>proc</li>
+								<li>root</li>
+								<li>sbin</li>
+								<li>selinux</li>
+								<li>srv</li>
+								<li>sys</li>
+								<li>tmp</li>
+								<li>usr</li>
+								<li>var</li>
+							</ul>
+						</li>
+					</ul>
+				</li>
+				<li>If your filestructure matches that of the above filestructure, you should be good to go</li>
 			</ul>
 		</div>
 		<!-- <ul>
@@ -188,7 +294,7 @@
 				<li>Turn it on</li>
 				<li>Wait...</li>
 				<li>You shouldn't crash. If so, your best bet is to Google the generic error(s), not specifying the Wii</li>
-				<li>When prompted, enter whiite's login information
+				<li>When prompted, enter whiite's login information:
 					<ul>
 						<li>Login:    <code>root</code></li>
 						<li>Password: <code>whiite</code></li>
@@ -230,8 +336,7 @@
 				<li>You will be looking for the "wlan0" connection</li>
 				<div class="box">
 					<i>
-					<p>Note: If you find that you still cannot connect to a WiFi spot, you can check the interfaces using <code>vi /etc/network/interfaces</code></p>
-					<p>      You can also restart the system, that might help: <code>shutdown -h now</code></p>
+					<p>Note: If you find that you still cannot connect to a WiFi spot, you can check the interfaces using <code>vi /etc/network/interfaces</code>. You can also restart the system, that might help: <code>shutdown -h now</code></p>
 					</i>
 				</div>
 				<li>If everything looks good, you can issue a <code>ping</code> to a website, like "www.google.com", and hopefully you will see a response</li>
