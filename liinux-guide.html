@@ -3,8 +3,82 @@
 	<meta charset="utf-8">
 	<head>
 		<title>Liinux</title>
+		<style>
+			* {
+				font-family: "Lucida Console", Courier, monospace;
+			}
+
+			code {
+				background-color: #CCCCCC;
+				font-style: italic;
+			}
+
+			.box {
+				margin-left: 25px;
+			}
+		</style>
 	</head>
 	<body>
+		<h2>Technical Specs of the Wii</h2>
+		<div class="box">
+			<h4>Processor (from /proc/cpuinfo)</h4>
+			<ul>
+				<li>Broadway 750CL</li>
+				<li>729.00MHz</li>
+			</ul>
+
+			<h4>RAM (from /proc/meminfo)</h4>
+			<ul>
+				<li>76204kB actually useable ...</li>
+				<li>...although <code>htop</code> only shows 74MB of useable RAM</li>
+			</ul>
+
+			<h4>Wireless (from <code>iwconfig</code>)</h4>
+			<ul>
+				<li>Mitsumi DWM-W004 WiFi 802.11b/g</li>
+				<li><i>My tested speeds on a 20Mbit network averaged ~160kB/s...so not fast!</i></li>
+				<i><li><code>ping</code> tests on my Desktop vs. the Wii on same network for 1 minute
+					<table>
+						<thead>
+							<th>System |</th>
+							<th>Packets Transmitted |</th>
+							<th>Packets Received |</th>
+							<th>Packet Loss |</th>
+							<th>Ping Average |</th>
+							<th>Time</th>
+						</thead>
+						<tbody>
+							<tr>
+								<td>Desktop</td>
+								<td>60</td>
+								<td>60</td>
+								<td>0%</td>
+								<td>62.932 ms</td>
+								<td>59025 ms</td>
+							</tr>
+							<tr>
+								<td>Wii</td>
+								<td>60</td>
+								<td>55</td>
+								<td>8%</td>
+								<td>66.969 ms</td>
+								<td>59214 ms</td>
+							</tr>
+						</tbody>
+					</table>
+				</li></i>
+			</ul>
+
+			<h4>Power Consumption (from <a href="https://en.wikipedia.org/wiki/Wii#Specifications">here</a>)</h4>
+			<ul>
+				<li>18W power consumption</li>
+			</ul>
+
+
+		</div>
+		<hr>
+
+		<h2>Getting Whiite</h2>
 		<ul>
 			<li>need usb and 2GB SD card</li>
 			<li>update wii to 4.3</li>
@@ -37,5 +111,104 @@
 			<li>plug it into the wii and start it</li>
 			<li>it should work</li>
 		</ul>
+		<hr>
+
+		<h2>Once you have Whiite installed</h2>
+		<div class="box">
+			<h4>Booting the Wii for the first time</h4>
+			<ul>
+				<li>Make sure that the SD card is in the Wii</li>
+				<li>Turn it on</li>
+				<li>Wait...</li>
+				<li>You shouldn't crash. If so, your best bet is to Google the generic error(s), not specifying the Wii</li>
+				<li>When prompted, enter whiite's login information
+					<ul>
+						<li>Login:    <code>root</code></li>
+						<li>Password: <code>whiite</code></li>
+					</ul>
+				</li>
+				<li>You should now be logged into whiite on your Wii as root</li>
+			</ul>
+
+			<h4>Fixing the Keyboard</h4>
+			<ul>
+				<li>If you try typing some symbols, such as '-', you can see they don't type the correct characters</li>
+				<li>Run the command <code>dpkg-reconfigure console-data</code>. Use the Numberpad '-'</li>
+				<li>Wait for the config tool to load...</li>
+				<li>Choose these options as they appear to load a standard QWERTY English keyboard
+					<ul>
+						<li>OK</li>
+						<li>Select keymap from full list</li>
+						<li>Scroll down with the arrow keys until you find "pc / qwerty / US american / Standard / Standard"</li>
+						<li>Press enter on that choice</li>
+					</ul>
+				</li>
+				<li>Wait for the tool to finish working...</li>
+				<li>Now your keyboard should be working correctly</li>
+			</ul>
+
+			<h4>Setting up WiFi</h4>
+			<ul>
+				<li>Whiite comes bundled with an easy installer that automatically modifies the "/etc/network/interfaces" file</li>
+				<li>The binary is located in the root. If you're in the root direction "~", you can get there by running <code>cd ~</code></li>
+				<li>While here I find myself running <code>ls</code> in every directory to get a sense for where things are in the filesytem</li>
+				<li>Run <code>./whiite-ez-wifi-config</code></li>
+				<li>Follow the onscreen prompts to enter your network SSID and passkey</li>
+				<li>There will be an option to test the connection, you will want to test the connection
+					<ul>
+						<li>If the installer says that the connection didn't work, don't worry. It might've worked anyway and the installer doesn't recognize it</li>
+					</ul>
+				</li>
+				<li>Back in your regular terminal, you can run <code>iwconfig</code> to see if you are connected to a network</li>
+				<li>You will be looking for the "wlan0" connection</li>
+				<div class="box">
+					<i>
+					<p>Note: If you find that you still cannot connect to a WiFi spot, you can check the interfaces using <code>vi /etc/network/interfaces</code></p>
+					<p>      You can also restart the system, that might help: <code>shutdown -h now</code></p>
+					</i>
+				</div>
+				<li>If everything looks good, you can issue a <code>ping</code> to a website, like "www.google.com", and hopefully you will see a response</li>
+			</ul>
+
+			<h4>Getting Correct Aptitude Repositories</h4>
+			<ul>
+				<li>Debian Lenny has become unsupported, so any <code>apt-get install</code> command will most likely fail due to the wrong repository source being used</li>
+				<li>To update this, use the following three commands in order:
+					<ul>
+						<li><code>deb http://archive.debian.org/debian/ lenny contrib main non-free</code></li>
+						<li><code>deb http://archive.debian.org/debian-security lenny/updates main</code></li>
+						<li><code>apt-get install debian-archive-keyring</code></li>
+					</ul>
+				</li>
+			</ul>
+
+			<h4>Upgrade and Update Aptitude</h4>
+			<ul>
+				<li>If you've gotten this far, I probably don't need to show you how to update apt</li>
+				<li><s>Overall I think it was ~150MB</s> I have no idea how much it was to upgrade and update everything
+					<ul>
+						<li><code>apt-get update</code></li>
+						<li><code>apt-get upgrade</code></li>
+						<li><code>apt-get update</code></li>
+					</ul>
+				</li>
+			</ul>
+
+			<h4>Tying out Apt</h4>
+			<ul>
+				<li>A useful tool while messing around with the Wii is htop</li>
+				<li>It is essentially a better version of top, which is your basic System Monitor
+					<ul>
+						<li><code>apt-get install htop</code></li>
+					</ul>
+				</li>
+				<li>Likewise, whiite (aka Debian Lenny) comes with the vi text editor. However, if you plan to do text editing at all on the machine, I recommend installing vim
+					<ul>
+						<li><code>apt-get install vim</code></li>
+					</ul>
+				</li>
+			</ul>
+
+		</div>
 	</body>
 </html>
