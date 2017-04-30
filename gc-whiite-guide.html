@@ -2,7 +2,7 @@
 <html>
 	<meta charset="utf-8">
 	<head>
-		<title>Liinux</title>
+		<title>GC-Whiite Guide</title>
 		<style>
 			* {
 				font-family: "Lucida Console", Courier, monospace;
@@ -10,21 +10,68 @@
 
 			body {
 				background-color: #FFFED3;
+				width: 100%;
 			}
 
 			code {
-				background-color: #CCCCCC;
+				background-color: #DEDEDE;
 				font-style: italic;
 			}
 
 			.box {
 				margin-left: 25px;
 			}
+
+			#unfinished {
+				color: red;
+				font-size: 72px;
+			}
 		</style>
 	</head>
 	<body>
-		<h2>Technical Specs of the Wii</h2>
+
+		<h1 id="unfinished" align="center"><u>THIS GUIDE IS UNFINISHED</u></h1>
+		<h1 id="unfinished" align="center"><u>THIS GUIDE IS UNFINISHED</u></h1>
+		<h1 id="unfinished" align="center"><u>THIS GUIDE IS UNFINISHED</u></h1>
+
+		<h2>Before we begin...</h2>
 		<div class="box">
+			<h4>Why?</h4>
+			<ul>
+				<li>If you're looking for a Linux system capable of running high traffic webservers, the Wii is not for you</li>
+				<li>If you're looking for a Linux system capable of booting in less than 30 seconds, the Wii is not for you</li>
+				<li>If you're looking for a Linux system capable of mining bitcoins, the Wii is not for you</li>
+				<li>If you're looking for a Linux system capable of running graphically intensive programs, the Wii is definitely not for you</li>
+			</ul>
+			<div class="box">
+				<p><i>However...</i></p>
+			</div>
+			<ul>
+				<li>If you want to experiment with Linux and don't require much of anything performance wise, the Wii IS for you</li>
+				<li>If you want to compile code and run it in a minimalistic Linux environment, the Wii is definitely capable</li>
+				<li>If you like to take things apart until they're broke, and forget how to fix them, GC-Whiite on the Wii is for you</li>
+				<li>If you have a Wii lying around that you have absolutely no use for, you might want to install Linux on it!</li>
+			</ul>
+		</div>
+		<hr>
+
+		<h2>Requirements</h2>
+		<div class="box">
+			<h4>Stuff you're going to need:</h4>
+			<ul>
+				<li>2 hours</li>
+				<li>2GB SD card</li>
+				<li>512MB or more USB flash drive</li>
+				<li>USB keyboard</li>
+				<li>Computer with -unix installed already</li>
+				<li>A Wii, Wiimote, Gamecube and a TV... obviously</li>
+			</ul>
+		</div>
+		<hr>
+
+		<h2>A Quick Note on the Technical Specs of the Wii</h2>
+		<div class="box">
+			<p><i>This is just random stuff I've found either by Googling or running commands on the Wii itself</i></p>
 			<h4>Processor (from /proc/cpuinfo)</h4>
 			<ul>
 				<li>Broadway 750CL</li>
@@ -35,6 +82,7 @@
 			<ul>
 				<li>76204kB actually useable ...</li>
 				<li>...although <code>htop</code> only shows 74MB of useable RAM</li>
+				<li>Idle usage holds steady at ~16MB for me</li>
 			</ul>
 
 			<h4>Wireless (from <code>iwconfig</code>)</h4>
@@ -84,15 +132,6 @@
 
 		<h2>Getting Whiite</h2>
 		<div class="box">
-			<h4>Requirements</h4>
-			<ul>
-				<li>2GB SD card</li>
-				<li>USB flash drive</li>
-				<li>USB keyboard</li>
-				<li>Computer with Unix installed already</li>
-				<li>A Wii, Wiimote and a TV... obviously</li>
-			</ul>
-
 			<h4>Updating your Wii to Version 4.3</h4>
 			<ul>
 				<li>If you know how to update, you can skip this step!</li>
@@ -114,12 +153,27 @@
 			
 			<h4>Installing IOS236</h4>
 			<ul>
-				<li></li>
+				<li>This step reverts the Wii's native operating system to an earlier version, the one that allows us to take advantage of a system exploit and write to the Wii's NAND memory</li>
+				<li>Download <a href="">this broken link</a>, and place it in the apps folder on your SD card</li>
+				<li>Navigate back to the Homebrew Channel, and run the installer. Choose the first option when it loads, and wait for it to complete</li>
+				<li>As soon as it's done, you can exit the app and restart the Wii</li>
+				<li>Once restarted, move onto the next step</li>
 			</ul>
 			
 			<h4>Installing Bootmii as boot2</h4>
 			<ul>
-				<li></li>
+				<li>Go back to the Hackmii bundled installer in your Wii's message board (Letterbomb)</li>
+				<li>Run it, and wait for it to load again</li>
+				<li>Press (1) on the Wiimote, or (A) if you're using a gamecube controller to continue pass the loading screen</li>
+				<li>Choose these options as they appear
+					<ul>
+						<li>Install Bootmii</li>
+						<li>Install as boot2</li>
+					</ul>
+				</li>
+				<li>Confirm the installation, and you should see some information about NAND memory being written to. This means that it worked</li>
+				<li>If you are unable to install Bootmii at all, that probably means that you didn't do the previous step which was to install IOS236. Make sure you've done that step and then try again</li>
+				<li>After the installation completes, you can exit the bundled installer and move on to setting up the SD card and the USB drive</li>
 			</ul>
 			
 			<h4>Setting up the SD card and USB</h4>
@@ -130,6 +184,14 @@
 			<h4>Run the Whiite Installer</h4>
 			<ul>
 				<li>We will be using the installer for the <i>sole purpose</i> of how it partitions your SD card. I have been unsuccessful in trying to manually partition the SD card, even when it matches the layout of how the installer does it</li>
+				<li>Boot the Wii with the SD, USB drive, and USB keyboard plugged in. Navigate to the Homebrew Channel, and run the gc-whiite installer app</li>
+				<li>A couple menus will appear. Using the keyboard, you're always going to want to say &lt;yes&gt; when presented with that option</li>
+				<li>Eventually, it will start to install. Using the recommended 2GB SD card, this process will take ~15 minutes. Do NOT unplug anything or turn off your Wii during this time
+					<ul>
+						<li>When the menu appears about "creating the journal", if it appears to freeze that is normal. For some reason this step takes a bit longer than all of the previous steps while installing</li>
+					</ul>
+				</li>
+				<li>When the process completes, it will prompt you to press enter and restart the system. Do this. It won't restart. Once it turns completely off, move on to the next step</li>
 			</ul>
 
 			<h4>Wipe the SD card</h4>
@@ -170,7 +232,7 @@
 			<ul>
 				<li>The filestructure of the SD card should look like this:
 					<ul>
-						<li>boot
+						<li>boot <i>(partition)</i>
 							<ul>
 								<li>bootmii
 									<ul>
@@ -180,7 +242,7 @@
 								</li>
 							</ul>
 						</li>
-						<li>whiite</li>
+						<li>whiite <i>(partition)</i></li>
 					</ul>
 				</li>
 				<li>Go to <a href="http://www.gc-linux.org/wiki/WL:whiite-linux#Featured_kernel_images">this</a> location and download the kernel version that best fits your TV and Wii setup. I would say 99 out of 100 times you're going to want to use the 5<sup>th</sup> option, "<a href="http://downloads.sourceforge.net/gc-linux/mikep5-zImage-2.6.32.mini.480p(NTSC).elf">mikep5-zImage-2.6.32.mini.480p(NTSC).elf</a>"</li>
@@ -208,82 +270,7 @@
 				<li>Wait for the untarring process to finish, it may take ~10 seconds to complete</li>
 				<li>Eject the drive safely, and wait for confirmation that you're able to unplug before you do so. Again, not safely removing the SD card from your computer risks corruption of the filesystem</li>
 			</ul>
-
-			<h4>Plug it into the Wii</h4>
-			<ul>
-				<li>At this point the filestructure of the SD card should look like this:
-					<ul>
-						<li>boot
-							<ul>
-								<li>bootmii
-									<ul>
-										<li>armboot.bin</li>
-										<li>bootmii.ini</li>
-										<li>ppcboot.elf</li>
-									</ul>
-								</li>
-							</ul>
-						</li>
-						<li>whiite
-							<ul>
-								<li>bin</li>
-								<li>boot</li>
-								<li>debootstrap</li>
-								<li>dev</li>
-								<li>etc</li>
-								<li>home</li>
-								<li>initrd</li>
-								<li>lib</li>
-								<li>lost+found</li>
-								<li>media</li>
-								<li>mnt</li>
-								<li>opt</li>
-								<li>proc</li>
-								<li>root</li>
-								<li>sbin</li>
-								<li>selinux</li>
-								<li>srv</li>
-								<li>sys</li>
-								<li>tmp</li>
-								<li>usr</li>
-								<li>var</li>
-							</ul>
-						</li>
-					</ul>
-				</li>
-				<li>If your filestructure matches that of the above filestructure, you should be good to go</li>
-			</ul>
 		</div>
-		<!-- <ul>
-			<li>need usb and 2GB SD card</li>
-			<li>update wii to 4.3</li>
-			<li>install homebrew without bootmii</li>
-			<li>get ios236 app and run it</li>
-			<li>install bootmii as boot2
-				<ul>
-					<li>save a copy of the generated bootmii folder somewhere</li>
-				</ul>
-			</li>
-			<li>setup the SD card and USB
-				<ul>
-					<li>whiite linux installer on sd card under apps</li>
-					<li>untar bundled filesystem, kernel, and config file on USB</li>
-				</ul>
-			</li>
-			<li>run the whiite installer through homebrew</li>
-			<li>wipe the sd card partitions, remove the USB (finished with the USB now)</li>
-			<li>drag bootmii folder back into boot partition</li>
-			<li>download the correct MINI kernel for the size of your TV (most likely 480p version)
-				<ul>
-					<li>delete the current ppcboot.elf file in the bootmii folder</li>
-					<li>place this file in the bootmii folder</li>
-					<li>rename it "ppcboot.elf"</li>
-				</ul>
-			</li>
-			<li>get newest filesystem and install that in whiite partition</li>
-			<li>plug it into the wii and start it</li>
-			<li>it should work</li>
-		</ul> -->
 		<hr>
 
 		<h2>Once you have Whiite installed</h2>
