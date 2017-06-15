@@ -116,34 +116,34 @@
 
 			var canvas;
 			var gl;
+			var SIMULATION_SCALE = 6;
 			
-			var simulationScale = 6;
 			var worldOffsetX = 0.0;
 			var worldOffsetY = 0.0;
 			
 			// DOM Objects
-			var sliderSpeed;
-			var sliderNumberOfCircles;
-			var sliderZoom;
-			var selectFunction;
-			var trackCheckbox;
-			var sliderAmplitude;
-			var commandLineDiv;
-			var commandLineInput;
-			var commandLineMessage;
-			var mousePositionSpan;
-			
+			var DOM_sliderSpeed;
+			var DOM_sliderAmplitude;
+			var DOM_sliderNumberOfCircles;
+			var DOM_sliderZoom;
+			var DOM_selectFunction;
+			var DOM_trackingCheckbox;
+			var DOM_showGrid;
+			var DOM_showFunctionString;
+			var DOM_commandLineDiv;
+			var DOM_commandLineInput;
+			var DOM_trackingPositionSpan;
 			var DOM_functionStringX;
 			var DOM_functionStringY;
 			var functionStringUpdateBuffer = 0;
-			
-			var functionOption_rose_k;
-			
-			var functionOption_lissajous_a;
-			var functionOption_lissajous_b;
-			var functionOption_lissajous_kx;
-			var functionOption_lissajous_ky;
-			var functionOption_lissajous_delta;
+			var DOM_functionOption_rose_k;
+			var DOM_functionOption_lissajous_a;
+			var DOM_functionOption_lissajous_b;
+			var DOM_functionOption_lissajous_kx;
+			var DOM_functionOption_lissajous_ky;
+			var DOM_functionOption_lissajous_delta;
+			var DOM_functionOption_limacon_a;
+			var DOM_functionOption_limacon_b;
 			
 			var previousCommands = [];
 			var previousCommandIndex = 0;
@@ -154,7 +154,8 @@
 			var clearColorDampen = 15.0;
 			
 			var trackingCircleZero = false;
-			var shouldDrawGrid = true;
+			var shouldDrawGrid = false;
+			var shouldUpdateFunctionString = true;
 
 			function initGL(canvas) {
 				try {
@@ -350,13 +351,13 @@
 			function handleKeys() {
 				if (currentlyPressedKeys[192] && keyFlag[192] == false) {
 					// grave aka tilde
-					if (commandLineDiv.style.display == "none") {
-						commandLineDiv.style.display = "inline";
-						commandLineInput.value = "";
-						commandLineInput.focus();
+					if (DOM_commandLineDiv.style.display == "none") {
+						DOM_commandLineDiv.style.display = "inline";
+						DOM_commandLineInput.value = "";
+						DOM_commandLineInput.focus();
 					} else {
-						commandLineDiv.style.display = "none";
-						commandLineInput.value = "";
+						DOM_commandLineDiv.style.display = "none";
+						DOM_commandLineInput.value = "";
 					}
 					
 					previousCommandIndex = previousCommands.length - 1;
@@ -367,30 +368,30 @@
 					keyFlag[192] = true;
 				}
 				if (currentlyPressedKeys[27]) {
-					if (commandLineDiv.style.display == "inline") {
-						commandLineInput.value = "";
+					if (DOM_commandLineDiv.style.display == "inline") {
+						DOM_commandLineInput.value = "";
 						previousCommandIndex = previousCommands.length - 1;
 					}
 				}
-				if (currentlyPressedKeys[13] && commandLineInput.value != "") {
+				if (currentlyPressedKeys[13] && DOM_commandLineInput.value != "") {
 					parseCommandLineInput();
-					commandLineInput.value = "";
+					DOM_commandLineInput.value = "";
 				}
 				
 				if (currentlyPressedKeys[107]) {
-					sliderZoom.value = parseInt(sliderZoom.value) + 2;
-					if (sliderZoom.value > 200) sliderZoom.value = 200;
+					DOM_sliderZoom.value = parseInt(DOM_sliderZoom.value) + 2;
+					if (DOM_sliderZoom.value > 200) DOM_sliderZoom.value = 200;
 				}
 				if (currentlyPressedKeys[109]) {
-					sliderZoom.value = parseInt(sliderZoom.value) - 2;
-					if (sliderZoom.value < 1) sliderZoom.value = 1;
+					DOM_sliderZoom.value = parseInt(DOM_sliderZoom.value) - 2;
+					if (DOM_sliderZoom.value < 1) DOM_sliderZoom.value = 1;
 				}
 				
 				if (currentlyPressedKeys[38] && keyFlag[38] == false) {
 					// Up cursor key
-					if (commandLineDiv.style.display == "inline") {
+					if (DOM_commandLineDiv.style.display == "inline") {
 						if (previousCommands.length > 0) {
-							commandLineInput.value = previousCommands[previousCommandIndex];
+							DOM_commandLineInput.value = previousCommands[previousCommandIndex];
 							previousCommandIndex--;
 							if (previousCommandIndex < 0) {
 								previousCommandIndex = 0;
@@ -403,13 +404,13 @@
 				}
 				if (currentlyPressedKeys[40] && keyFlag[40] == false) {
 					// Down cursor key
-					if (commandLineDiv.style.display == "inline") {
+					if (DOM_commandLineDiv.style.display == "inline") {
 						previousCommandIndex++;
 						if (previousCommandIndex >= previousCommands.length) {
 							previousCommandIndex = previousCommands.length - 1;
-							commandLineInput.value = "";
+							DOM_commandLineInput.value = "";
 						} else {
-							commandLineInput.value = previousCommands[previousCommandIndex];
+							DOM_commandLineInput.value = previousCommands[previousCommandIndex];
 						}
 					keyFlag[40] = true;
 					} else {
@@ -418,21 +419,21 @@
 				}
 				if (currentlyPressedKeys[37]) {
 					// left arrow
-					if (commandLineDiv.style.display != "inline") worldOffsetX++;
+					if (DOM_commandLineDiv.style.display != "inline") worldOffsetX++;
 				}
 				if (currentlyPressedKeys[39]) {
 					// right arrow
-					if (commandLineDiv.style.display != "inline") worldOffsetX--;
+					if (DOM_commandLineDiv.style.display != "inline") worldOffsetX--;
 				}
 			}
 			
 			function parseCommandLineInput() {
-				var input = commandLineInput.value;
+				var input = DOM_commandLineInput.value;
 				if (input.startsWith("circles=")) {
 					var n = parseInt(input.substring(8));
 					if (n) {
 						if (0 < n && n <= 200) {
-							sliderNumberOfCircles.value = n;
+							DOM_sliderNumberOfCircles.value = n;
 							initWorldObjects();
 							displayCommandLineMessage("circles set to " + n, true);
 						} else {
@@ -443,7 +444,7 @@
 					var n = parseInt(input.substring(6));
 					if (n) {
 						if (0 < n && n <= 100) {
-							sliderSpeed.value = n;
+							DOM_sliderSpeed.value = n;
 							displayCommandLineMessage("speed set to " + n, true);
 						} else {
 							displayCommandLineMessage("0 < speed <= 100", false);
@@ -453,7 +454,7 @@
 					var n = parseInt(input.substring(5));
 					if (n) {
 						if (0 < n && n <= 200) {
-							sliderZoom.value = n;
+							DOM_sliderZoom.value = n;
 							displayCommandLineMessage("zoom set to " + n, true);
 						} else {
 							displayCommandLineMessage("0 < zoom <= 200", false);
@@ -463,7 +464,7 @@
 					var n = parseFloat(input.substring(10));
 					if (n) {
 						if (0 < n && n <= 10) {
-							sliderAmplitude.value = n * 10.0;
+							DOM_sliderAmplitude.value = n * 10.0;
 							displayCommandLineMessage("amplitude set to " + n, true);
 						} else {
 							displayCommandLineMessage("0 < amplitude <= 10", false);
@@ -472,15 +473,15 @@
 						displayCommandLineMessage("amplitude=<float>", false);
 					}
 				} else if (input == "reset") {
-					sliderSpeed.value = defaultDOMSettings.speed;
-					sliderNumberOfCircles.value = defaultDOMSettings.numberOfCircles;
-					sliderZoom.value = defaultDOMSettings.zoom;
+					DOM_sliderSpeed.value = defaultDOMSettings.speed;
+					DOM_sliderNumberOfCircles.value = defaultDOMSettings.numberOfCircles;
+					DOM_sliderZoom.value = defaultDOMSettings.zoom;
 					initWorldObjects();
 					worldOffsetX = 0.0;
 					worldOffsetY = 0.0;
 					shouldDrawGrid = true;
-					trackCheckbox.checked = false;
-					selectFunction.value = "rose";
+					DOM_trackingCheckbox.checked = false;
+					DOM_selectFunction.value = "rose";
 					displayCommandLineMessage("reset everything", true);
 				} else if (input == "newcolors") {
 					for (var i in circles) {
@@ -496,15 +497,15 @@
 						displayCommandLineMessage("hiding grid", true);
 					}
 				} else if (input == "clear") {
-					while (commandLineDiv.children.length > 1) {
-						commandLineDiv.removeChild(commandLineDiv.firstChild);
+					while (DOM_commandLineDiv.children.length > 1) {
+						DOM_commandLineDiv.removeChild(DOM_commandLineDiv.firstChild);
 					}
 				} else if (input.startsWith("track=")) {
 					if (input.substring(6) == "true") {
-						trackCheckbox.checked = true;
+						DOM_trackingCheckbox.checked = true;
 						displayCommandLineMessage("tracking circle 0", true);
 					} else {
-						trackCheckbox.checked = false;
+						DOM_trackingCheckbox.checked = false;
 						displayCommandLineMessage("untracking circle 0", true);
 					}
 				} else if (input == "regen") {
@@ -518,11 +519,6 @@
 				
 				previousCommands.push(input);
 				previousCommandIndex = previousCommands.length - 1;
-			}
-			
-			function handleMouseMovement(event) {
-				//var worldspaceX = event.clientX - (gl.viewportWidth / 2.0)
-				//mousePositionSpan.innerHTML = "(" + worldspaceX + ", " + event.clientY + ")";
 			}
 
 			var circleVertexPositionBuffer;
@@ -557,10 +553,10 @@
 				gridVertexPositionBuffer = gl.createBuffer();
 				gl.bindBuffer(gl.ARRAY_BUFFER, gridVertexPositionBuffer);
 				vertices = [
-					-(simulationScale / 2.0), -(simulationScale / 2.0),  0.0,
-					 (simulationScale / 2.0), -(simulationScale / 2.0),  0.0,
-					 (simulationScale / 2.0),  (simulationScale / 2.0),  0.0,
-					-(simulationScale / 2.0),  (simulationScale / 2.0),  0.0,
+					-(SIMULATION_SCALE / 2.0), -(SIMULATION_SCALE / 2.0),  0.0,
+					 (SIMULATION_SCALE / 2.0), -(SIMULATION_SCALE / 2.0),  0.0,
+					 (SIMULATION_SCALE / 2.0),  (SIMULATION_SCALE / 2.0),  0.0,
+					-(SIMULATION_SCALE / 2.0),  (SIMULATION_SCALE / 2.0),  0.0,
 				];
 				gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
 				gridVertexPositionBuffer.itemSize = 3;
@@ -579,7 +575,7 @@
 					mvPushMatrix();
 					mat4.translate(mvMatrix, [this.x, this.y, 0.0]);
 					
-					if (trackCheckbox.checked) {
+					if (DOM_trackingCheckbox.checked) {
 						if (isFirstCircle) {
 							gl.uniform3f(circleShaderProgram.colorUniform, this.r * 2.0, this.g * 2.0, this.b * 2.0);
 						} else {
@@ -596,7 +592,7 @@
 				
 				animate(elapsedTime) {
 					//              PI          slider value   constant   ms per frame   elapsed ms
-					this.theta += Math.PI * sliderSpeed.value * 0.0001 * (60 / 1000) * elapsedTime;
+					this.theta += Math.PI * DOM_sliderSpeed.value * 0.0001 * (60 / 1000) * elapsedTime;
 					if (this.theta > 2 * Math.PI) {
 						this.theta = 0.0;
 					}
@@ -610,10 +606,10 @@
 				}
 				
 				updatePosition() {
-					var func = selectFunction.value;
+					var func = DOM_selectFunction.value;
 					if (func == "rose") {
-						this.x = Math.cos(functionOption_rose_k.value * this.theta) * Math.cos(this.theta);
-						this.y = Math.cos(functionOption_rose_k.value * this.theta) * Math.sin(this.theta);
+						this.x = Math.cos(DOM_functionOption_rose_k.value * this.theta) * Math.cos(this.theta);
+						this.y = Math.cos(DOM_functionOption_rose_k.value * this.theta) * Math.sin(this.theta);
 					} else if (func == "cardioid") {
 						this.x = Math.cos(this.theta)*(1 - Math.cos(this.theta));
 						this.y = Math.sin(this.theta)*(1 - Math.cos(this.theta));
@@ -621,19 +617,24 @@
 						this.x = Math.cos(this.theta);
 						this.y = Math.sin(this.theta);
 					} else if (func == "lissajous") {
-						this.x = functionOption_lissajous_a.value * Math.sin(functionOption_lissajous_kx.value * this.theta + (Math.PI * 0.5 * functionOption_lissajous_delta.value));
-						this.y = functionOption_lissajous_b.value * Math.sin(functionOption_lissajous_ky.value * this.theta);
+						this.x = DOM_functionOption_lissajous_a.value * Math.sin(DOM_functionOption_lissajous_kx.value * this.theta + (Math.PI * 0.5 * DOM_functionOption_lissajous_delta.value));
+						this.y = DOM_functionOption_lissajous_b.value * Math.sin(DOM_functionOption_lissajous_ky.value * this.theta);
 					} else if (func == "butterfly") {
 						var val = Math.sin(this.theta / 12.0);
 						this.x = Math.sin(this.theta) * (   Math.pow(Math.E, Math.cos(this.theta))   -   (2 * Math.cos(4 * this.theta))   -   ( Math.pow(val, 5))  );
 						this.y = Math.cos(this.theta) * (   Math.pow(Math.E, Math.cos(this.theta))   -   (2 * Math.cos(4 * this.theta))   -   ( Math.pow(val, 5))  );
+					} else if (func == "limacon") {
+						var a = DOM_functionOption_limacon_a.value - 4;
+						var b = DOM_functionOption_limacon_b.value - 4;
+						this.x = a * Math.cos(this.theta) + b * Math.cos(this.theta) * Math.cos(this.theta);
+						this.y = a * Math.sin(this.theta) + b * Math.cos(this.theta) * Math.sin(this.theta);
 					}
 					
-					this.x *= sliderAmplitude.value / 10.0;
-					this.y *= sliderAmplitude.value / 10.0;
+					this.x *= DOM_sliderAmplitude.value / 10.0;
+					this.y *= DOM_sliderAmplitude.value / 10.0;
 					
-					this.x *= simulationScale;
-					this.y *= simulationScale;
+					this.x *= SIMULATION_SCALE;
+					this.y *= SIMULATION_SCALE;
 					
 				}
 			}
@@ -641,7 +642,7 @@
 			var circles = [];
 
 			function initWorldObjects() {
-				var numCircles = sliderNumberOfCircles.value;
+				var numCircles = DOM_sliderNumberOfCircles.value;
 				circles = [];
 
 				for (var i=0; i < numCircles; i++) {
@@ -658,7 +659,7 @@
 				
 				// translate the world back
 				mat4.identity(mvMatrix);
-				mat4.translate(mvMatrix, [worldOffsetX, worldOffsetY, -(260 - sliderZoom.value)]);
+				mat4.translate(mvMatrix, [worldOffsetX, worldOffsetY, -(260 - DOM_sliderZoom.value)]);
 				
 				updateClearColor();
 				
@@ -671,35 +672,41 @@
 				}
 				
 				// show/hide track coordinates
-				if (trackCheckbox.checked) {
-					if (mousePositionSpan.style.display == "none") mousePositionSpan.style.display = "inline";
-					mousePositionSpan.innerHTML = " (" + (Math.round(circles[0].x * 100 / simulationScale) / 100).toFixed(2) + ", " + (Math.round(circles[0].y * 100 / simulationScale) / 100).toFixed(2) + "), &theta; = " + (Math.round((circles[0].theta / Math.PI) * 100) / 100.0).toFixed(2) + " &pi;";
+				if (DOM_trackingCheckbox.checked) {
+					if (DOM_trackingPositionSpan.style.display == "none") DOM_trackingPositionSpan.style.display = "inline";
+					DOM_trackingPositionSpan.innerHTML = " (" + (Math.round(circles[0].x * 100 / SIMULATION_SCALE) / 100).toFixed(2) + ", " + (Math.round(circles[0].y * 100 / SIMULATION_SCALE) / 100).toFixed(2) + "), &theta; = " + (Math.round((circles[0].theta / Math.PI) * 100) / 100.0).toFixed(2) + " &pi;";
 				} else {
-					if (mousePositionSpan.style.display == "inline") mousePositionSpan.style.display = "none";
+					if (DOM_trackingPositionSpan.style.display == "inline") DOM_trackingPositionSpan.style.display = "none";
 				}
 				
-				functionStringUpdateBuffer++;
-				if (functionStringUpdateBuffer > 15) {
-					functionStringUpdateBuffer = 0;
-					var func = selectFunction.value;
-					if (func == "rose") {
-						DOM_functionStringX.innerHTML = "X = " + (Math.round(sliderAmplitude.value * 10) / 100.0) + " * cos(" + functionOption_rose_k.value + " * \u03b8) * cos(\u03b8)";
-						DOM_functionStringY.innerHTML = "Y = " + (Math.round(sliderAmplitude.value * 10) / 100.0) + " * cos(" + functionOption_rose_k.value + " * \u03b8) * sin(\u03b8)";
-					} else if (func == "cardioid") {
-						DOM_functionStringX.innerHTML = "X = " + (Math.round(sliderAmplitude.value * 10) / 100.0) + " * cos(\u03b8) * (1 - cos(\u03b8))";
-						DOM_functionStringY.innerHTML = "Y = " + (Math.round(sliderAmplitude.value * 10) / 100.0) + " * sin(\u03b8) * (1 - cos(\u03b8))";
-					} else if (func == "circle") {
-						DOM_functionStringX.innerHTML = "X = " + (Math.round(sliderAmplitude.value * 10) / 100.0) + " * cos(\u03b8)";
-						DOM_functionStringY.innerHTML = "Y = " + (Math.round(sliderAmplitude.value * 10) / 100.0) + " * sin(\u03b8)";
-					} else if (func == "lissajous") {
-						DOM_functionStringX.innerHTML = "X = " + (Math.round(sliderAmplitude.value * 10) / 100.0) + " * [ " + functionOption_lissajous_a.value + " * sin(" + functionOption_lissajous_kx.value + " * \u03b8 + " + (0.5 * functionOption_lissajous_delta.value) + "&pi;) ]";
-						DOM_functionStringY.innerHTML = "Y = " + (Math.round(sliderAmplitude.value * 10) / 100.0) + " * [ " + functionOption_lissajous_b.value + " * sin(" + functionOption_lissajous_ky.value + " * \u03b8) ]";
-					} else if (func == "butterfly") {
-						DOM_functionStringX.innerHTML = "X = " + (Math.round(sliderAmplitude.value * 10) / 100.0) + " * sin(&theta;) * [ e^cos(&theta;) - 2cos(4 * &theta;) - sin^5(&theta; / 12) ]";
-						DOM_functionStringY.innerHTML = "Y = " + (Math.round(sliderAmplitude.value * 10) / 100.0) + " * cos(&theta;) * [ e^cos(&theta;) - 2cos(4 * &theta;) - sin^5(&theta; / 12) ]";
+				if (shouldUpdateFunctionString) {
+					functionStringUpdateBuffer++;
+					if (functionStringUpdateBuffer > 15) {
+						functionStringUpdateBuffer = 0;
+						var func = DOM_selectFunction.value;
+						if (func == "rose") {
+							DOM_functionStringX.innerHTML = "X = " + (Math.round(DOM_sliderAmplitude.value * 10) / 100.0) + " * cos(" + DOM_functionOption_rose_k.value + " * \u03b8) * cos(\u03b8)";
+							DOM_functionStringY.innerHTML = "Y = " + (Math.round(DOM_sliderAmplitude.value * 10) / 100.0) + " * cos(" + DOM_functionOption_rose_k.value + " * \u03b8) * sin(\u03b8)";
+						} else if (func == "cardioid") {
+							DOM_functionStringX.innerHTML = "X = " + (Math.round(DOM_sliderAmplitude.value * 10) / 100.0) + " * cos(\u03b8) * (1 - cos(\u03b8))";
+							DOM_functionStringY.innerHTML = "Y = " + (Math.round(DOM_sliderAmplitude.value * 10) / 100.0) + " * sin(\u03b8) * (1 - cos(\u03b8))";
+						} else if (func == "circle") {
+							DOM_functionStringX.innerHTML = "X = " + (Math.round(DOM_sliderAmplitude.value * 10) / 100.0) + " * cos(\u03b8)";
+							DOM_functionStringY.innerHTML = "Y = " + (Math.round(DOM_sliderAmplitude.value * 10) / 100.0) + " * sin(\u03b8)";
+						} else if (func == "lissajous") {
+							DOM_functionStringX.innerHTML = "X = " + (Math.round(DOM_sliderAmplitude.value * 10) / 100.0) + " * [ " + DOM_functionOption_lissajous_a.value + " * sin(" + DOM_functionOption_lissajous_kx.value + " * \u03b8 + " + (0.5 * DOM_functionOption_lissajous_delta.value) + "&pi;) ]";
+							DOM_functionStringY.innerHTML = "Y = " + (Math.round(DOM_sliderAmplitude.value * 10) / 100.0) + " * [ " + DOM_functionOption_lissajous_b.value + " * sin(" + DOM_functionOption_lissajous_ky.value + " * \u03b8) ]";
+						} else if (func == "butterfly") {
+							DOM_functionStringX.innerHTML = "X = " + (Math.round(DOM_sliderAmplitude.value * 10) / 100.0) + " * sin(&theta;) * [ e^cos(&theta;) - 2cos(4 * &theta;) - sin^5(&theta; / 12) ]";
+							DOM_functionStringY.innerHTML = "Y = " + (Math.round(DOM_sliderAmplitude.value * 10) / 100.0) + " * cos(&theta;) * [ e^cos(&theta;) - 2cos(4 * &theta;) - sin^5(&theta; / 12) ]";
+						} else if (func == "limacon") {
+							var a = DOM_functionOption_limacon_a.value - 4;
+							var b = DOM_functionOption_limacon_b.value - 4;
+							DOM_functionStringX.innerHTML = "X = " + (Math.round(DOM_sliderAmplitude.value * 10) / 100.0) + " * [ " + a + " * cos(&theta;) + " + b + " * cos^2(&theta;) ]";
+							DOM_functionStringY.innerHTML = "Y = " + (Math.round(DOM_sliderAmplitude.value * 10) / 100.0) + " * [ " + a + " * sin(&theta;) + " + b + " * cos(&theta;)sin(&theta;) ]";
+						}
 					}
 				}
-				
 			}
 			
 			function drawCircles() {
@@ -739,7 +746,7 @@
 				for (var i = 0; i < 40; i++) {
 					for (var j = 0; j < 40; j++) {
 						mvPushMatrix();
-						mat4.translate(mvMatrix, [(j-20) * simulationScale + (simulationScale / 2.0), (i-20) * simulationScale + (simulationScale / 2.0), 0.0]);
+						mat4.translate(mvMatrix, [(j-20) * SIMULATION_SCALE + (SIMULATION_SCALE / 2.0), (i-20) * SIMULATION_SCALE + (SIMULATION_SCALE / 2.0), 0.0]);
 						
 						setGridShaderMatrixUniforms();
 						gl.drawArrays(gl.LINE_LOOP, 0, gridVertexPositionBuffer.numItems);
@@ -804,78 +811,107 @@
 				amplitude: 10
 			}
 			function initDOM() {
-				sliderSpeed = document.getElementById("sliderSpeed");
-				sliderSpeed.max = 100;
-				sliderSpeed.min = 1;
-				sliderSpeed.value = defaultDOMSettings.speed;
+				DOM_sliderSpeed = document.getElementById("DOM_sliderSpeed");
+				DOM_sliderSpeed.max = 100;
+				DOM_sliderSpeed.min = 1;
+				DOM_sliderSpeed.value = defaultDOMSettings.speed;
 				
-				sliderNumberOfCircles = document.getElementById("sliderNumberOfCircles");
-				sliderNumberOfCircles.max = 200;
-				sliderNumberOfCircles.min = 1;
-				sliderNumberOfCircles.value = defaultDOMSettings.numberOfCircles;
-				sliderNumberOfCircles.oninput = function() {
+				DOM_sliderAmplitude = document.getElementById("DOM_sliderAmplitude");
+				DOM_sliderAmplitude.max = 100;
+				DOM_sliderAmplitude.min = 1;
+				DOM_sliderAmplitude.value = defaultDOMSettings.amplitude;
+				
+				DOM_sliderNumberOfCircles = document.getElementById("DOM_sliderNumberOfCircles");
+				DOM_sliderNumberOfCircles.max = 200;
+				DOM_sliderNumberOfCircles.min = 1;
+				DOM_sliderNumberOfCircles.value = defaultDOMSettings.numberOfCircles;
+				DOM_sliderNumberOfCircles.oninput = function() {
 					initWorldObjects();
 				}
 				
-				sliderZoom = document.getElementById("sliderZoom");
-				sliderZoom.max = 200;
-				sliderZoom.min = 1;
-				sliderZoom.value = defaultDOMSettings.zoom;
+				DOM_sliderZoom = document.getElementById("DOM_sliderZoom");
+				DOM_sliderZoom.max = 200;
+				DOM_sliderZoom.min = 1;
+				DOM_sliderZoom.value = defaultDOMSettings.zoom;
 				
-				selectFunction = document.getElementById("selectFunction");
-				selectFunction.value = defaultDOMSettings.func;
-				selectFunction.onchange = function() {
-					for (var i = 0; i < selectFunction.options.length; i++) {
-						document.getElementById("functionOptions_" + selectFunction.options[i].value).style.display = "none";
-						document.getElementById("functionOptions_" + selectFunction.value).style.display = "block";
+				DOM_selectFunction = document.getElementById("DOM_selectFunction");
+				DOM_selectFunction.value = defaultDOMSettings.func;
+				DOM_selectFunction.onchange = function() {
+					for (var i = 0; i < DOM_selectFunction.options.length; i++) {
+						document.getElementById("functionOptions_" + DOM_selectFunction.options[i].value).style.display = "none";
+						document.getElementById("functionOptions_" + DOM_selectFunction.value).style.display = "block";
 					}
 				}
 				document.getElementById("functionOptions_circle").style.display = "block";
 				
-				trackCheckbox = document.getElementById("trackCheckbox");
-				trackCheckbox.checked = defaultDOMSettings.tracked;
+				DOM_trackingCheckbox = document.getElementById("DOM_trackingCheckbox");
+				DOM_trackingCheckbox.checked = defaultDOMSettings.tracked;
 				
-				sliderAmplitude = document.getElementById("sliderAmplitude");
-				sliderAmplitude.max = 100;
-				sliderAmplitude.min = 1;
-				sliderAmplitude.value = defaultDOMSettings.amplitude;
+				DOM_trackingPositionSpan = document.getElementById("DOM_trackingPositionSpan");
+				DOM_trackingPositionSpan.style.display = "none";
 				
-				commandLineDiv = document.getElementById("commandLineDiv");
-				commandLineDiv.style.display = "none";
-				commandLineInput = document.getElementById("commandLineInput");
+				DOM_showGrid = document.getElementById("DOM_showGrid");
+				DOM_showGrid.checked = false;
+				DOM_showGrid.onchange = function() {
+					shouldDrawGrid = DOM_showGrid.checked;
+				}
 				
-				mousePositionSpan = document.getElementById("mousePosition");
-				mousePositionSpan.style.display = "none";
+				DOM_showFunctionString = document.getElementById("DOM_showFunctionString");
+				DOM_showFunctionString.checked = true;
+				DOM_showFunctionString.onchange = function() {
+					shouldUpdateFunctionString = DOM_showFunctionString.checked;
+					if (shouldUpdateFunctionString) {
+						DOM_functionStringX.style.display = "inline";
+						DOM_functionStringY.style.display = "inline";
+					} else {
+						DOM_functionStringX.style.display = "none";
+						DOM_functionStringY.style.display = "none";
+					}
+				}
 				
-				functionOption_rose_k = document.getElementById("functionOption_rose_k");
-				functionOption_rose_k.max = 8;
-				functionOption_rose_k.min = 1;
-				functionOption_rose_k.value = 2;
+				DOM_commandLineDiv = document.getElementById("DOM_commandLineDiv");
+				DOM_commandLineDiv.style.display = "none";
+				DOM_commandLineInput = document.getElementById("DOM_commandLineInput");
+				
+				DOM_functionOption_rose_k = document.getElementById("DOM_functionOption_rose_k");
+				DOM_functionOption_rose_k.max = 8;
+				DOM_functionOption_rose_k.min = 1;
+				DOM_functionOption_rose_k.value = 2;
 			
-				functionOption_lissajous_a = document.getElementById("functionOption_lissajous_a");
-				functionOption_lissajous_a.max = 6;
-				functionOption_lissajous_a.min = 1;
-				functionOption_lissajous_a.value = 1;
+				DOM_functionOption_lissajous_a = document.getElementById("DOM_functionOption_lissajous_a");
+				DOM_functionOption_lissajous_a.max = 6;
+				DOM_functionOption_lissajous_a.min = 1;
+				DOM_functionOption_lissajous_a.value = 1;
 				
-				functionOption_lissajous_b = document.getElementById("functionOption_lissajous_b");
-				functionOption_lissajous_b.max = 6;
-				functionOption_lissajous_b.min = 1;
-				functionOption_lissajous_b.value = 2;
+				DOM_functionOption_lissajous_b = document.getElementById("DOM_functionOption_lissajous_b");
+				DOM_functionOption_lissajous_b.max = 6;
+				DOM_functionOption_lissajous_b.min = 1;
+				DOM_functionOption_lissajous_b.value = 2;
 				
-				functionOption_lissajous_kx = document.getElementById("functionOption_lissajous_kx");
-				functionOption_lissajous_kx.max = 6;
-				functionOption_lissajous_kx.min = 1;
-				functionOption_lissajous_kx.value = 2;
+				DOM_functionOption_lissajous_kx = document.getElementById("DOM_functionOption_lissajous_kx");
+				DOM_functionOption_lissajous_kx.max = 6;
+				DOM_functionOption_lissajous_kx.min = 1;
+				DOM_functionOption_lissajous_kx.value = 2;
 				
-				functionOption_lissajous_ky = document.getElementById("functionOption_lissajous_ky");
-				functionOption_lissajous_ky.max = 6;
-				functionOption_lissajous_ky.min = 1;
-				functionOption_lissajous_ky.value = 1;
+				DOM_functionOption_lissajous_ky = document.getElementById("DOM_functionOption_lissajous_ky");
+				DOM_functionOption_lissajous_ky.max = 6;
+				DOM_functionOption_lissajous_ky.min = 1;
+				DOM_functionOption_lissajous_ky.value = 1;
 				
-				functionOption_lissajous_delta = document.getElementById("functionOption_lissajous_delta");
-				functionOption_lissajous_delta.max = 4;
-				functionOption_lissajous_delta.min = 0;
-				functionOption_lissajous_delta.value = 0;
+				DOM_functionOption_lissajous_delta = document.getElementById("DOM_functionOption_lissajous_delta");
+				DOM_functionOption_lissajous_delta.max = 4;
+				DOM_functionOption_lissajous_delta.min = 0;
+				DOM_functionOption_lissajous_delta.value = 0;
+				
+				DOM_functionOption_limacon_a = document.getElementById("DOM_functionOption_limacon_a");
+				DOM_functionOption_limacon_a.max = 8;
+				DOM_functionOption_limacon_a.min = 0;
+				DOM_functionOption_limacon_a.value = 8;
+				
+				DOM_functionOption_limacon_b = document.getElementById("DOM_functionOption_limacon_b");
+				DOM_functionOption_limacon_b.max = 8;
+				DOM_functionOption_limacon_b.min = 0;
+				DOM_functionOption_limacon_b.value = 8;
 				
 				DOM_functionStringX = document.getElementById("functionStringX");
 				DOM_functionStringY = document.getElementById("functionStringY");
@@ -883,7 +919,6 @@
 			}
 			
 			function displayCommandLineMessage(text, passed) {
-			
 				var span = document.createElement("span");
 				if (passed) {
 					span.style.color = "green";
@@ -896,18 +931,18 @@
 				span.appendChild(textnode);
 				span.style.fontFamily = "monospace";
 				
-				
-				
-				commandLineDiv.insertBefore(span, commandLineDiv.children[commandLineDiv.children.length - 1]);
-				commandLineDiv.insertBefore(document.createElement("br"), commandLineDiv.children[commandLineDiv.children.length - 1]);
+				DOM_commandLineDiv.insertBefore(span, DOM_commandLineDiv.children[DOM_commandLineDiv.children.length - 1]);
+				DOM_commandLineDiv.insertBefore(document.createElement("br"), DOM_commandLineDiv.children[DOM_commandLineDiv.children.length - 1]);
 			}
 			
 			function displayCommandLineHelp() {
 				displayCommandLineMessage("--- Help -------------------------------------", true);
 				displayCommandLineMessage("help........: display this window", true);
 				displayCommandLineMessage("reset.......: reset the sim", true);
+				displayCommandLineMessage("regen.......: regen all circles with given settings", true);
 				displayCommandLineMessage("clear.......: clear these messages", true);
 				displayCommandLineMessage("speed=?.....: 0 < ? <= 100, sets sim speed", true);
+				displayCommandLineMessage("amplitude=?.: 0 < ? <= 10, sets function amplitude", true);
 				displayCommandLineMessage("circles=?...: 0 < ? <= 200, sets circle number", true);
 				displayCommandLineMessage("zoom=?......: 0 < ? <= 100, sets zoom amount", true);
 				displayCommandLineMessage("newcolors...: change all circle colors", true);
@@ -930,7 +965,6 @@
 
 				document.onkeydown = handleKeyDown;
 				document.onkeyup = handleKeyUp;
-				document.onmousemove = handleMouseMovement;
 
 				tick();
 			}
@@ -943,22 +977,25 @@
 	<body oncontextmenu="return false;" onload="webGLStart()" onresize="resizeGL()" style="padding: 0; margin: 0; position: absolute; overflow: hidden;" style="">
 		
 		<div class="general-options">
-			<span>speed&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="sliderSpeed" type="range"></input><br>
-			<span>amplitude </span><input id="sliderAmplitude" type="range"></input><br>
-			<span>circles&nbsp;&nbsp; </span><input id="sliderNumberOfCircles" type="range"></input><br>
-			<span>zoom&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="sliderZoom" type="range"></input><br>
-			<span>track&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input type="checkbox" id="trackCheckbox"></input><span id="mousePosition"></span><br>
+			<span>speed&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="DOM_sliderSpeed" type="range"></input><br>
+			<span>amplitude </span><input id="DOM_sliderAmplitude" type="range"></input><br>
+			<span>circles&nbsp;&nbsp; </span><input id="DOM_sliderNumberOfCircles" type="range"></input><br>
+			<span>zoom&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="DOM_sliderZoom" type="range"></input><br>
+			<span>track&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input type="checkbox" id="DOM_trackingCheckbox"></input><span id="DOM_trackingPositionSpan"></span><br>
+			<span>grid&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input type="checkbox" id="DOM_showGrid"></input><br>
+			<span>show fn&nbsp;&nbsp;&nbsp; </span><input type="checkbox" id="DOM_showFunctionString"></input><br>
 			<hr>
-			<span>function&nbsp;&nbsp; </span><select name="function" id="selectFunction">
+			<span>function&nbsp;&nbsp; </span><select name="function" id="DOM_selectFunction">
 				<option value="butterfly">butterfly</option>
 				<option value="cardioid">cardioid</option>
 				<option value="circle">circle</option>
+				<option value="limacon">limacon</option>
 				<option value="lissajous">lissajous</option>
 				<option value="rose">rose</option>
 			</select><br>
 			
 			<div id="functionOptions_rose" class="function-options">
-				<span>K&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="functionOption_rose_k" type="range"></input><br>
+				<span>K&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="DOM_functionOption_rose_k" type="range"></input><br>
 			</div>
 			<div id="functionOptions_cardioid" class="function-options">
 			
@@ -966,12 +1003,16 @@
 			<div id="functionOptions_circle" class="function-options">
 			
 			</div>
+			<div id="functionOptions_limacon" class="function-options">
+				<span>A&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="DOM_functionOption_limacon_a" type="range"></input><br>
+				<span>B&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="DOM_functionOption_limacon_b" type="range"></input><br>
+			</div>
 			<div id="functionOptions_lissajous" class="function-options">
-				<span>A&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="functionOption_lissajous_a" type="range"></input><br>
-				<span>B&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="functionOption_lissajous_b" type="range"></input><br>
-				<span>Kx&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="functionOption_lissajous_kx" type="range"></input><br>
-				<span>Ky&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="functionOption_lissajous_ky" type="range"></input><br>
-				<span>&delta;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="functionOption_lissajous_delta" type="range"></input><br>
+				<span>A&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="DOM_functionOption_lissajous_a" type="range"></input><br>
+				<span>B&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="DOM_functionOption_lissajous_b" type="range"></input><br>
+				<span>Kx&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="DOM_functionOption_lissajous_kx" type="range"></input><br>
+				<span>Ky&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="DOM_functionOption_lissajous_ky" type="range"></input><br>
+				<span>&delta;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="DOM_functionOption_lissajous_delta" type="range"></input><br>
 			</div>
 			<div id="functionOptions_butterfly" class="function-options">
 			
@@ -984,8 +1025,8 @@
 			<span id="functionStringY">y function string here...</span>
 		</div>
 		
-		<div id="commandLineDiv" class="command-div">
-			<input type="text" id="commandLineInput" style="color: white; font-family: monospace; margin: 0; background-color: transparent; border-top: none; border-right: none;"></input>
+		<div id="DOM_commandLineDiv" class="command-div">
+			<input type="text" id="DOM_commandLineInput" style="color: white; font-family: monospace; margin: 0; background-color: transparent; border-top: none; border-right: none;"></input>
 		</div>
 		
 		<div class="ftr ftr-top">
