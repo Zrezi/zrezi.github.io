@@ -1,8 +1,63 @@
 <html>
 
 	<head>
-		<title>Learning WebGL &mdash; lesson 9</title>
-		<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+		<title>WebGL</title>
+		<meta charset="utf-8">
+		
+		<style>
+			.general-options{
+				position: absolute;
+				margin: 20;
+			}
+			.general-options span {
+				color: white;
+				font-family: monospace;
+			}
+			
+			.function-options {
+				margin-top: 10;
+				display: none;
+			}
+			.function-options span {
+				color: white;
+				font-family: monospace;
+			}
+			
+			.function-string {
+				position: absolute;
+				right: 20;
+				top: 20;
+				margin: 0;
+			}
+			.function-string span {
+				color: white;
+				font-family: monospace;
+			}
+			
+			.command-div {
+				position: absolute;
+				bottom: 20;
+				left: 20;
+				margin: 0;
+				display: none;
+			}
+			
+			.ftr {
+				position: absolute;
+				right: 20;
+				margin: 0;
+			}
+			.ftr-bottom {
+				bottom: 10;
+			}
+			.ftr-top {
+				bottom: 20;
+			}
+			.ftr span {
+				color: white;
+				font-family: monospace;
+			}
+		</style>
 
 		<script type="text/javascript" src="glMatrix-0.9.5.min.js"></script>
 		<script type="text/javascript" src="webgl-utils.js"></script>
@@ -77,6 +132,18 @@
 			var commandLineInput;
 			var commandLineMessage;
 			var mousePositionSpan;
+			
+			var DOM_functionStringX;
+			var DOM_functionStringY;
+			var functionStringUpdateBuffer = 0;
+			
+			var functionOption_rose_k;
+			
+			var functionOption_lissajous_a;
+			var functionOption_lissajous_b;
+			var functionOption_lissajous_kx;
+			var functionOption_lissajous_ky;
+			var functionOption_lissajous_delta;
 			
 			var previousCommands = [];
 			var previousCommandIndex = 0;
@@ -260,11 +327,9 @@
 				gl.uniformMatrix4fv(circleShaderProgram.mvMatrixUniform, false, mvMatrix);
 			}
 
-
 			function degToRad(degrees) {
 				return degrees * Math.PI / 180;
 			}
-
 
 			var currentlyPressedKeys = {};
 			var keyFlag = {};
@@ -395,14 +460,16 @@
 						}
 					}
 				} else if (input.startsWith("amplitude=")) {
-					var n = parseInt(input.substring(10));
+					var n = parseFloat(input.substring(10));
 					if (n) {
 						if (0 < n && n <= 10) {
 							sliderAmplitude.value = n * 10.0;
 							displayCommandLineMessage("amplitude set to " + n, true);
 						} else {
-							displayCommandLineMessage("0 < zoom <= 10", false);
+							displayCommandLineMessage("0 < amplitude <= 10", false);
 						}
+					} else {
+						displayCommandLineMessage("amplitude=<float>", false);
 					}
 				} else if (input == "reset") {
 					sliderSpeed.value = defaultDOMSettings.speed;
@@ -416,10 +483,10 @@
 					selectFunction.value = "rose";
 					displayCommandLineMessage("reset everything", true);
 				} else if (input == "newcolors") {
-					for (var i in stars) {
-						stars[i].randomizeColors();
+					for (var i in circles) {
+						circles[i].randomizeColors();
 					}
-					displayCommandLineMessage("new colors to all stars", true);
+					displayCommandLineMessage("new colors to all circles", true);
 				} else if (input.startsWith("drawgrid=")) {
 					if (input.substring(9) == "true") {
 						shouldDrawGrid = true;
@@ -440,6 +507,9 @@
 						trackCheckbox.checked = false;
 						displayCommandLineMessage("untracking circle 0", true);
 					}
+				} else if (input == "regen") {
+					initWorldObjects();
+					displayCommandLineMessage("regenerated circles", true);
 				} else if (input == "help") {
 					displayCommandLineHelp();
 				} else {
@@ -455,13 +525,13 @@
 				//mousePositionSpan.innerHTML = "(" + worldspaceX + ", " + event.clientY + ")";
 			}
 
-			var starVertexPositionBuffer;
-			var starVertexTextureCoordBuffer;
+			var circleVertexPositionBuffer;
+			var circleVertexTextureCoordBuffer;
 			var gridVertexPositionBuffer;
 
 			function initBuffers() {
-				starVertexPositionBuffer = gl.createBuffer();
-				gl.bindBuffer(gl.ARRAY_BUFFER, starVertexPositionBuffer);
+				circleVertexPositionBuffer = gl.createBuffer();
+				gl.bindBuffer(gl.ARRAY_BUFFER, circleVertexPositionBuffer);
 				vertices = [
 					-1.0, -1.0,  0.0,
 					 1.0, -1.0,  0.0,
@@ -469,11 +539,11 @@
 					 1.0,  1.0,  0.0
 				];
 				gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-				starVertexPositionBuffer.itemSize = 3;
-				starVertexPositionBuffer.numItems = 4;
+				circleVertexPositionBuffer.itemSize = 3;
+				circleVertexPositionBuffer.numItems = 4;
 
-				starVertexTextureCoordBuffer = gl.createBuffer();
-				gl.bindBuffer(gl.ARRAY_BUFFER, starVertexTextureCoordBuffer);
+				circleVertexTextureCoordBuffer = gl.createBuffer();
+				gl.bindBuffer(gl.ARRAY_BUFFER, circleVertexTextureCoordBuffer);
 				var textureCoords = [
 					0.0, 0.0,
 					1.0, 0.0,
@@ -481,8 +551,8 @@
 					1.0, 1.0
 				];
 				gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoords), gl.STATIC_DRAW);
-				starVertexTextureCoordBuffer.itemSize = 2;
-				starVertexTextureCoordBuffer.numItems = 4;
+				circleVertexTextureCoordBuffer.itemSize = 2;
+				circleVertexTextureCoordBuffer.numItems = 4;
 				
 				gridVertexPositionBuffer = gl.createBuffer();
 				gl.bindBuffer(gl.ARRAY_BUFFER, gridVertexPositionBuffer);
@@ -520,7 +590,7 @@
 					}
 					
 					setCircleShaderMatrixUniforms();
-					gl.drawArrays(gl.TRIANGLE_STRIP, 0, starVertexPositionBuffer.numItems);
+					gl.drawArrays(gl.TRIANGLE_STRIP, 0, circleVertexPositionBuffer.numItems);
 					mvPopMatrix();
 				}
 				
@@ -542,11 +612,21 @@
 				updatePosition() {
 					var func = selectFunction.value;
 					if (func == "rose") {
-						this.x = Math.cos(4 * this.theta) * Math.cos(this.theta);
-						this.y = Math.cos(4 * this.theta) * Math.sin(this.theta);
+						this.x = Math.cos(functionOption_rose_k.value * this.theta) * Math.cos(this.theta);
+						this.y = Math.cos(functionOption_rose_k.value * this.theta) * Math.sin(this.theta);
 					} else if (func == "cardioid") {
 						this.x = Math.cos(this.theta)*(1 - Math.cos(this.theta));
 						this.y = Math.sin(this.theta)*(1 - Math.cos(this.theta));
+					} else if (func == "circle") {
+						this.x = Math.cos(this.theta);
+						this.y = Math.sin(this.theta);
+					} else if (func == "lissajous") {
+						this.x = functionOption_lissajous_a.value * Math.sin(functionOption_lissajous_kx.value * this.theta + (Math.PI * 0.5 * functionOption_lissajous_delta.value));
+						this.y = functionOption_lissajous_b.value * Math.sin(functionOption_lissajous_ky.value * this.theta);
+					} else if (func == "butterfly") {
+						var val = Math.sin(this.theta / 12.0);
+						this.x = Math.sin(this.theta) * (   Math.pow(Math.E, Math.cos(this.theta))   -   (2 * Math.cos(4 * this.theta))   -   ( Math.pow(val, 5))  );
+						this.y = Math.cos(this.theta) * (   Math.pow(Math.E, Math.cos(this.theta))   -   (2 * Math.cos(4 * this.theta))   -   ( Math.pow(val, 5))  );
 					}
 					
 					this.x *= sliderAmplitude.value / 10.0;
@@ -558,17 +638,16 @@
 				}
 			}
 			
-			var stars = [];
+			var circles = [];
 
 			function initWorldObjects() {
-				var numStars = sliderNumberOfCircles.value;
-				stars = [];
+				var numCircles = sliderNumberOfCircles.value;
+				circles = [];
 
-				for (var i=0; i < numStars; i++) {
-					stars.push(new Circle((i * 2 / numStars) * Math.PI));
+				for (var i=0; i < numCircles; i++) {
+					circles.push(new Circle((i * 2 / numCircles) * Math.PI));
 				}
 			}
-
 
 			function drawScene() {
 				gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
@@ -594,10 +673,33 @@
 				// show/hide track coordinates
 				if (trackCheckbox.checked) {
 					if (mousePositionSpan.style.display == "none") mousePositionSpan.style.display = "inline";
-					mousePositionSpan.innerHTML = " (" + (Math.round(stars[0].x * 100 / simulationScale) / 100) + ", " + (Math.round(stars[0].y * 100 / simulationScale) / 100) + ")";
+					mousePositionSpan.innerHTML = " (" + (Math.round(circles[0].x * 100 / simulationScale) / 100).toFixed(2) + ", " + (Math.round(circles[0].y * 100 / simulationScale) / 100).toFixed(2) + "), &theta; = " + (Math.round((circles[0].theta / Math.PI) * 100) / 100.0).toFixed(2) + " &pi;";
 				} else {
 					if (mousePositionSpan.style.display == "inline") mousePositionSpan.style.display = "none";
 				}
+				
+				functionStringUpdateBuffer++;
+				if (functionStringUpdateBuffer > 15) {
+					functionStringUpdateBuffer = 0;
+					var func = selectFunction.value;
+					if (func == "rose") {
+						DOM_functionStringX.innerHTML = "X = " + (Math.round(sliderAmplitude.value * 10) / 100.0) + " * cos(" + functionOption_rose_k.value + " * \u03b8) * cos(\u03b8)";
+						DOM_functionStringY.innerHTML = "Y = " + (Math.round(sliderAmplitude.value * 10) / 100.0) + " * cos(" + functionOption_rose_k.value + " * \u03b8) * sin(\u03b8)";
+					} else if (func == "cardioid") {
+						DOM_functionStringX.innerHTML = "X = " + (Math.round(sliderAmplitude.value * 10) / 100.0) + " * cos(\u03b8) * (1 - cos(\u03b8))";
+						DOM_functionStringY.innerHTML = "Y = " + (Math.round(sliderAmplitude.value * 10) / 100.0) + " * sin(\u03b8) * (1 - cos(\u03b8))";
+					} else if (func == "circle") {
+						DOM_functionStringX.innerHTML = "X = " + (Math.round(sliderAmplitude.value * 10) / 100.0) + " * cos(\u03b8)";
+						DOM_functionStringY.innerHTML = "Y = " + (Math.round(sliderAmplitude.value * 10) / 100.0) + " * sin(\u03b8)";
+					} else if (func == "lissajous") {
+						DOM_functionStringX.innerHTML = "X = " + (Math.round(sliderAmplitude.value * 10) / 100.0) + " * [ " + functionOption_lissajous_a.value + " * sin(" + functionOption_lissajous_kx.value + " * \u03b8 + " + (0.5 * functionOption_lissajous_delta.value) + "&pi;) ]";
+						DOM_functionStringY.innerHTML = "Y = " + (Math.round(sliderAmplitude.value * 10) / 100.0) + " * [ " + functionOption_lissajous_b.value + " * sin(" + functionOption_lissajous_ky.value + " * \u03b8) ]";
+					} else if (func == "butterfly") {
+						DOM_functionStringX.innerHTML = "X = " + (Math.round(sliderAmplitude.value * 10) / 100.0) + " * sin(&theta;) * [ e^cos(&theta;) - 2cos(4 * &theta;) - sin^5(&theta; / 12) ]";
+						DOM_functionStringY.innerHTML = "Y = " + (Math.round(sliderAmplitude.value * 10) / 100.0) + " * cos(&theta;) * [ e^cos(&theta;) - 2cos(4 * &theta;) - sin^5(&theta; / 12) ]";
+					}
+				}
+				
 			}
 			
 			function drawCircles() {
@@ -609,17 +711,17 @@
 				gl.bindTexture(gl.TEXTURE_2D, circleTexture);
 				gl.uniform1i(circleShaderProgram.samplerUniform, 0);
 
-				gl.bindBuffer(gl.ARRAY_BUFFER, starVertexTextureCoordBuffer);
-				gl.vertexAttribPointer(circleShaderProgram.textureCoordAttribute, starVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+				gl.bindBuffer(gl.ARRAY_BUFFER, circleVertexTextureCoordBuffer);
+				gl.vertexAttribPointer(circleShaderProgram.textureCoordAttribute, circleVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-				gl.bindBuffer(gl.ARRAY_BUFFER, starVertexPositionBuffer);
-				gl.vertexAttribPointer(circleShaderProgram.vertexPositionAttribute, starVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+				gl.bindBuffer(gl.ARRAY_BUFFER, circleVertexPositionBuffer);
+				gl.vertexAttribPointer(circleShaderProgram.vertexPositionAttribute, circleVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-				for (var i in stars) {
+				for (var i in circles) {
 					if (i == 0) {
-						stars[i].draw(true);
+						circles[i].draw(true);
 					} else {
-						stars[i].draw(false);
+						circles[i].draw(false);
 					}
 				}
 				
@@ -679,8 +781,8 @@
 				if (lastTime != 0) {
 					var elapsed = timeNow - lastTime;
 
-					for (var i in stars) {
-						stars[i].animate(elapsed);
+					for (var i in circles) {
+						circles[i].animate(elapsed);
 					}
 				}
 				lastTime = timeNow;
@@ -697,7 +799,7 @@
 				speed: 20,
 				numberOfCircles: 12,
 				zoom: 25,
-				func: "rose",
+				func: "circle",
 				tracking: false,
 				amplitude: 10
 			}
@@ -711,7 +813,7 @@
 				sliderNumberOfCircles.max = 200;
 				sliderNumberOfCircles.min = 1;
 				sliderNumberOfCircles.value = defaultDOMSettings.numberOfCircles;
-				sliderNumberOfCircles.onchange = function() {
+				sliderNumberOfCircles.oninput = function() {
 					initWorldObjects();
 				}
 				
@@ -722,6 +824,13 @@
 				
 				selectFunction = document.getElementById("selectFunction");
 				selectFunction.value = defaultDOMSettings.func;
+				selectFunction.onchange = function() {
+					for (var i = 0; i < selectFunction.options.length; i++) {
+						document.getElementById("functionOptions_" + selectFunction.options[i].value).style.display = "none";
+						document.getElementById("functionOptions_" + selectFunction.value).style.display = "block";
+					}
+				}
+				document.getElementById("functionOptions_circle").style.display = "block";
 				
 				trackCheckbox = document.getElementById("trackCheckbox");
 				trackCheckbox.checked = defaultDOMSettings.tracked;
@@ -732,24 +841,62 @@
 				sliderAmplitude.value = defaultDOMSettings.amplitude;
 				
 				commandLineDiv = document.getElementById("commandLineDiv");
+				commandLineDiv.style.display = "none";
 				commandLineInput = document.getElementById("commandLineInput");
 				
 				mousePositionSpan = document.getElementById("mousePosition");
 				mousePositionSpan.style.display = "none";
+				
+				functionOption_rose_k = document.getElementById("functionOption_rose_k");
+				functionOption_rose_k.max = 8;
+				functionOption_rose_k.min = 1;
+				functionOption_rose_k.value = 2;
+			
+				functionOption_lissajous_a = document.getElementById("functionOption_lissajous_a");
+				functionOption_lissajous_a.max = 6;
+				functionOption_lissajous_a.min = 1;
+				functionOption_lissajous_a.value = 1;
+				
+				functionOption_lissajous_b = document.getElementById("functionOption_lissajous_b");
+				functionOption_lissajous_b.max = 6;
+				functionOption_lissajous_b.min = 1;
+				functionOption_lissajous_b.value = 2;
+				
+				functionOption_lissajous_kx = document.getElementById("functionOption_lissajous_kx");
+				functionOption_lissajous_kx.max = 6;
+				functionOption_lissajous_kx.min = 1;
+				functionOption_lissajous_kx.value = 2;
+				
+				functionOption_lissajous_ky = document.getElementById("functionOption_lissajous_ky");
+				functionOption_lissajous_ky.max = 6;
+				functionOption_lissajous_ky.min = 1;
+				functionOption_lissajous_ky.value = 1;
+				
+				functionOption_lissajous_delta = document.getElementById("functionOption_lissajous_delta");
+				functionOption_lissajous_delta.max = 4;
+				functionOption_lissajous_delta.min = 0;
+				functionOption_lissajous_delta.value = 0;
+				
+				DOM_functionStringX = document.getElementById("functionStringX");
+				DOM_functionStringY = document.getElementById("functionStringY");
+				
 			}
 			
 			function displayCommandLineMessage(text, passed) {
 			
 				var span = document.createElement("span");
-				var textnode = document.createTextNode(text);
-				span.appendChild(textnode);
-				span.style.fontFamily = "monospace";
-				
 				if (passed) {
 					span.style.color = "green";
 				} else {
 					span.style.color = "red";
+					var errornode = document.createTextNode("ERR: ");
+					span.appendChild(errornode);
 				}
+				var textnode = document.createTextNode(text);
+				span.appendChild(textnode);
+				span.style.fontFamily = "monospace";
+				
+				
 				
 				commandLineDiv.insertBefore(span, commandLineDiv.children[commandLineDiv.children.length - 1]);
 				commandLineDiv.insertBefore(document.createElement("br"), commandLineDiv.children[commandLineDiv.children.length - 1]);
@@ -795,27 +942,57 @@
 
 	<body oncontextmenu="return false;" onload="webGLStart()" onresize="resizeGL()" style="padding: 0; margin: 0; position: absolute; overflow: hidden;" style="">
 		
-		<div style="position: absolute; margin: 20;" style="">
-			<span style="color: white; font-family: monospace;">speed </span><input id="sliderSpeed" type="range"></input><br>
-			<span style="color: white; font-family: monospace;">circles </span><input id="sliderNumberOfCircles" type="range"></input><br>
-			<span style="color: white; font-family: monospace;">zoom </span><input id="sliderZoom" type="range"></input><br>
-			<span style="color: white; font-family: monospace;">function </span><select name="function" id="selectFunction" >
-				<option value="rose">rose</option>
+		<div class="general-options">
+			<span>speed&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="sliderSpeed" type="range"></input><br>
+			<span>amplitude </span><input id="sliderAmplitude" type="range"></input><br>
+			<span>circles&nbsp;&nbsp; </span><input id="sliderNumberOfCircles" type="range"></input><br>
+			<span>zoom&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="sliderZoom" type="range"></input><br>
+			<span>track&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input type="checkbox" id="trackCheckbox"></input><span id="mousePosition"></span><br>
+			<hr>
+			<span>function&nbsp;&nbsp; </span><select name="function" id="selectFunction">
+				<option value="butterfly">butterfly</option>
 				<option value="cardioid">cardioid</option>
+				<option value="circle">circle</option>
+				<option value="lissajous">lissajous</option>
+				<option value="rose">rose</option>
 			</select><br>
-			<span style="color: white; font-family: monospace;">track </span><input type="checkbox" id="trackCheckbox"></input><span id="mousePosition" style="color: white; font-family: monospace;"></span><br>
-			<span style="color: white; font-family: monospace;">amplitude </span><input id="sliderAmplitude" type="range"></input><br>
+			
+			<div id="functionOptions_rose" class="function-options">
+				<span>K&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="functionOption_rose_k" type="range"></input><br>
+			</div>
+			<div id="functionOptions_cardioid" class="function-options">
+			
+			</div>
+			<div id="functionOptions_circle" class="function-options">
+			
+			</div>
+			<div id="functionOptions_lissajous" class="function-options">
+				<span>A&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="functionOption_lissajous_a" type="range"></input><br>
+				<span>B&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="functionOption_lissajous_b" type="range"></input><br>
+				<span>Kx&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="functionOption_lissajous_kx" type="range"></input><br>
+				<span>Ky&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="functionOption_lissajous_ky" type="range"></input><br>
+				<span>&delta;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="functionOption_lissajous_delta" type="range"></input><br>
+			</div>
+			<div id="functionOptions_butterfly" class="function-options">
+			
+			</div>
+			
 		</div>
 		
-		<div id="commandLineDiv" style="position: absolute; bottom: 20; left: 20; margin: 0; display: none;">
+		<div class="function-string">
+			<span id="functionStringX">x function string here...</span><br>
+			<span id="functionStringY">y function string here...</span>
+		</div>
+		
+		<div id="commandLineDiv" class="command-div">
 			<input type="text" id="commandLineInput" style="color: white; font-family: monospace; margin: 0; background-color: transparent; border-top: none; border-right: none;"></input>
 		</div>
 		
-		<div id="footerText1" style="position: absolute; bottom: 20; right: 20; margin: 0;">
-			<span style="color: white; font-family: monospace;">&copy; Zach Reznicek</span>
+		<div class="ftr ftr-top">
+			<span>&copy; Zach Reznicek</span>
 		</div>
-		<div id="footerText2" style="position: absolute; bottom: 10; right: 20; margin: 0;">
-			<span style="color: white; font-family: monospace; font-size: 8">like a copyright does anything</span>
+		<div class="ftr ftr-bottom">
+			<span style="font-size: 8">like a copyright does anything</span>
 		</div>
 		
 		<canvas id="gameCanvas" style="border: none;"></canvas>
