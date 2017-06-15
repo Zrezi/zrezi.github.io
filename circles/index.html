@@ -1,0 +1,825 @@
+<html>
+
+	<head>
+		<title>Learning WebGL &mdash; lesson 9</title>
+		<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+
+		<script type="text/javascript" src="glMatrix-0.9.5.min.js"></script>
+		<script type="text/javascript" src="webgl-utils.js"></script>
+
+		<script id="circle-shader-fs" type="x-shader/x-fragment">
+			precision mediump float;
+
+			varying vec2 vTextureCoord;
+
+			uniform sampler2D uSampler;
+
+			uniform vec3 uColor;
+			uniform float uBrightness;
+
+			void main(void) {
+				vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));
+				gl_FragColor = textureColor * vec4(uColor, 1.0);
+			}
+		</script>
+
+		<script id="circle-shader-vs" type="x-shader/x-vertex">
+			attribute vec3 aVertexPosition;
+			attribute vec2 aTextureCoord;
+
+			uniform mat4 uMVMatrix;
+			uniform mat4 uPMatrix;
+
+			varying vec2 vTextureCoord;
+
+			void main(void) {
+				gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+				vTextureCoord = aTextureCoord;
+			}
+		</script>
+
+		<script id="grid-shader-fs" type="x-shader/x-fragment">
+			precision mediump float;
+			
+			void main(void) {
+				gl_FragColor = vec4(0.125, 0.125, 0.125, 1.0);
+			}
+		</script>
+
+		<script id="grid-shader-vs" type="x-shader/x-vertex">
+			attribute vec3 aVertexPosition;
+			
+			uniform mat4 uMVMatrix;
+			uniform mat4 uPMatrix;
+			
+			void main(void) {
+				gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+			}
+		</script>
+
+		<script type="text/javascript">
+
+			var canvas;
+			var gl;
+			
+			var simulationScale = 6;
+			var worldOffsetX = 0.0;
+			var worldOffsetY = 0.0;
+			
+			// DOM Objects
+			var sliderSpeed;
+			var sliderNumberOfCircles;
+			var sliderZoom;
+			var selectFunction;
+			var trackCheckbox;
+			var sliderAmplitude;
+			var commandLineDiv;
+			var commandLineInput;
+			var commandLineMessage;
+			var mousePositionSpan;
+			
+			var previousCommands = [];
+			var previousCommandIndex = 0;
+			
+			var colorVertex = 0.0;
+			var clearColorOpacity = 0.2;
+			var clearColorStep = 0.001;
+			var clearColorDampen = 15.0;
+			
+			var trackingCircleZero = false;
+			var shouldDrawGrid = true;
+
+			function initGL(canvas) {
+				try {
+					gl = canvas.getContext("experimental-webgl");
+					gl.viewportWidth = canvas.width;
+					gl.viewportHeight = canvas.height;
+
+					gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+					gl.enable(gl.BLEND);
+				} catch (e) {
+				}
+				if (!gl) {
+					alert("Could not initialise WebGL, sorry :-(");
+				}
+			}
+
+			function resizeGL() {
+				canvas.width = document.body.clientWidth;
+				canvas.height = document.body.clientHeight;
+				
+				gl.viewportWidth = canvas.width;
+				gl.viewportHeight = canvas.height;
+				
+				gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+				gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+			}
+
+			function getShader(gl, id) {
+				var shaderScript = document.getElementById(id);
+				if (!shaderScript) {
+					return null;
+				}
+
+				var str = "";
+				var k = shaderScript.firstChild;
+				while (k) {
+					if (k.nodeType == 3) {
+						str += k.textContent;
+					}
+					k = k.nextSibling;
+				}
+
+				var shader;
+				if (shaderScript.type == "x-shader/x-fragment") {
+					shader = gl.createShader(gl.FRAGMENT_SHADER);
+				} else if (shaderScript.type == "x-shader/x-vertex") {
+					shader = gl.createShader(gl.VERTEX_SHADER);
+				} else {
+					return null;
+				}
+
+				gl.shaderSource(shader, str);
+				gl.compileShader(shader);
+
+				if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+					alert(gl.getShaderInfoLog(shader));
+					return null;
+				}
+
+				return shader;
+			}
+
+			var circleShaderProgram;
+			var gridShaderProgram;
+
+			function initShaders() {
+				var fragmentShader = getShader(gl, "circle-shader-fs");
+				var vertexShader = getShader(gl, "circle-shader-vs");
+
+				circleShaderProgram = gl.createProgram();
+				gl.attachShader(circleShaderProgram, vertexShader);
+				gl.attachShader(circleShaderProgram, fragmentShader);
+				gl.linkProgram(circleShaderProgram);
+
+				if (!gl.getProgramParameter(circleShaderProgram, gl.LINK_STATUS)) {
+					alert("Could not initialise shaders");
+				}
+
+				gl.useProgram(circleShaderProgram);
+
+				circleShaderProgram.vertexPositionAttribute = gl.getAttribLocation(circleShaderProgram, "aVertexPosition");
+				gl.enableVertexAttribArray(circleShaderProgram.vertexPositionAttribute);
+
+				circleShaderProgram.textureCoordAttribute = gl.getAttribLocation(circleShaderProgram, "aTextureCoord");
+				gl.enableVertexAttribArray(circleShaderProgram.textureCoordAttribute);
+
+				circleShaderProgram.pMatrixUniform = gl.getUniformLocation(circleShaderProgram, "uPMatrix");
+				circleShaderProgram.mvMatrixUniform = gl.getUniformLocation(circleShaderProgram, "uMVMatrix");
+				circleShaderProgram.samplerUniform = gl.getUniformLocation(circleShaderProgram, "uSampler");
+				circleShaderProgram.colorUniform = gl.getUniformLocation(circleShaderProgram, "uColor");
+				
+				gl.disableVertexAttribArray(circleShaderProgram.vertexPositionAttribute);
+				gl.disableVertexAttribArray(circleShaderProgram.textureCoordAttribute);
+				
+				/*****/
+				
+				
+				fragmentShader = getShader(gl, "grid-shader-fs");
+				vertexShader = getShader(gl, "grid-shader-vs");
+
+				gridShaderProgram = gl.createProgram();
+				gl.attachShader(gridShaderProgram, vertexShader);
+				gl.attachShader(gridShaderProgram, fragmentShader);
+				gl.linkProgram(gridShaderProgram);
+
+				if (!gl.getProgramParameter(gridShaderProgram, gl.LINK_STATUS)) {
+					alert("Could not initialise shaders");
+				}
+
+				gl.useProgram(gridShaderProgram);
+
+				gridShaderProgram.vertexPositionAttribute = gl.getAttribLocation(gridShaderProgram, "aVertexPosition");
+				gl.enableVertexAttribArray(gridShaderProgram.vertexPositionAttribute);
+
+				gridShaderProgram.pMatrixUniform = gl.getUniformLocation(gridShaderProgram, "uPMatrix");
+				gridShaderProgram.mvMatrixUniform = gl.getUniformLocation(gridShaderProgram, "uMVMatrix");
+				
+				gl.disableVertexAttribArray(gridShaderProgram.vertexPositionAttribute);
+			}
+
+
+			function handleLoadedTexture(texture) {
+				gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+				gl.bindTexture(gl.TEXTURE_2D, texture);
+				gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.image);
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+
+				gl.bindTexture(gl.TEXTURE_2D, null);
+			}
+
+
+			var circleTexture;
+
+			function initTexture() {
+				circleTexture = gl.createTexture();
+				circleTexture.image = new Image();
+				circleTexture.image.onload = function () {
+					handleLoadedTexture(circleTexture)
+				}
+
+				circleTexture.image.src = "circle.png";
+			}
+
+
+			var mvMatrix = mat4.create();
+			var mvMatrixStack = [];
+			var pMatrix = mat4.create();
+
+			function mvPushMatrix() {
+				var copy = mat4.create();
+				mat4.set(mvMatrix, copy);
+				mvMatrixStack.push(copy);
+			}
+
+			function mvPopMatrix() {
+				if (mvMatrixStack.length == 0) {
+					throw "Invalid popMatrix!";
+				}
+				mvMatrix = mvMatrixStack.pop();
+			}
+
+			function setGridShaderMatrixUniforms() {
+				gl.uniformMatrix4fv(gridShaderProgram.pMatrixUniform, false, pMatrix);
+				gl.uniformMatrix4fv(gridShaderProgram.mvMatrixUniform, false, mvMatrix);
+			}
+			
+			function setCircleShaderMatrixUniforms() {
+				gl.uniformMatrix4fv(circleShaderProgram.pMatrixUniform, false, pMatrix);
+				gl.uniformMatrix4fv(circleShaderProgram.mvMatrixUniform, false, mvMatrix);
+			}
+
+
+			function degToRad(degrees) {
+				return degrees * Math.PI / 180;
+			}
+
+
+			var currentlyPressedKeys = {};
+			var keyFlag = {};
+			keyFlag[192] = false;
+			keyFlag[38] = false;
+			keyFlag[40] = false;
+
+			function handleKeyDown(event) {
+				currentlyPressedKeys[event.keyCode] = true;
+				if (event.keyCode == 192) return false;
+			}
+			function handleKeyUp(event) {
+				currentlyPressedKeys[event.keyCode] = false;
+				keyFlag[event.keyCode] = false;
+				if (event.keyCode == 192) return false;
+			}
+
+			function handleKeys() {
+				if (currentlyPressedKeys[192] && keyFlag[192] == false) {
+					// grave aka tilde
+					if (commandLineDiv.style.display == "none") {
+						commandLineDiv.style.display = "inline";
+						commandLineInput.value = "";
+						commandLineInput.focus();
+					} else {
+						commandLineDiv.style.display = "none";
+						commandLineInput.value = "";
+					}
+					
+					previousCommandIndex = previousCommands.length - 1;
+					if (previousCommandIndex < 0) {
+						previousCommandIndex = 0;
+					}
+					
+					keyFlag[192] = true;
+				}
+				if (currentlyPressedKeys[27]) {
+					if (commandLineDiv.style.display == "inline") {
+						commandLineInput.value = "";
+						previousCommandIndex = previousCommands.length - 1;
+					}
+				}
+				if (currentlyPressedKeys[13] && commandLineInput.value != "") {
+					parseCommandLineInput();
+					commandLineInput.value = "";
+				}
+				
+				if (currentlyPressedKeys[107]) {
+					sliderZoom.value = parseInt(sliderZoom.value) + 2;
+					if (sliderZoom.value > 200) sliderZoom.value = 200;
+				}
+				if (currentlyPressedKeys[109]) {
+					sliderZoom.value = parseInt(sliderZoom.value) - 2;
+					if (sliderZoom.value < 1) sliderZoom.value = 1;
+				}
+				
+				if (currentlyPressedKeys[38] && keyFlag[38] == false) {
+					// Up cursor key
+					if (commandLineDiv.style.display == "inline") {
+						if (previousCommands.length > 0) {
+							commandLineInput.value = previousCommands[previousCommandIndex];
+							previousCommandIndex--;
+							if (previousCommandIndex < 0) {
+								previousCommandIndex = 0;
+							}
+						}
+						keyFlag[38] = true;
+					} else {
+						worldOffsetY--;
+					}
+				}
+				if (currentlyPressedKeys[40] && keyFlag[40] == false) {
+					// Down cursor key
+					if (commandLineDiv.style.display == "inline") {
+						previousCommandIndex++;
+						if (previousCommandIndex >= previousCommands.length) {
+							previousCommandIndex = previousCommands.length - 1;
+							commandLineInput.value = "";
+						} else {
+							commandLineInput.value = previousCommands[previousCommandIndex];
+						}
+					keyFlag[40] = true;
+					} else {
+						worldOffsetY++;
+					}
+				}
+				if (currentlyPressedKeys[37]) {
+					// left arrow
+					if (commandLineDiv.style.display != "inline") worldOffsetX++;
+				}
+				if (currentlyPressedKeys[39]) {
+					// right arrow
+					if (commandLineDiv.style.display != "inline") worldOffsetX--;
+				}
+			}
+			
+			function parseCommandLineInput() {
+				var input = commandLineInput.value;
+				if (input.startsWith("circles=")) {
+					var n = parseInt(input.substring(8));
+					if (n) {
+						if (0 < n && n <= 200) {
+							sliderNumberOfCircles.value = n;
+							initWorldObjects();
+							displayCommandLineMessage("circles set to " + n, true);
+						} else {
+							displayCommandLineMessage("0 < circles <= 200", false);
+						}
+					}
+				} else if (input.startsWith("speed=")) {
+					var n = parseInt(input.substring(6));
+					if (n) {
+						if (0 < n && n <= 100) {
+							sliderSpeed.value = n;
+							displayCommandLineMessage("speed set to " + n, true);
+						} else {
+							displayCommandLineMessage("0 < speed <= 100", false);
+						}
+					}
+				} else if (input.startsWith("zoom=")) {
+					var n = parseInt(input.substring(5));
+					if (n) {
+						if (0 < n && n <= 200) {
+							sliderZoom.value = n;
+							displayCommandLineMessage("zoom set to " + n, true);
+						} else {
+							displayCommandLineMessage("0 < zoom <= 200", false);
+						}
+					}
+				} else if (input.startsWith("amplitude=")) {
+					var n = parseInt(input.substring(10));
+					if (n) {
+						if (0 < n && n <= 10) {
+							sliderAmplitude.value = n * 10.0;
+							displayCommandLineMessage("amplitude set to " + n, true);
+						} else {
+							displayCommandLineMessage("0 < zoom <= 10", false);
+						}
+					}
+				} else if (input == "reset") {
+					sliderSpeed.value = defaultDOMSettings.speed;
+					sliderNumberOfCircles.value = defaultDOMSettings.numberOfCircles;
+					sliderZoom.value = defaultDOMSettings.zoom;
+					initWorldObjects();
+					worldOffsetX = 0.0;
+					worldOffsetY = 0.0;
+					shouldDrawGrid = true;
+					trackCheckbox.checked = false;
+					selectFunction.value = "rose";
+					displayCommandLineMessage("reset everything", true);
+				} else if (input == "newcolors") {
+					for (var i in stars) {
+						stars[i].randomizeColors();
+					}
+					displayCommandLineMessage("new colors to all stars", true);
+				} else if (input.startsWith("drawgrid=")) {
+					if (input.substring(9) == "true") {
+						shouldDrawGrid = true;
+						displayCommandLineMessage("showing grid", true);
+					} else {
+						shouldDrawGrid = false;
+						displayCommandLineMessage("hiding grid", true);
+					}
+				} else if (input == "clear") {
+					while (commandLineDiv.children.length > 1) {
+						commandLineDiv.removeChild(commandLineDiv.firstChild);
+					}
+				} else if (input.startsWith("track=")) {
+					if (input.substring(6) == "true") {
+						trackCheckbox.checked = true;
+						displayCommandLineMessage("tracking circle 0", true);
+					} else {
+						trackCheckbox.checked = false;
+						displayCommandLineMessage("untracking circle 0", true);
+					}
+				} else if (input == "help") {
+					displayCommandLineHelp();
+				} else {
+					displayCommandLineMessage("unknown input: " + input, false);
+				}
+				
+				previousCommands.push(input);
+				previousCommandIndex = previousCommands.length - 1;
+			}
+			
+			function handleMouseMovement(event) {
+				//var worldspaceX = event.clientX - (gl.viewportWidth / 2.0)
+				//mousePositionSpan.innerHTML = "(" + worldspaceX + ", " + event.clientY + ")";
+			}
+
+			var starVertexPositionBuffer;
+			var starVertexTextureCoordBuffer;
+			var gridVertexPositionBuffer;
+
+			function initBuffers() {
+				starVertexPositionBuffer = gl.createBuffer();
+				gl.bindBuffer(gl.ARRAY_BUFFER, starVertexPositionBuffer);
+				vertices = [
+					-1.0, -1.0,  0.0,
+					 1.0, -1.0,  0.0,
+					-1.0,  1.0,  0.0,
+					 1.0,  1.0,  0.0
+				];
+				gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+				starVertexPositionBuffer.itemSize = 3;
+				starVertexPositionBuffer.numItems = 4;
+
+				starVertexTextureCoordBuffer = gl.createBuffer();
+				gl.bindBuffer(gl.ARRAY_BUFFER, starVertexTextureCoordBuffer);
+				var textureCoords = [
+					0.0, 0.0,
+					1.0, 0.0,
+					0.0, 1.0,
+					1.0, 1.0
+				];
+				gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoords), gl.STATIC_DRAW);
+				starVertexTextureCoordBuffer.itemSize = 2;
+				starVertexTextureCoordBuffer.numItems = 4;
+				
+				gridVertexPositionBuffer = gl.createBuffer();
+				gl.bindBuffer(gl.ARRAY_BUFFER, gridVertexPositionBuffer);
+				vertices = [
+					-(simulationScale / 2.0), -(simulationScale / 2.0),  0.0,
+					 (simulationScale / 2.0), -(simulationScale / 2.0),  0.0,
+					 (simulationScale / 2.0),  (simulationScale / 2.0),  0.0,
+					-(simulationScale / 2.0),  (simulationScale / 2.0),  0.0,
+				];
+				gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+				gridVertexPositionBuffer.itemSize = 3;
+				gridVertexPositionBuffer.numItems = 4;
+			}
+			
+			class Circle {
+			
+				constructor(startingTheta) {
+					this.theta = startingTheta;
+					this.updatePosition();
+					this.randomizeColors();
+				};
+				
+				draw(isFirstCircle) {
+					mvPushMatrix();
+					mat4.translate(mvMatrix, [this.x, this.y, 0.0]);
+					
+					if (trackCheckbox.checked) {
+						if (isFirstCircle) {
+							gl.uniform3f(circleShaderProgram.colorUniform, this.r * 2.0, this.g * 2.0, this.b * 2.0);
+						} else {
+							gl.uniform3f(circleShaderProgram.colorUniform, this.r / 8.0, this.g / 8.0, this.b / 8.0);
+						}
+					} else {
+						gl.uniform3f(circleShaderProgram.colorUniform, this.r, this.g, this.b);
+					}
+					
+					setCircleShaderMatrixUniforms();
+					gl.drawArrays(gl.TRIANGLE_STRIP, 0, starVertexPositionBuffer.numItems);
+					mvPopMatrix();
+				}
+				
+				animate(elapsedTime) {
+					//              PI          slider value   constant   ms per frame   elapsed ms
+					this.theta += Math.PI * sliderSpeed.value * 0.0001 * (60 / 1000) * elapsedTime;
+					if (this.theta > 2 * Math.PI) {
+						this.theta = 0.0;
+					}
+					this.updatePosition();
+				}
+				
+				randomizeColors() {
+					this.r = Math.random();
+					this.g = Math.random();
+					this.b = Math.random();
+				}
+				
+				updatePosition() {
+					var func = selectFunction.value;
+					if (func == "rose") {
+						this.x = Math.cos(4 * this.theta) * Math.cos(this.theta);
+						this.y = Math.cos(4 * this.theta) * Math.sin(this.theta);
+					} else if (func == "cardioid") {
+						this.x = Math.cos(this.theta)*(1 - Math.cos(this.theta));
+						this.y = Math.sin(this.theta)*(1 - Math.cos(this.theta));
+					}
+					
+					this.x *= sliderAmplitude.value / 10.0;
+					this.y *= sliderAmplitude.value / 10.0;
+					
+					this.x *= simulationScale;
+					this.y *= simulationScale;
+					
+				}
+			}
+			
+			var stars = [];
+
+			function initWorldObjects() {
+				var numStars = sliderNumberOfCircles.value;
+				stars = [];
+
+				for (var i=0; i < numStars; i++) {
+					stars.push(new Circle((i * 2 / numStars) * Math.PI));
+				}
+			}
+
+
+			function drawScene() {
+				gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+				gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+				// set up perspective matrix
+				mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 400.0, pMatrix);
+				
+				// translate the world back
+				mat4.identity(mvMatrix);
+				mat4.translate(mvMatrix, [worldOffsetX, worldOffsetY, -(260 - sliderZoom.value)]);
+				
+				updateClearColor();
+				
+				// draw circles
+				drawCircles();
+				
+				// Draw grid
+				if (shouldDrawGrid) {
+					drawGrid();
+				}
+				
+				// show/hide track coordinates
+				if (trackCheckbox.checked) {
+					if (mousePositionSpan.style.display == "none") mousePositionSpan.style.display = "inline";
+					mousePositionSpan.innerHTML = " (" + (Math.round(stars[0].x * 100 / simulationScale) / 100) + ", " + (Math.round(stars[0].y * 100 / simulationScale) / 100) + ")";
+				} else {
+					if (mousePositionSpan.style.display == "inline") mousePositionSpan.style.display = "none";
+				}
+			}
+			
+			function drawCircles() {
+				gl.useProgram(circleShaderProgram);
+				gl.enableVertexAttribArray(circleShaderProgram.vertexPositionAttribute);
+				gl.enableVertexAttribArray(circleShaderProgram.textureCoordAttribute);
+				
+				gl.activeTexture(gl.TEXTURE0);
+				gl.bindTexture(gl.TEXTURE_2D, circleTexture);
+				gl.uniform1i(circleShaderProgram.samplerUniform, 0);
+
+				gl.bindBuffer(gl.ARRAY_BUFFER, starVertexTextureCoordBuffer);
+				gl.vertexAttribPointer(circleShaderProgram.textureCoordAttribute, starVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+				gl.bindBuffer(gl.ARRAY_BUFFER, starVertexPositionBuffer);
+				gl.vertexAttribPointer(circleShaderProgram.vertexPositionAttribute, starVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+				for (var i in stars) {
+					if (i == 0) {
+						stars[i].draw(true);
+					} else {
+						stars[i].draw(false);
+					}
+				}
+				
+				gl.disableVertexAttribArray(circleShaderProgram.vertexPositionAttribute);
+				gl.disableVertexAttribArray(circleShaderProgram.textureCoordAttribute);
+
+			}
+			
+			function drawGrid() {
+				gl.useProgram(gridShaderProgram);
+				gl.enableVertexAttribArray(gridShaderProgram.vertexPositionAttribute);
+				gl.bindBuffer(gl.ARRAY_BUFFER, gridVertexPositionBuffer);
+				gl.vertexAttribPointer(gridShaderProgram.vertexPositionAttribute, gridVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+						
+				for (var i = 0; i < 40; i++) {
+					for (var j = 0; j < 40; j++) {
+						mvPushMatrix();
+						mat4.translate(mvMatrix, [(j-20) * simulationScale + (simulationScale / 2.0), (i-20) * simulationScale + (simulationScale / 2.0), 0.0]);
+						
+						setGridShaderMatrixUniforms();
+						gl.drawArrays(gl.LINE_LOOP, 0, gridVertexPositionBuffer.numItems);
+
+						mvPopMatrix();
+					}
+				}
+				
+				gl.disableVertexAttribArray(gridShaderProgram.vertexPositionAttribute);
+			}
+			
+			function updateClearColor() {
+				if (colorVertex == 0) {
+					gl.clearColor(1.0, 0.0, 0.0, clearColorOpacity);
+				} else if (colorVertex == 1) {
+					gl.clearColor(0.0, 1.0, 0.0, clearColorOpacity);
+				} else if (colorVertex == 2) {
+					gl.clearColor(0.0, 0.0, 1.0, clearColorOpacity);
+				} else if (0 < colorVertex && colorVertex < 1) {
+					gl.clearColor(1.0 - colorVertex, colorVertex, 0.0, clearColorOpacity);
+				} else if (1 < colorVertex && colorVertex < 2) {
+					gl.clearColor(0.0, 2.0 - colorVertex, colorVertex - 1.0, clearColorOpacity);
+				} else if (2 < colorVertex && colorVertex < 3) {
+					gl.clearColor(colorVertex - 2.0, 0.0, 3.0 - colorVertex, clearColorOpacity);
+				}
+				gl.clearColor(
+					gl.getParameter(gl.COLOR_CLEAR_VALUE)[0] / clearColorDampen,
+					gl.getParameter(gl.COLOR_CLEAR_VALUE)[1] / clearColorDampen,
+					gl.getParameter(gl.COLOR_CLEAR_VALUE)[2] / clearColorDampen,
+					1.0
+				);
+				colorVertex += clearColorStep;
+				if (colorVertex >= 3) colorVertex = 0;
+			}
+
+			var lastTime = 0;
+			function animate() {
+				var timeNow = new Date().getTime();
+				if (lastTime != 0) {
+					var elapsed = timeNow - lastTime;
+
+					for (var i in stars) {
+						stars[i].animate(elapsed);
+					}
+				}
+				lastTime = timeNow;
+			}
+
+			function tick() {
+				requestAnimFrame(tick);
+				handleKeys();
+				drawScene();
+				animate();
+			}
+
+			var defaultDOMSettings = {
+				speed: 20,
+				numberOfCircles: 12,
+				zoom: 25,
+				func: "rose",
+				tracking: false,
+				amplitude: 10
+			}
+			function initDOM() {
+				sliderSpeed = document.getElementById("sliderSpeed");
+				sliderSpeed.max = 100;
+				sliderSpeed.min = 1;
+				sliderSpeed.value = defaultDOMSettings.speed;
+				
+				sliderNumberOfCircles = document.getElementById("sliderNumberOfCircles");
+				sliderNumberOfCircles.max = 200;
+				sliderNumberOfCircles.min = 1;
+				sliderNumberOfCircles.value = defaultDOMSettings.numberOfCircles;
+				sliderNumberOfCircles.onchange = function() {
+					initWorldObjects();
+				}
+				
+				sliderZoom = document.getElementById("sliderZoom");
+				sliderZoom.max = 200;
+				sliderZoom.min = 1;
+				sliderZoom.value = defaultDOMSettings.zoom;
+				
+				selectFunction = document.getElementById("selectFunction");
+				selectFunction.value = defaultDOMSettings.func;
+				
+				trackCheckbox = document.getElementById("trackCheckbox");
+				trackCheckbox.checked = defaultDOMSettings.tracked;
+				
+				sliderAmplitude = document.getElementById("sliderAmplitude");
+				sliderAmplitude.max = 100;
+				sliderAmplitude.min = 1;
+				sliderAmplitude.value = defaultDOMSettings.amplitude;
+				
+				commandLineDiv = document.getElementById("commandLineDiv");
+				commandLineInput = document.getElementById("commandLineInput");
+				
+				mousePositionSpan = document.getElementById("mousePosition");
+				mousePositionSpan.style.display = "none";
+			}
+			
+			function displayCommandLineMessage(text, passed) {
+			
+				var span = document.createElement("span");
+				var textnode = document.createTextNode(text);
+				span.appendChild(textnode);
+				span.style.fontFamily = "monospace";
+				
+				if (passed) {
+					span.style.color = "green";
+				} else {
+					span.style.color = "red";
+				}
+				
+				commandLineDiv.insertBefore(span, commandLineDiv.children[commandLineDiv.children.length - 1]);
+				commandLineDiv.insertBefore(document.createElement("br"), commandLineDiv.children[commandLineDiv.children.length - 1]);
+			}
+			
+			function displayCommandLineHelp() {
+				displayCommandLineMessage("--- Help -------------------------------------", true);
+				displayCommandLineMessage("help........: display this window", true);
+				displayCommandLineMessage("reset.......: reset the sim", true);
+				displayCommandLineMessage("clear.......: clear these messages", true);
+				displayCommandLineMessage("speed=?.....: 0 < ? <= 100, sets sim speed", true);
+				displayCommandLineMessage("circles=?...: 0 < ? <= 200, sets circle number", true);
+				displayCommandLineMessage("zoom=?......: 0 < ? <= 100, sets zoom amount", true);
+				displayCommandLineMessage("newcolors...: change all circle colors", true);
+				displayCommandLineMessage("drawgrid=?..: true or false to draw grid", true);
+				displayCommandLineMessage("----------------------------------------------", true);
+			}
+
+			function webGLStart() {
+				canvas = document.getElementById("gameCanvas");
+				canvas.width = document.body.clientWidth;
+				canvas.height = document.body.clientHeight;
+				initGL(canvas);
+				initDOM();
+				initShaders();
+				initBuffers();
+				initTexture();
+				initWorldObjects();
+
+				gl.clearColor(0.0, 0.0, 0.1, 1.0);
+
+				document.onkeydown = handleKeyDown;
+				document.onkeyup = handleKeyUp;
+				document.onmousemove = handleMouseMovement;
+
+				tick();
+			}
+
+		</script>
+
+
+	</head>
+
+	<body oncontextmenu="return false;" onload="webGLStart()" onresize="resizeGL()" style="padding: 0; margin: 0; position: absolute; overflow: hidden;" style="">
+		
+		<div style="position: absolute; margin: 20;" style="">
+			<span style="color: white; font-family: monospace;">speed </span><input id="sliderSpeed" type="range"></input><br>
+			<span style="color: white; font-family: monospace;">circles </span><input id="sliderNumberOfCircles" type="range"></input><br>
+			<span style="color: white; font-family: monospace;">zoom </span><input id="sliderZoom" type="range"></input><br>
+			<span style="color: white; font-family: monospace;">function </span><select name="function" id="selectFunction" >
+				<option value="rose">rose</option>
+				<option value="cardioid">cardioid</option>
+			</select><br>
+			<span style="color: white; font-family: monospace;">track </span><input type="checkbox" id="trackCheckbox"></input><span id="mousePosition" style="color: white; font-family: monospace;"></span><br>
+			<span style="color: white; font-family: monospace;">amplitude </span><input id="sliderAmplitude" type="range"></input><br>
+		</div>
+		
+		<div id="commandLineDiv" style="position: absolute; bottom: 20; left: 20; margin: 0; display: none;">
+			<input type="text" id="commandLineInput" style="color: white; font-family: monospace; margin: 0; background-color: transparent; border-top: none; border-right: none;"></input>
+		</div>
+		
+		<div id="footerText1" style="position: absolute; bottom: 20; right: 20; margin: 0;">
+			<span style="color: white; font-family: monospace;">&copy; Zach Reznicek</span>
+		</div>
+		<div id="footerText2" style="position: absolute; bottom: 10; right: 20; margin: 0;">
+			<span style="color: white; font-family: monospace; font-size: 8">like a copyright does anything</span>
+		</div>
+		
+		<canvas id="gameCanvas" style="border: none;"></canvas>
+	
+	</body>
+
+</html>
