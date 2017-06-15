@@ -53,6 +53,9 @@
 			.ftr-top {
 				bottom: 20;
 			}
+			.ftr-version {
+				bottom: 34;
+			}
 			.ftr span {
 				color: white;
 				font-family: monospace;
@@ -153,9 +156,8 @@
 			var clearColorStep = 0.001;
 			var clearColorDampen = 15.0;
 			
-			var trackingCircleZero = false;
-			var shouldDrawGrid = false;
-			var shouldUpdateFunctionString = true;
+			var goBonkers = false;
+			var goBonkersCounter = 0;
 
 			function initGL(canvas) {
 				try {
@@ -252,7 +254,6 @@
 				
 				/*****/
 				
-				
 				fragmentShader = getShader(gl, "grid-shader-fs");
 				vertexShader = getShader(gl, "grid-shader-vs");
 
@@ -284,7 +285,10 @@
 				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
 
-				gl.bindTexture(gl.TEXTURE_2D, null);
+				// go ahead and activate the loaded circle texture since it's the only texture we need
+				// to draw in the entire project
+				gl.activeTexture(gl.TEXTURE0);
+				gl.bindTexture(gl.TEXTURE_2D, circleTexture);
 			}
 
 
@@ -479,9 +483,10 @@
 					initWorldObjects();
 					worldOffsetX = 0.0;
 					worldOffsetY = 0.0;
-					shouldDrawGrid = true;
+					DOM_showGrid.checked = false;
 					DOM_trackingCheckbox.checked = false;
-					DOM_selectFunction.value = "rose";
+					DOM_showFunctionString.checked = true;
+					DOM_selectFunction.value = "circle";
 					displayCommandLineMessage("reset everything", true);
 				} else if (input == "newcolors") {
 					for (var i in circles) {
@@ -490,10 +495,10 @@
 					displayCommandLineMessage("new colors to all circles", true);
 				} else if (input.startsWith("drawgrid=")) {
 					if (input.substring(9) == "true") {
-						shouldDrawGrid = true;
+						DOM_showGrid.checked = true;
 						displayCommandLineMessage("showing grid", true);
 					} else {
-						shouldDrawGrid = false;
+						DOM_showGrid.checked = false;
 						displayCommandLineMessage("hiding grid", true);
 					}
 				} else if (input == "clear") {
@@ -508,6 +513,10 @@
 						DOM_trackingCheckbox.checked = false;
 						displayCommandLineMessage("untracking circle 0", true);
 					}
+				} else if (input == "gobonkers") {
+					goBonkers = true;
+				} else if (input == "enoughbonkers") {
+					goBonkers = false;
 				} else if (input == "regen") {
 					initWorldObjects();
 					displayCommandLineMessage("regenerated circles", true);
@@ -667,7 +676,7 @@
 				drawCircles();
 				
 				// Draw grid
-				if (shouldDrawGrid) {
+				if (DOM_showGrid.checked) {
 					drawGrid();
 				}
 				
@@ -679,32 +688,43 @@
 					if (DOM_trackingPositionSpan.style.display == "inline") DOM_trackingPositionSpan.style.display = "none";
 				}
 				
-				if (shouldUpdateFunctionString) {
+				if (DOM_showFunctionString.checked) {
 					functionStringUpdateBuffer++;
 					if (functionStringUpdateBuffer > 15) {
 						functionStringUpdateBuffer = 0;
 						var func = DOM_selectFunction.value;
+						var amplitude = (Math.round(DOM_sliderAmplitude.value * 10) / 100.0);
 						if (func == "rose") {
-							DOM_functionStringX.innerHTML = "X = " + (Math.round(DOM_sliderAmplitude.value * 10) / 100.0) + " * cos(" + DOM_functionOption_rose_k.value + " * \u03b8) * cos(\u03b8)";
-							DOM_functionStringY.innerHTML = "Y = " + (Math.round(DOM_sliderAmplitude.value * 10) / 100.0) + " * cos(" + DOM_functionOption_rose_k.value + " * \u03b8) * sin(\u03b8)";
+							DOM_functionStringX.innerHTML = "X = " + amplitude + " * cos(" + DOM_functionOption_rose_k.value + " * &theta;) * cos(&theta;)";
+							DOM_functionStringY.innerHTML = "Y = " + amplitude + " * cos(" + DOM_functionOption_rose_k.value + " * &theta;) * sin(&theta;)";
 						} else if (func == "cardioid") {
-							DOM_functionStringX.innerHTML = "X = " + (Math.round(DOM_sliderAmplitude.value * 10) / 100.0) + " * cos(\u03b8) * (1 - cos(\u03b8))";
-							DOM_functionStringY.innerHTML = "Y = " + (Math.round(DOM_sliderAmplitude.value * 10) / 100.0) + " * sin(\u03b8) * (1 - cos(\u03b8))";
+							DOM_functionStringX.innerHTML = "X = " + amplitude + " * cos(&theta;) * (1 - cos(&theta;))";
+							DOM_functionStringY.innerHTML = "Y = " + amplitude + " * sin(&theta;) * (1 - cos(&theta;))";
 						} else if (func == "circle") {
-							DOM_functionStringX.innerHTML = "X = " + (Math.round(DOM_sliderAmplitude.value * 10) / 100.0) + " * cos(\u03b8)";
-							DOM_functionStringY.innerHTML = "Y = " + (Math.round(DOM_sliderAmplitude.value * 10) / 100.0) + " * sin(\u03b8)";
+							DOM_functionStringX.innerHTML = "X = " + amplitude + " * cos(&theta;)";
+							DOM_functionStringY.innerHTML = "Y = " + amplitude + " * sin(&theta;)";
 						} else if (func == "lissajous") {
-							DOM_functionStringX.innerHTML = "X = " + (Math.round(DOM_sliderAmplitude.value * 10) / 100.0) + " * [ " + DOM_functionOption_lissajous_a.value + " * sin(" + DOM_functionOption_lissajous_kx.value + " * \u03b8 + " + (0.5 * DOM_functionOption_lissajous_delta.value) + "&pi;) ]";
-							DOM_functionStringY.innerHTML = "Y = " + (Math.round(DOM_sliderAmplitude.value * 10) / 100.0) + " * [ " + DOM_functionOption_lissajous_b.value + " * sin(" + DOM_functionOption_lissajous_ky.value + " * \u03b8) ]";
+							DOM_functionStringX.innerHTML = "X = " + amplitude + " * [ " + DOM_functionOption_lissajous_a.value + " * sin(" + DOM_functionOption_lissajous_kx.value + " * &theta; + " + (0.5 * DOM_functionOption_lissajous_delta.value) + "&pi;) ]";
+							DOM_functionStringY.innerHTML = "Y = " + amplitude + " * [ " + DOM_functionOption_lissajous_b.value + " * sin(" + DOM_functionOption_lissajous_ky.value + " * &theta;) ]";
 						} else if (func == "butterfly") {
-							DOM_functionStringX.innerHTML = "X = " + (Math.round(DOM_sliderAmplitude.value * 10) / 100.0) + " * sin(&theta;) * [ e^cos(&theta;) - 2cos(4 * &theta;) - sin^5(&theta; / 12) ]";
-							DOM_functionStringY.innerHTML = "Y = " + (Math.round(DOM_sliderAmplitude.value * 10) / 100.0) + " * cos(&theta;) * [ e^cos(&theta;) - 2cos(4 * &theta;) - sin^5(&theta; / 12) ]";
+							DOM_functionStringX.innerHTML = "X = " + amplitude + " * sin(&theta;) * [ e^cos(&theta;) - 2cos(4 * &theta;) - sin^5(&theta; / 12) ]";
+							DOM_functionStringY.innerHTML = "Y = " + amplitude + " * cos(&theta;) * [ e^cos(&theta;) - 2cos(4 * &theta;) - sin^5(&theta; / 12) ]";
 						} else if (func == "limacon") {
 							var a = DOM_functionOption_limacon_a.value - 4;
 							var b = DOM_functionOption_limacon_b.value - 4;
-							DOM_functionStringX.innerHTML = "X = " + (Math.round(DOM_sliderAmplitude.value * 10) / 100.0) + " * [ " + a + " * cos(&theta;) + " + b + " * cos^2(&theta;) ]";
-							DOM_functionStringY.innerHTML = "Y = " + (Math.round(DOM_sliderAmplitude.value * 10) / 100.0) + " * [ " + a + " * sin(&theta;) + " + b + " * cos(&theta;)sin(&theta;) ]";
+							DOM_functionStringX.innerHTML = "X = " + amplitude + " * [ " + a + " * cos(&theta;) + " + b + " * cos^2(&theta;) ]";
+							DOM_functionStringY.innerHTML = "Y = " + amplitude + " * [ " + a + " * sin(&theta;) + " + b + " * cos(&theta;)sin(&theta;) ]";
 						}
+					}
+				}
+				
+				if (goBonkers) {
+					goBonkersCounter++;
+					if (goBonkersCounter > 4) {
+						for (var i in circles) {
+							circles[i].randomizeColors();
+						}
+						goBonkersCounter = 0;
 					}
 				}
 			}
@@ -714,8 +734,6 @@
 				gl.enableVertexAttribArray(circleShaderProgram.vertexPositionAttribute);
 				gl.enableVertexAttribArray(circleShaderProgram.textureCoordAttribute);
 				
-				gl.activeTexture(gl.TEXTURE0);
-				gl.bindTexture(gl.TEXTURE_2D, circleTexture);
 				gl.uniform1i(circleShaderProgram.samplerUniform, 0);
 
 				gl.bindBuffer(gl.ARRAY_BUFFER, circleVertexTextureCoordBuffer);
@@ -859,8 +877,7 @@
 				DOM_showFunctionString = document.getElementById("DOM_showFunctionString");
 				DOM_showFunctionString.checked = true;
 				DOM_showFunctionString.onchange = function() {
-					shouldUpdateFunctionString = DOM_showFunctionString.checked;
-					if (shouldUpdateFunctionString) {
+					if (DOM_showFunctionString.checked) {
 						DOM_functionStringX.style.display = "inline";
 						DOM_functionStringY.style.display = "inline";
 					} else {
@@ -961,7 +978,7 @@
 				initTexture();
 				initWorldObjects();
 
-				gl.clearColor(0.0, 0.0, 0.1, 1.0);
+				gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
 				document.onkeydown = handleKeyDown;
 				document.onkeyup = handleKeyUp;
@@ -989,7 +1006,7 @@
 				<option value="butterfly">butterfly</option>
 				<option value="cardioid">cardioid</option>
 				<option value="circle">circle</option>
-				<option value="limacon">limacon</option>
+				<option value="limacon">lima&ccedil;on</option>
 				<option value="lissajous">lissajous</option>
 				<option value="rose">rose</option>
 			</select><br>
@@ -998,10 +1015,10 @@
 				<span>K&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="DOM_functionOption_rose_k" type="range"></input><br>
 			</div>
 			<div id="functionOptions_cardioid" class="function-options">
-			
+				<!-- the limacon handles all modifying of the cardioid, since a cardioid is a specific limacon -->
 			</div>
 			<div id="functionOptions_circle" class="function-options">
-			
+				<!-- the only thing you can change is size and that's amplitude -->
 			</div>
 			<div id="functionOptions_limacon" class="function-options">
 				<span>A&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="DOM_functionOption_limacon_a" type="range"></input><br>
@@ -1015,7 +1032,7 @@
 				<span>&delta;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="DOM_functionOption_lissajous_delta" type="range"></input><br>
 			</div>
 			<div id="functionOptions_butterfly" class="function-options">
-			
+				<!-- no options for butterfly, it's way too complicated to begin with -->
 			</div>
 			
 		</div>
@@ -1029,6 +1046,9 @@
 			<input type="text" id="DOM_commandLineInput" style="color: white; font-family: monospace; margin: 0; background-color: transparent; border-top: none; border-right: none;"></input>
 		</div>
 		
+		<div class="ftr ftr-version">
+			<span style="font-size: 8">6/15/17 v 1.0</span>
+		</div>
 		<div class="ftr ftr-top">
 			<span>&copy; Zach Reznicek</span>
 		</div>
