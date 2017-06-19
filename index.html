@@ -1,4 +1,1332 @@
-<!DOCTYPE html>
 <html>
-	<script>window.location.href="circles/index.html";</script>
+
+	<head>
+		<title>WebGL &mdash; Function Viewer</title>
+		<meta charset="utf-8">
+		
+		<style>
+			.general-options{
+				position: absolute;
+				margin: 20;
+			}
+			.general-options span {
+				color: white;
+				font-family: monospace;
+			}
+			
+			.function-options {
+				margin-top: 10;
+				display: none;
+			}
+			.function-options span {
+				color: white;
+				font-family: monospace;
+			}
+			
+			.function-string {
+				position: absolute;
+				right: 20;
+				top: 20;
+				margin: 0;
+			}
+			.function-string span {
+				color: white;
+				font-family: monospace;
+			}
+			
+			.command-div {
+				position: absolute;
+				bottom: 20;
+				left: 20;
+				margin: 0;
+				display: none;
+			}
+			
+			.ftr {
+				position: absolute;
+				right: 20;
+				margin: 0;
+			}
+			.ftr-bottom {
+				bottom: 10;
+			}
+			.ftr-top {
+				bottom: 20;
+			}
+			.ftr-version {
+				bottom: 34;
+			}
+			.ftr span {
+				color: white;
+				font-family: monospace;
+			}
+		</style>
+
+		<script type="text/javascript" src="glMatrix-0.9.5.min.js"></script>
+		<script type="text/javascript" src="webgl-utils.js"></script>
+
+		<script id="circle-shader-fs" type="x-shader/x-fragment">
+			precision mediump float;
+
+			varying vec2 vTextureCoord;
+
+			uniform sampler2D uSampler;
+
+			uniform vec3 uColor;
+			uniform float uBrightness;
+
+			void main(void) {
+				vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));
+				gl_FragColor = textureColor * vec4(uColor, 1.0);
+			}
+		</script>
+
+		<script id="circle-shader-vs" type="x-shader/x-vertex">
+			attribute vec3 aVertexPosition;
+			attribute vec2 aTextureCoord;
+
+			uniform mat4 uMVMatrix;
+			uniform mat4 uPMatrix;
+
+			varying vec2 vTextureCoord;
+
+			void main(void) {
+				gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+				vTextureCoord = aTextureCoord;
+			}
+		</script>
+
+		<script id="grid-shader-fs" type="x-shader/x-fragment">
+			precision mediump float;
+			
+			uniform vec3 gridColor;
+			
+			void main(void) {
+				gl_FragColor = vec4(0.125, 0.125, 0.125, 1.0) * vec4(gridColor, 1.0);
+			}
+		</script>
+
+		<script id="grid-shader-vs" type="x-shader/x-vertex">
+			attribute vec3 aVertexPosition;
+			
+			uniform mat4 uMVMatrix;
+			uniform mat4 uPMatrix;
+			
+			void main(void) {
+				gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+			}
+		</script>
+
+		<script type="text/javascript">
+
+			/**
+			 * A GLSL shader.
+			 * @typedef {Object} GLSLShader
+			*/
+			
+			/**
+			 * A WebGL Vertex Buffer Object
+			 * @typedef {Object} VBO
+			*/
+			
+			/**
+			 * A 4x4 Matrix
+			 * @typedef {Object} Matrix4
+			*/
+			
+			/**
+			 * A WebGL Texture reference
+			 * @typedef {Object} WebGLTexture
+			*/
+
+			/**
+			 * The canvas element reference.
+			 * @type {Element}
+			*/
+			var canvas;
+			
+			/**
+			 * The canvas's WebGL context reference.
+			 * @type {Object}
+			*/
+			var gl;
+			
+			/**
+			 * The constant simulation scale size. Everything drawn is rendered this many times larger.
+			 * @type {Number}
+			*/
+			const SIMULATION_SCALE = 6;
+			
+			/**
+			 * The world's x-position offset.
+			 * @type {Number}
+			*/
+			var worldOffsetX = 0.0;
+			
+			/**
+			 * The world's y-position offset.
+			 * @type {Number}
+			*/
+			var worldOffsetY = 0.0;
+			
+			// DOM Object references
+			var DOM_sliderSpeed;
+			var DOM_sliderAmplitude;
+			var DOM_sliderNumberOfCircles;
+			var DOM_sliderZoom;
+			var DOM_selectFunction;
+			var DOM_trackingCheckbox;
+			var DOM_showGrid;
+			var DOM_showFunctionString;
+			var DOM_commandLineDiv;
+			var DOM_commandLineInput;
+			var DOM_trackingPositionSpan;
+			var DOM_functionStringX;
+			var DOM_functionStringY;
+			var DOM_functionOption_rose_k;
+			var DOM_functionOption_lissajous_a;
+			var DOM_functionOption_lissajous_b;
+			var DOM_functionOption_lissajous_kx;
+			var DOM_functionOption_lissajous_ky;
+			var DOM_functionOption_lissajous_delta;
+			var DOM_functionOption_limacon_a;
+			var DOM_functionOption_limacon_b;
+			
+			/**
+			 * For sake of performance, I only update the function text in the top right 4 times a second. Once this value reaches 15 (as it is updated once per second) the text will update.
+			 * @type {Number}
+			*/
+			var functionStringUpdateBuffer = 0;
+			
+			/**
+			 * Array of strings representing the previous entered console commands
+			 * @type {String[]}
+			*/
+			var previousCommands = [];
+			
+			/**
+			 * An index/counter of the "current" read value of previousCommands
+			 * @type {Number}
+			*/
+			var previousCommandIndex = 0;
+
+			/**
+			 * A Date object used to determine elapsed time between frame animation updates
+			 * @type {Date}
+			*/
+			var lastTime = 0;
+			
+			/**
+			 * The "index" for the WebGL clear color background. 0 designates entirely red, 1 designates entirely green, 2 designates entirely blue
+			 * @type {Number}
+			*/
+			var colorVertex = 0.0;
+			
+			/**
+			 * The square grid dimensions.
+			 * @type {Number}
+			*/
+			const GRID_SIZE = 42;
+			
+			/**
+			 * The constant opacity value for the WebGL clear color.
+			 * @type {Number}
+			*/
+			const CLEAR_COLOR_OPACITY = 0.2;
+			
+			/**
+			 * The constant step increase for updating colorVertex.
+			 * @type {Number}
+			 * @see {@link colorVertex}
+			*/
+			const CLEAR_COLOR_STEP = 0.001;
+			
+			/**
+			 * The constant value that the clear color is divided by to dampen the color saturation.
+			 * @type {Number}
+			*/
+			const CLEAR_COLOR_DAMPEN = 15.0;
+			
+			/**
+			 * A little easter-egg. Typing "gobonkers" in the console will enable this, and "enoughbonkers" will disable this.
+			 * @type {Boolean}
+			*/
+			var goBonkers = false;
+			
+			/**
+			 * A frame counter for the bonkers setting. Colors will only change every time this value is greater than goBonkersUpdateCount.
+			 * @type {Number}
+			 * @see {@link goBonkersUpdateCount}
+			*/
+			var goBonkersCounter = 0;
+			
+			/**
+			 * The number of frames that must pass before the circles change color while in bonkers mode.
+			 * @type {Number}
+			*/
+			var goBonkersUpdateCount = 4;
+
+			/**
+			 * A reference to the circle GLSL shader program.
+			 * @type {GLSLShader}
+			*/
+			var circleShaderProgram;
+			
+			/**
+			 * A reference to the grid GLSL shader program.
+			 * @type {GLSLShader}
+			*/
+			var gridShaderProgram;
+
+			/**
+			 * An array buffer reference for the circle vertex positions.
+			 * @type {VBO}
+			*/
+			var circleVertexPositionBuffer;
+			
+			/**
+			 * An array buffer reference for the circle texture coordinate positions.
+			 * @type {VBO}
+			*/
+			var circleVertexTextureCoordBuffer;
+			
+			/**
+			 * An array buffer reference for the grid vertex positions.
+			 * @type {VBO}
+			*/
+			var gridVertexPositionBuffer;
+			
+			/**
+			 * The array that holds all of the circle object instances.
+			 * @type {Circle[]}
+			*/
+			var circles = [];
+
+			/**
+			 * The global transformation matrix.
+			 * @type {Matrix4}
+			*/
+			var transformationMatrix = mat4.create();
+			
+			/**
+			 * All objects that are rendered use the same "transformation matrix" and thus they need to edit the base one (the world transformation) differently. The base gets pushed to the stack, and the invidiual renders pop an instance of that to use each time.
+			 * @type {Matrix4}
+			*/
+			var transformationMatrixStack = [];
+			
+			/**
+			 * The scene's projection matrix.
+			 * @type {Matrix4}
+			*/
+			var projectionMatrix = mat4.create();
+
+			/**
+			 * The only texture that is used in the entire project. This is the reference to the WebGL generated texture.
+			 * @type {WebGLTexture}
+			*/
+			var circleTexture;
+			
+			/**
+			 * An object that keeps track of key presses based on their .keyCode values as object keys.
+			 * @type {Object.<Number, Boolean>}
+			*/
+			var currentlyPressedKeys = {};
+			
+			/**
+			 * Used to fire an event only once when a key is pressed, not the entire time the key is held.
+			 * @type {Object.<Number, Boolean>}
+			*/
+			var keyFlag = {};
+			
+			// Initially set some of these values to false so that they aren't undefined when the program starts
+			keyFlag[192] = false;
+			keyFlag[38] = false;
+			keyFlag[40] = false;
+
+			/**
+			 * Grabs the WebGL context from the canvas DOM element.
+			 * @param {Element} canvas The canvas element to extract the WebGL context from.
+			*/
+			function initGL(canvas) {
+				try {
+					gl = canvas.getContext("experimental-webgl");
+					gl.viewportWidth = canvas.width;
+					gl.viewportHeight = canvas.height;
+
+					gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+					gl.enable(gl.BLEND);
+				} catch (e) {
+				}
+				if (!gl) {
+					alert("Could not initialise WebGL, sorry :-(");
+				}
+			}
+
+			/**
+			 * Resizes the WebGL context when the browser window is resized.
+			*/
+			function resizeGL() {
+				canvas.width = document.body.clientWidth;
+				canvas.height = document.body.clientHeight;
+				
+				gl.viewportWidth = canvas.width;
+				gl.viewportHeight = canvas.height;
+				
+				gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+				gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+			}
+
+			/**
+			 * Reads and compiles GLSL shaders from an embedded <script> element. Will check compile status of the shader source.
+			 * @param {Object} gl The active WebGL context.
+			 * @param {String} id The <script> element id
+			 * @return {Number} shader The compiled GLSL shader ID generated with WebGL.
+			*/
+			function getShader(gl, id) {
+				var shaderScript = document.getElementById(id);
+				if (!shaderScript) {
+					return null;
+				}
+
+				var str = "";
+				var k = shaderScript.firstChild;
+				while (k) {
+					if (k.nodeType == 3) {
+						str += k.textContent;
+					}
+					k = k.nextSibling;
+				}
+
+				var shader;
+				if (shaderScript.type == "x-shader/x-fragment") {
+					shader = gl.createShader(gl.FRAGMENT_SHADER);
+				} else if (shaderScript.type == "x-shader/x-vertex") {
+					shader = gl.createShader(gl.VERTEX_SHADER);
+				} else {
+					return null;
+				}
+
+				gl.shaderSource(shader, str);
+				gl.compileShader(shader);
+
+				if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+					alert(gl.getShaderInfoLog(shader));
+					return null;
+				}
+
+				return shader;
+			}
+
+			/**
+			 * Initializes the circle shader and the grid shader using the <script> elements.
+			 * @see {@link getShader}
+			*/
+			function initShaders() {
+				var fragmentShader = getShader(gl, "circle-shader-fs");
+				var vertexShader = getShader(gl, "circle-shader-vs");
+
+				circleShaderProgram = gl.createProgram();
+				gl.attachShader(circleShaderProgram, vertexShader);
+				gl.attachShader(circleShaderProgram, fragmentShader);
+				gl.linkProgram(circleShaderProgram);
+
+				if (!gl.getProgramParameter(circleShaderProgram, gl.LINK_STATUS)) {
+					alert("Could not initialise shaders");
+				}
+
+				gl.useProgram(circleShaderProgram);
+
+				circleShaderProgram.vertexPositionAttribute = gl.getAttribLocation(circleShaderProgram, "aVertexPosition");
+				gl.enableVertexAttribArray(circleShaderProgram.vertexPositionAttribute);
+
+				circleShaderProgram.textureCoordAttribute = gl.getAttribLocation(circleShaderProgram, "aTextureCoord");
+				gl.enableVertexAttribArray(circleShaderProgram.textureCoordAttribute);
+
+				circleShaderProgram.projectionMatrixUniform = gl.getUniformLocation(circleShaderProgram, "uPMatrix");
+				circleShaderProgram.transformationMatrixUniform = gl.getUniformLocation(circleShaderProgram, "uMVMatrix");
+				circleShaderProgram.samplerUniform = gl.getUniformLocation(circleShaderProgram, "uSampler");
+				circleShaderProgram.colorUniform = gl.getUniformLocation(circleShaderProgram, "uColor");
+				
+				gl.disableVertexAttribArray(circleShaderProgram.vertexPositionAttribute);
+				gl.disableVertexAttribArray(circleShaderProgram.textureCoordAttribute);
+				
+				// now load the grid shader
+				
+				fragmentShader = getShader(gl, "grid-shader-fs");
+				vertexShader = getShader(gl, "grid-shader-vs");
+
+				gridShaderProgram = gl.createProgram();
+				gl.attachShader(gridShaderProgram, vertexShader);
+				gl.attachShader(gridShaderProgram, fragmentShader);
+				gl.linkProgram(gridShaderProgram);
+
+				if (!gl.getProgramParameter(gridShaderProgram, gl.LINK_STATUS)) {
+					alert("Could not initialise shaders");
+				}
+
+				gl.useProgram(gridShaderProgram);
+
+				gridShaderProgram.vertexPositionAttribute = gl.getAttribLocation(gridShaderProgram, "aVertexPosition");
+				gl.enableVertexAttribArray(gridShaderProgram.vertexPositionAttribute);
+
+				gridShaderProgram.projectionMatrixUniform = gl.getUniformLocation(gridShaderProgram, "uPMatrix");
+				gridShaderProgram.transformationMatrixUniform = gl.getUniformLocation(gridShaderProgram, "uMVMatrix");
+				gridShaderProgram.gridColorUniform = gl.getUniformLocation(gridShaderProgram, "gridColor");
+				
+				gl.disableVertexAttribArray(gridShaderProgram.vertexPositionAttribute);
+			}
+			
+			/**
+			 * Initializes the circleTexture object with WebGL's createTexture() function.
+			 * @see {@link handleLoadedTexture}
+			*/
+			function initTexture() {
+				circleTexture = gl.createTexture();
+				circleTexture.image = new Image();
+				circleTexture.image.onload = function () {
+					handleLoadedTexture(circleTexture)
+				}
+				circleTexture.image.src = "circle.png";
+			}
+
+			/**
+			 * Generate texture's image data from the source image.
+			 * @param {Object} texture The WebGL texture object.
+			*/
+			function handleLoadedTexture(texture) {
+				gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+				gl.bindTexture(gl.TEXTURE_2D, texture);
+				gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.image);
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+
+				// go ahead and activate the loaded circle texture since it's the only texture we need
+				// to draw in the entire project
+				gl.activeTexture(gl.TEXTURE0);
+				gl.bindTexture(gl.TEXTURE_2D, circleTexture);
+			}
+
+			/**
+			 * Creates a copy of the current transformationMatrix and pushes it to the matrix stack.
+			*/
+			function mvPushMatrix() {
+				var copy = mat4.create();
+				mat4.set(transformationMatrix, copy);
+				transformationMatrixStack.push(copy);
+			}
+
+			/**
+			 * Pop the last element of the array off of the array and sets transformationMatrix equal to it.
+			 * @throws {NoSuchElementException} Will error if the matrix stack size is 0.
+			*/
+			function mvPoprojectionMatrix() {
+				if (transformationMatrixStack.length == 0) {
+					throw "Invalid poprojectionMatrix!";
+				}
+				transformationMatrix = transformationMatrixStack.pop();
+			}
+
+			/**
+			 * Uploads the move matrix and projection matrix to the uniform locations in the grid shader.
+			*/
+			function setGridShaderMatrixUniforms() {
+				gl.uniformMatrix4fv(gridShaderProgram.projectionMatrixUniform, false, projectionMatrix);
+				gl.uniformMatrix4fv(gridShaderProgram.transformationMatrixUniform, false, transformationMatrix);
+			}
+			
+			/**
+			 * Uploads the move matrix and projection matrix to the uniform locations in the circle shader.
+			*/
+			function setCircleShaderMatrixUniforms() {
+				gl.uniformMatrix4fv(circleShaderProgram.projectionMatrixUniform, false, projectionMatrix);
+				gl.uniformMatrix4fv(circleShaderProgram.transformationMatrixUniform, false, transformationMatrix);
+			}
+
+			/**
+			 * Convert an angle in degrees to an angle in radians.
+			 * @param {number} degrees The value in degrees to convert to radians.
+			 * @returns {number} A radian value representation of the degrees parameter.
+			*/
+			function degToRad(degrees) {
+				return degrees * Math.PI / 180;
+			}
+
+			/**
+			 * Handles the onkeydown document event.
+			 * Prevents default operation of the tilde key.
+			 * @param {Object} event The document's onkeydown event.
+			*/
+			function handleKeyDown(event) {
+				currentlyPressedKeys[event.keyCode] = true;
+				if (event.keyCode == 192) return false;
+			}
+			
+			/**
+			 * Handles the onkeyup document event.
+			 * Prevents default operation of the tilde key.
+			 * @param {Object} event The document's onkeyup event.
+			*/
+			function handleKeyUp(event) {
+				currentlyPressedKeys[event.keyCode] = false;
+				keyFlag[event.keyCode] = false;
+				if (event.keyCode == 192) return false;
+			}
+
+			/**
+			 * Reads the currently pressed keys and does an action based on those keys.
+			 * This function is called as fast as your screen's refresh rate.
+			*/
+			function handleKeys() {
+				if (currentlyPressedKeys[192] && keyFlag[192] == false) {
+					// grave aka tilde
+					if (DOM_commandLineDiv.style.display == "none") {
+						DOM_commandLineDiv.style.display = "inline";
+						DOM_commandLineInput.value = "";
+						DOM_commandLineInput.focus();
+					} else {
+						DOM_commandLineDiv.style.display = "none";
+						DOM_commandLineInput.value = "";
+					}
+					
+					previousCommandIndex = previousCommands.length - 1;
+					if (previousCommandIndex < 0) {
+						previousCommandIndex = 0;
+					}
+					
+					keyFlag[192] = true;
+				}
+				if (currentlyPressedKeys[27]) {
+					if (DOM_commandLineDiv.style.display == "inline") {
+						DOM_commandLineInput.value = "";
+						previousCommandIndex = previousCommands.length - 1;
+					}
+				}
+				if (currentlyPressedKeys[13] && DOM_commandLineInput.value != "") {
+					parseCommandLineInput();
+					DOM_commandLineInput.value = "";
+				}
+				
+				if (currentlyPressedKeys[107]) {
+					DOM_sliderZoom.value = parseInt(DOM_sliderZoom.value) + 2;
+					if (DOM_sliderZoom.value > 200) DOM_sliderZoom.value = 200;
+				}
+				if (currentlyPressedKeys[109]) {
+					DOM_sliderZoom.value = parseInt(DOM_sliderZoom.value) - 2;
+					if (DOM_sliderZoom.value < 1) DOM_sliderZoom.value = 1;
+				}
+				
+				if (currentlyPressedKeys[38] && keyFlag[38] == false) {
+					// Up cursor key
+					if (DOM_commandLineDiv.style.display == "inline") {
+						if (previousCommands.length > 0) {
+							DOM_commandLineInput.value = previousCommands[previousCommandIndex];
+							previousCommandIndex--;
+							if (previousCommandIndex < 0) {
+								previousCommandIndex = 0;
+							}
+						}
+						keyFlag[38] = true;
+					} else {
+						worldOffsetY--;
+					}
+				}
+				if (currentlyPressedKeys[40] && keyFlag[40] == false) {
+					// Down cursor key
+					if (DOM_commandLineDiv.style.display == "inline") {
+						previousCommandIndex++;
+						if (previousCommandIndex >= previousCommands.length) {
+							previousCommandIndex = previousCommands.length - 1;
+							DOM_commandLineInput.value = "";
+						} else {
+							DOM_commandLineInput.value = previousCommands[previousCommandIndex];
+						}
+						keyFlag[40] = true;
+					} else {
+						worldOffsetY++;
+					}
+				}
+				if (currentlyPressedKeys[37]) {
+					// left arrow
+					if (DOM_commandLineDiv.style.display != "inline") worldOffsetX++;
+				}
+				if (currentlyPressedKeys[39]) {
+					// right arrow
+					if (DOM_commandLineDiv.style.display != "inline") worldOffsetX--;
+				}
+			}
+			
+			/**
+			 * Parse the text in the command line input, and do an action based on that text.
+			*/
+			function parseCommandLineInput() {
+				var input = DOM_commandLineInput.value;
+				if (input.startsWith("circles=")) {
+					var n = parseInt(input.substring(8));
+					if (n) {
+						if (0 < n && n <= 200) {
+							DOM_sliderNumberOfCircles.value = n;
+							initWorldObjects();
+							displayCommandLineMessage("circles set to " + n, true);
+						} else {
+							displayCommandLineMessage("0 < circles <= 200", false);
+						}
+					} else {
+						displayCommandLineMessage("circles=<int>", false);
+					}
+				} else if (input.startsWith("speed=")) {
+					var n = parseInt(input.substring(6));
+					if (n) {
+						if (0 < n && n <= 100) {
+							DOM_sliderSpeed.value = n;
+							displayCommandLineMessage("speed set to " + n, true);
+						} else {
+							displayCommandLineMessage("0 < speed <= 100", false);
+						}
+					} else {
+						displayCommandLineMessage("speed=<int>", false);
+					}
+				} else if (input.startsWith("zoom=")) {
+					var n = parseInt(input.substring(5));
+					if (n) {
+						if (0 < n && n <= 200) {
+							DOM_sliderZoom.value = n;
+							displayCommandLineMessage("zoom set to " + n, true);
+						} else {
+							displayCommandLineMessage("0 < zoom <= 200", false);
+						}
+					} else {
+						displayCommandLineMessage("zoom=<int>", false);
+					}
+				} else if (input.startsWith("amplitude=")) {
+					var n = parseFloat(input.substring(10));
+					if (n) {
+						if (0 < n && n <= 10) {
+							DOM_sliderAmplitude.value = n * 10.0;
+							displayCommandLineMessage("amplitude set to " + n, true);
+						} else {
+							displayCommandLineMessage("0 < amplitude <= 10", false);
+						}
+					} else {
+						displayCommandLineMessage("amplitude=<float>", false);
+					}
+				} else if (input == "reset") {
+					DOM_sliderSpeed.value = defaultDOMSettings.speed;
+					DOM_sliderNumberOfCircles.value = defaultDOMSettings.numberOfCircles;
+					DOM_sliderZoom.value = defaultDOMSettings.zoom;
+					initWorldObjects();
+					worldOffsetX = 0.0;
+					worldOffsetY = 0.0;
+					DOM_showGrid.checked = false;
+					DOM_trackingCheckbox.checked = false;
+					DOM_showFunctionString.checked = true;
+					DOM_selectFunction.value = "circle";
+					displayCommandLineMessage("reset everything", true);
+				} else if (input == "newcolors") {
+					for (var i in circles) {
+						circles[i].randomizeColors();
+					}
+					displayCommandLineMessage("new colors to all circles", true);
+				} else if (input.startsWith("drawgrid=")) {
+					if (input.substring(9) == "true") {
+						DOM_showGrid.checked = true;
+						displayCommandLineMessage("showing grid", true);
+					} else {
+						DOM_showGrid.checked = false;
+						displayCommandLineMessage("hiding grid", true);
+					}
+				} else if (input == "clear") {
+					while (DOM_commandLineDiv.children.length > 1) {
+						DOM_commandLineDiv.removeChild(DOM_commandLineDiv.firstChild);
+					}
+				} else if (input.startsWith("track=")) {
+					if (input.substring(6) == "true") {
+						DOM_trackingCheckbox.checked = true;
+						displayCommandLineMessage("tracking circle 0", true);
+					} else {
+						DOM_trackingCheckbox.checked = false;
+						displayCommandLineMessage("untracking circle 0", true);
+					}
+				} else if (input == "gobonkers") {
+					goBonkers = true;
+					displayCommandLineMessage("going bonkers", true);
+				} else if (input == "enoughbonkers") {
+					goBonkers = false;
+					displayCommandLineMessage("that's enough bonkers", true);
+				} else if (input == "regen") {
+					initWorldObjects();
+					displayCommandLineMessage("regenerated circles", true);
+				} else if (input == "help") {
+					displayCommandLineHelp();
+				} else {
+					displayCommandLineMessage("unknown input: " + input, false);
+				}
+				
+				previousCommands.push(input);
+				previousCommandIndex = previousCommands.length - 1;
+			}
+
+			/**
+			 * Initializes the WebGL vertex and texture array buffers for the circle objects,
+			 * and initializes the vertex array buffer for the grid.
+			*/
+			function initBuffers() {
+				circleVertexPositionBuffer = gl.createBuffer();
+				gl.bindBuffer(gl.ARRAY_BUFFER, circleVertexPositionBuffer);
+				vertices = [
+					-1.0, -1.0,  0.0,
+					 1.0, -1.0,  0.0,
+					-1.0,  1.0,  0.0,
+					 1.0,  1.0,  0.0
+				];
+				gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+				circleVertexPositionBuffer.itemSize = 3;
+				circleVertexPositionBuffer.numItems = 4;
+
+				circleVertexTextureCoordBuffer = gl.createBuffer();
+				gl.bindBuffer(gl.ARRAY_BUFFER, circleVertexTextureCoordBuffer);
+				var textureCoords = [
+					0.0, 0.0,
+					1.0, 0.0,
+					0.0, 1.0,
+					1.0, 1.0
+				];
+				gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoords), gl.STATIC_DRAW);
+				circleVertexTextureCoordBuffer.itemSize = 2;
+				circleVertexTextureCoordBuffer.numItems = 4;
+				
+				gridVertexPositionBuffer = gl.createBuffer();
+				gl.bindBuffer(gl.ARRAY_BUFFER, gridVertexPositionBuffer);
+				vertices = [
+					-(SIMULATION_SCALE / 2.0), -(SIMULATION_SCALE / 2.0),  0.0,
+					 (SIMULATION_SCALE / 2.0), -(SIMULATION_SCALE / 2.0),  0.0,
+					 (SIMULATION_SCALE / 2.0),  (SIMULATION_SCALE / 2.0),  0.0,
+					-(SIMULATION_SCALE / 2.0),  (SIMULATION_SCALE / 2.0),  0.0,
+				];
+				gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+				gridVertexPositionBuffer.itemSize = 3;
+				gridVertexPositionBuffer.numItems = 4;
+			}
+			
+			/**
+			 * The circle class.
+			*/
+			class Circle {
+			
+				constructor(startingTheta) {
+					this.theta = startingTheta;
+					this.updatePosition();
+					this.randomizeColors();
+				};
+				
+				draw(isFirstCircle) {
+					mvPushMatrix();
+					mat4.translate(transformationMatrix, [this.x, this.y, 0.0]);
+					
+					if (DOM_trackingCheckbox.checked) {
+						if (isFirstCircle) {
+							gl.uniform3f(circleShaderProgram.colorUniform, this.r * 2.0, this.g * 2.0, this.b * 2.0);
+							worldOffsetX = -this.x;
+							worldOffsetY = -this.y;
+						} else {
+							gl.uniform3f(circleShaderProgram.colorUniform, this.r / 8.0, this.g / 8.0, this.b / 8.0);
+						}
+					} else {
+						gl.uniform3f(circleShaderProgram.colorUniform, this.r, this.g, this.b);
+					}
+					
+					setCircleShaderMatrixUniforms();
+					gl.drawArrays(gl.TRIANGLE_STRIP, 0, circleVertexPositionBuffer.numItems);
+					mvPoprojectionMatrix();
+				}
+				
+				animate(elapsedTime) {
+					//              PI    *     slider value  *   constant *  ms per frame * elapsed ms
+					this.theta += Math.PI * DOM_sliderSpeed.value * 0.0001 * (60 / 1000) * elapsedTime;
+					if (this.theta > 2 * Math.PI) {
+						this.theta = 0.0;
+					}
+					this.updatePosition();
+				}
+				
+				randomizeColors() {
+					this.r = Math.random();
+					this.g = Math.random();
+					this.b = Math.random();
+				}
+				
+				/**
+				 * Based on the selected function and the circle's theta value, determine the (x, y)
+				 * position of the circle by using the function's parametric equation.
+				*/
+				updatePosition() {
+					var func = DOM_selectFunction.value;
+					if (func == "rose") {
+						this.x = Math.cos(DOM_functionOption_rose_k.value * this.theta) * Math.cos(this.theta);
+						this.y = Math.cos(DOM_functionOption_rose_k.value * this.theta) * Math.sin(this.theta);
+					} else if (func == "cardioid") {
+						this.x = Math.cos(this.theta)*(1 - Math.cos(this.theta));
+						this.y = Math.sin(this.theta)*(1 - Math.cos(this.theta));
+					} else if (func == "circle") {
+						this.x = Math.cos(this.theta);
+						this.y = Math.sin(this.theta);
+					} else if (func == "lissajous") {
+						var delta = Math.PI * 0.25 * DOM_functionOption_lissajous_delta.value;
+						this.x = DOM_functionOption_lissajous_a.value * Math.sin(DOM_functionOption_lissajous_kx.value * this.theta + delta);
+						this.y = DOM_functionOption_lissajous_b.value * Math.sin(DOM_functionOption_lissajous_ky.value * this.theta);
+					} else if (func == "butterfly") {
+						var val = Math.sin(this.theta / 12.0);
+						this.x = Math.sin(this.theta) * (Math.pow(Math.E, Math.cos(this.theta)) - (2 * Math.cos(4 * this.theta)) - (Math.pow(val, 5)));
+						this.y = Math.cos(this.theta) * (Math.pow(Math.E, Math.cos(this.theta)) - (2 * Math.cos(4 * this.theta)) - (Math.pow(val, 5)));
+					} else if (func == "limacon") {
+						var a = DOM_functionOption_limacon_a.value - 4;
+						var b = DOM_functionOption_limacon_b.value - 4;
+						this.x = a * Math.cos(this.theta) + b * Math.cos(this.theta) * Math.cos(this.theta);
+						this.y = a * Math.sin(this.theta) + b * Math.cos(this.theta) * Math.sin(this.theta);
+					}
+					
+					this.x *= DOM_sliderAmplitude.value / 10.0;
+					this.y *= DOM_sliderAmplitude.value / 10.0;
+					
+					this.x *= SIMULATION_SCALE;
+					this.y *= SIMULATION_SCALE;
+					
+				}
+			}
+
+			/**
+			 * Regenerates a number of circles based on the value of the DOM slider.
+			*/
+			function initWorldObjects() {
+				var numCircles = DOM_sliderNumberOfCircles.value;
+				circles = [];
+
+				for (var i=0; i < numCircles; i++) {
+					circles.push(new Circle((i * 2 / numCircles) * Math.PI));
+				}
+			}
+
+			/**
+			 * Draws the WebGL scene and updates DOM elements accordingly.
+			*/
+			function drawScene() {
+				gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+				gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+				mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 400.0, projectionMatrix);
+				
+				mat4.identity(transformationMatrix);
+				mat4.translate(transformationMatrix, [worldOffsetX, worldOffsetY, -(260 - DOM_sliderZoom.value)]);
+				
+				updateClearColor();
+				
+				drawCircles();
+				
+				if (DOM_showGrid.checked) {
+					drawGrid();
+				}
+				
+				if (DOM_trackingCheckbox.checked) {
+					if (DOM_trackingPositionSpan.style.display == "none") DOM_trackingPositionSpan.style.display = "inline";
+					DOM_trackingPositionSpan.innerHTML = " (" + (Math.round(circles[0].x * 100 / SIMULATION_SCALE) / 100).toFixed(2) + ", " + (Math.round(circles[0].y * 100 / SIMULATION_SCALE) / 100).toFixed(2) + "), &theta; = " + (Math.round((circles[0].theta / Math.PI) * 100) / 100.0).toFixed(2) + " &pi;";
+				} else {
+					if (DOM_trackingPositionSpan.style.display == "inline") DOM_trackingPositionSpan.style.display = "none";
+				}
+				
+				if (DOM_showFunctionString.checked) {
+					functionStringUpdateBuffer++;
+					if (functionStringUpdateBuffer > 15) {
+						functionStringUpdateBuffer = 0;
+						var func = DOM_selectFunction.value;
+						var amplitude = (Math.round(DOM_sliderAmplitude.value * 10) / 100.0);
+						if (func == "rose") {
+							DOM_functionStringX.innerHTML = "X = " + amplitude + " * cos(" + DOM_functionOption_rose_k.value + " * &theta;) * cos(&theta;)";
+							DOM_functionStringY.innerHTML = "Y = " + amplitude + " * cos(" + DOM_functionOption_rose_k.value + " * &theta;) * sin(&theta;)";
+						} else if (func == "cardioid") {
+							DOM_functionStringX.innerHTML = "X = " + amplitude + " * cos(&theta;) * (1 - cos(&theta;))";
+							DOM_functionStringY.innerHTML = "Y = " + amplitude + " * sin(&theta;) * (1 - cos(&theta;))";
+						} else if (func == "circle") {
+							DOM_functionStringX.innerHTML = "X = " + amplitude + " * cos(&theta;)";
+							DOM_functionStringY.innerHTML = "Y = " + amplitude + " * sin(&theta;)";
+						} else if (func == "lissajous") {
+							DOM_functionStringX.innerHTML = "X = " + amplitude + " * [ " + DOM_functionOption_lissajous_a.value + " * sin(" + DOM_functionOption_lissajous_kx.value + " * &theta; + " + (0.25 * DOM_functionOption_lissajous_delta.value) + "&pi;) ]";
+							DOM_functionStringY.innerHTML = "Y = " + amplitude + " * [ " + DOM_functionOption_lissajous_b.value + " * sin(" + DOM_functionOption_lissajous_ky.value + " * &theta;) ]";
+						} else if (func == "butterfly") {
+							DOM_functionStringX.innerHTML = "X = " + amplitude + " * sin(&theta;) * [ e^cos(&theta;) - 2cos(4 * &theta;) - sin^5(&theta; / 12) ]";
+							DOM_functionStringY.innerHTML = "Y = " + amplitude + " * cos(&theta;) * [ e^cos(&theta;) - 2cos(4 * &theta;) - sin^5(&theta; / 12) ]";
+						} else if (func == "limacon") {
+							var a = DOM_functionOption_limacon_a.value - 4;
+							var b = DOM_functionOption_limacon_b.value - 4;
+							DOM_functionStringX.innerHTML = "X = " + amplitude + " * [ " + a + " * cos(&theta;) + " + b + " * cos^2(&theta;) ]";
+							DOM_functionStringY.innerHTML = "Y = " + amplitude + " * [ " + a + " * sin(&theta;) + " + b + " * cos(&theta;)sin(&theta;) ]";
+						}
+					}
+				}
+				
+				if (goBonkers) {
+					goBonkersCounter++;
+					if (goBonkersCounter > goBonkersUpdateCount) {
+						for (var i in circles) {
+							circles[i].randomizeColors();
+						}
+						goBonkersCounter = 0;
+					}
+				}
+			}
+			
+			/**
+			 * Draw all circles in the circles[] array.
+			*/
+			function drawCircles() {
+				gl.useProgram(circleShaderProgram);
+				gl.enableVertexAttribArray(circleShaderProgram.vertexPositionAttribute);
+				gl.enableVertexAttribArray(circleShaderProgram.textureCoordAttribute);
+				
+				gl.uniform1i(circleShaderProgram.samplerUniform, 0);
+
+				gl.bindBuffer(gl.ARRAY_BUFFER, circleVertexTextureCoordBuffer);
+				gl.vertexAttribPointer(circleShaderProgram.textureCoordAttribute, circleVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+				gl.bindBuffer(gl.ARRAY_BUFFER, circleVertexPositionBuffer);
+				gl.vertexAttribPointer(circleShaderProgram.vertexPositionAttribute, circleVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+				for (var i in circles) {
+					if (i == 0) {
+						circles[i].draw(true);
+					} else {
+						circles[i].draw(false);
+					}
+				}
+				
+				gl.disableVertexAttribArray(circleShaderProgram.vertexPositionAttribute);
+				gl.disableVertexAttribArray(circleShaderProgram.textureCoordAttribute);
+			}
+			
+			/**
+			 * For now, draw a 40x40 grid around the center of the scene.
+			*/
+			function drawGrid() {
+				gl.useProgram(gridShaderProgram);
+				gl.enableVertexAttribArray(gridShaderProgram.vertexPositionAttribute);
+				gl.bindBuffer(gl.ARRAY_BUFFER, gridVertexPositionBuffer);
+				gl.vertexAttribPointer(gridShaderProgram.vertexPositionAttribute, gridVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+						
+				for (var i = 0; i < GRID_SIZE; i++) {
+					for (var j = 0; j < GRID_SIZE; j++) {
+					
+						if (i >= (GRID_SIZE / 2.0) - 1 && i <= (GRID_SIZE / 2.0) || j >= (GRID_SIZE / 2.0) - 1 && j <= (GRID_SIZE / 2.0)) {
+							gl.uniform3f(gridShaderProgram.gridColorUniform, 1.0, 0.0, 0.0);
+						} else {
+							gl.uniform3f(gridShaderProgram.gridColorUniform, 1.0, 1.0, 1.0);
+						}
+					
+						mvPushMatrix();
+						mat4.translate(transformationMatrix, [(j - GRID_SIZE / 2.0) * SIMULATION_SCALE + (SIMULATION_SCALE / 2.0), (i - GRID_SIZE / 2.0) * SIMULATION_SCALE + (SIMULATION_SCALE / 2.0), 0.0]);
+						
+						setGridShaderMatrixUniforms();
+						gl.drawArrays(gl.LINE_LOOP, 0, gridVertexPositionBuffer.numItems);
+
+						mvPoprojectionMatrix();
+					}
+				}
+				
+				gl.disableVertexAttribArray(gridShaderProgram.vertexPositionAttribute);
+			}
+			
+			/**
+			 * Linearly interpolates the WebGL clear color between all RGB colors.
+			*/
+			function updateClearColor() {
+				if (colorVertex == 0) {
+					gl.clearColor(1.0, 0.0, 0.0, CLEAR_COLOR_OPACITY);
+				} else if (colorVertex == 1) {
+					gl.clearColor(0.0, 1.0, 0.0, CLEAR_COLOR_OPACITY);
+				} else if (colorVertex == 2) {
+					gl.clearColor(0.0, 0.0, 1.0, CLEAR_COLOR_OPACITY);
+				} else if (0 < colorVertex && colorVertex < 1) {
+					gl.clearColor(1.0 - colorVertex, colorVertex, 0.0, CLEAR_COLOR_OPACITY);
+				} else if (1 < colorVertex && colorVertex < 2) {
+					gl.clearColor(0.0, 2.0 - colorVertex, colorVertex - 1.0, CLEAR_COLOR_OPACITY);
+				} else if (2 < colorVertex && colorVertex < 3) {
+					gl.clearColor(colorVertex - 2.0, 0.0, 3.0 - colorVertex, CLEAR_COLOR_OPACITY);
+				}
+				gl.clearColor(
+					gl.getParameter(gl.COLOR_CLEAR_VALUE)[0] / CLEAR_COLOR_DAMPEN,
+					gl.getParameter(gl.COLOR_CLEAR_VALUE)[1] / CLEAR_COLOR_DAMPEN,
+					gl.getParameter(gl.COLOR_CLEAR_VALUE)[2] / CLEAR_COLOR_DAMPEN,
+					1.0
+				);
+				colorVertex += CLEAR_COLOR_STEP;
+				colorVertex %= 3;
+			}
+			
+			/**
+			 * Using a timer, updates all circles based on the elapsed time instead of at a constant rate.
+			 * This means that framerate drops will not affect the animation.
+			*/
+			function animate() {
+				var timeNow = new Date().getTime();
+				if (lastTime != 0) {
+					var elapsed = timeNow - lastTime;
+
+					for (var i in circles) {
+						circles[i].animate(elapsed);
+					}
+				}
+				lastTime = timeNow;
+			}
+
+			/**
+			 * The heartbeat of the program. Requests this function to happen again on frame refresh,
+			 * handle input, draw the scene, and update all of the circles.
+			*/
+			function tick() {
+				requestAnimFrame(tick);
+				handleKeys();
+				drawScene();
+				animate();
+			}
+			
+			/**
+			 * Initialize all of the DOM element reference variables and set their attributes.
+			*/
+			function initDOM() {
+				DOM_sliderSpeed = document.getElementById("DOM_sliderSpeed");
+				DOM_sliderSpeed.max = 100;
+				DOM_sliderSpeed.min = 1;
+				DOM_sliderSpeed.value = 20;
+				
+				DOM_sliderAmplitude = document.getElementById("DOM_sliderAmplitude");
+				DOM_sliderAmplitude.max = 100;
+				DOM_sliderAmplitude.min = 1;
+				DOM_sliderAmplitude.value = 10;
+				
+				DOM_sliderNumberOfCircles = document.getElementById("DOM_sliderNumberOfCircles");
+				DOM_sliderNumberOfCircles.max = 200;
+				DOM_sliderNumberOfCircles.min = 1;
+				DOM_sliderNumberOfCircles.value = 12;
+				DOM_sliderNumberOfCircles.oninput = function() {
+					initWorldObjects();
+				}
+				
+				DOM_sliderZoom = document.getElementById("DOM_sliderZoom");
+				DOM_sliderZoom.max = 200;
+				DOM_sliderZoom.min = 1;
+				DOM_sliderZoom.value = 25;
+				
+				DOM_selectFunction = document.getElementById("DOM_selectFunction");
+				DOM_selectFunction.value = "circle";
+				DOM_selectFunction.onchange = function() {
+					for (var i = 0; i < DOM_selectFunction.options.length; i++) {
+						document.getElementById("functionOptions_" + DOM_selectFunction.options[i].value).style.display = "none";
+						document.getElementById("functionOptions_" + DOM_selectFunction.value).style.display = "block";
+					}
+				}
+				document.getElementById("functionOptions_circle").style.display = "block";
+				
+				DOM_trackingCheckbox = document.getElementById("DOM_trackingCheckbox");
+				DOM_trackingCheckbox.checked = false;
+				
+				DOM_trackingPositionSpan = document.getElementById("DOM_trackingPositionSpan");
+				DOM_trackingPositionSpan.style.display = "none";
+				
+				DOM_showGrid = document.getElementById("DOM_showGrid");
+				DOM_showGrid.checked = false;
+				
+				DOM_showFunctionString = document.getElementById("DOM_showFunctionString");
+				DOM_showFunctionString.checked = true;
+				DOM_showFunctionString.onchange = function() {
+					if (DOM_showFunctionString.checked) {
+						DOM_functionStringX.style.display = "inline";
+						DOM_functionStringY.style.display = "inline";
+					} else {
+						DOM_functionStringX.style.display = "none";
+						DOM_functionStringY.style.display = "none";
+					}
+				}
+				
+				DOM_commandLineDiv = document.getElementById("DOM_commandLineDiv");
+				DOM_commandLineDiv.style.display = "none";
+				DOM_commandLineInput = document.getElementById("DOM_commandLineInput");
+				
+				DOM_functionOption_rose_k = document.getElementById("DOM_functionOption_rose_k");
+				DOM_functionOption_rose_k.max = 8;
+				DOM_functionOption_rose_k.min = 1;
+				DOM_functionOption_rose_k.value = 2;
+			
+				DOM_functionOption_lissajous_a = document.getElementById("DOM_functionOption_lissajous_a");
+				DOM_functionOption_lissajous_a.max = 6;
+				DOM_functionOption_lissajous_a.min = 1;
+				DOM_functionOption_lissajous_a.value = 1;
+				
+				DOM_functionOption_lissajous_b = document.getElementById("DOM_functionOption_lissajous_b");
+				DOM_functionOption_lissajous_b.max = 6;
+				DOM_functionOption_lissajous_b.min = 1;
+				DOM_functionOption_lissajous_b.value = 2;
+				
+				DOM_functionOption_lissajous_kx = document.getElementById("DOM_functionOption_lissajous_kx");
+				DOM_functionOption_lissajous_kx.max = 6;
+				DOM_functionOption_lissajous_kx.min = 1;
+				DOM_functionOption_lissajous_kx.value = 2;
+				
+				DOM_functionOption_lissajous_ky = document.getElementById("DOM_functionOption_lissajous_ky");
+				DOM_functionOption_lissajous_ky.max = 6;
+				DOM_functionOption_lissajous_ky.min = 1;
+				DOM_functionOption_lissajous_ky.value = 1;
+				
+				DOM_functionOption_lissajous_delta = document.getElementById("DOM_functionOption_lissajous_delta");
+				DOM_functionOption_lissajous_delta.max = 8;
+				DOM_functionOption_lissajous_delta.min = 0;
+				DOM_functionOption_lissajous_delta.value = 0;
+				
+				DOM_functionOption_limacon_a = document.getElementById("DOM_functionOption_limacon_a");
+				DOM_functionOption_limacon_a.max = 8;
+				DOM_functionOption_limacon_a.min = 0;
+				DOM_functionOption_limacon_a.value = 8;
+				
+				DOM_functionOption_limacon_b = document.getElementById("DOM_functionOption_limacon_b");
+				DOM_functionOption_limacon_b.max = 8;
+				DOM_functionOption_limacon_b.min = 0;
+				DOM_functionOption_limacon_b.value = 8;
+				
+				DOM_functionStringX = document.getElementById("functionStringX");
+				DOM_functionStringY = document.getElementById("functionStringY");
+				
+			}
+			
+			/**
+			 * Display a single message by appending it to the command line <div> element. Depending on the passed parameter it will display differently.
+			 * @param {String} text The message text
+			 * @param {Boolean} passed Whether the message is information or an error.
+			*/
+			function displayCommandLineMessage(text, passed) {
+				var span = document.createElement("span");
+				if (passed) {
+					span.style.color = "green";
+				} else {
+					span.style.color = "red";
+					var errornode = document.createTextNode("ERR: ");
+					span.appendChild(errornode);
+				}
+				var textnode = document.createTextNode(text);
+				span.appendChild(textnode);
+				span.style.fontFamily = "monospace";
+				
+				DOM_commandLineDiv.insertBefore(span, DOM_commandLineDiv.children[DOM_commandLineDiv.children.length - 1]);
+				DOM_commandLineDiv.insertBefore(document.createElement("br"), DOM_commandLineDiv.children[DOM_commandLineDiv.children.length - 1]);
+			}
+			
+			/**
+			 * Display a bunch of help information in the console.
+			 * @see {@link displayCommandLineMessage}
+			*/
+			function displayCommandLineHelp() {
+				displayCommandLineMessage("--- Help -------------------------------------", true);
+				displayCommandLineMessage("help........: display this window", true);
+				displayCommandLineMessage("reset.......: reset the sim", true);
+				displayCommandLineMessage("regen.......: regen all circles with given settings", true);
+				displayCommandLineMessage("clear.......: clear these messages", true);
+				displayCommandLineMessage("speed=?.....: 0 < ? <= 100, sets sim speed", true);
+				displayCommandLineMessage("amplitude=?.: 0 < ? <= 10, sets function amplitude", true);
+				displayCommandLineMessage("circles=?...: 0 < ? <= 200, sets circle number", true);
+				displayCommandLineMessage("zoom=?......: 0 < ? <= 100, sets zoom amount", true);
+				displayCommandLineMessage("newcolors...: change all circle colors", true);
+				displayCommandLineMessage("drawgrid=?..: true or false to draw grid", true);
+				displayCommandLineMessage("----------------------------------------------", true);
+			}
+
+			/**
+			 * Entry point for the page. Initializes everything and starts the loop.
+			*/
+			function webGLStart() {
+				canvas = document.getElementById("gameCanvas");
+				canvas.width = document.body.clientWidth;
+				canvas.height = document.body.clientHeight;
+				
+				initGL(canvas);
+				initDOM();
+				initShaders();
+				initBuffers();
+				initTexture();
+				initWorldObjects();
+
+				gl.clearColor(0.0, 0.0, 0.0, 1.0);
+
+				document.onkeydown = handleKeyDown;
+				document.onkeyup = handleKeyUp;
+
+				tick();
+			}
+
+		</script>
+
+
+	</head>
+
+	<body oncontextmenu="return false;" onload="webGLStart()" onresize="resizeGL()" style="padding: 0; margin: 0; position: absolute; overflow: hidden;">
+		<div class="general-options">
+			<span>speed&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="DOM_sliderSpeed" type="range"></input><br>
+			<span>amplitude </span><input id="DOM_sliderAmplitude" type="range"></input><br>
+			<span>circles&nbsp;&nbsp; </span><input id="DOM_sliderNumberOfCircles" type="range"></input><br>
+			<span>zoom&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="DOM_sliderZoom" type="range"></input><br>
+			<span>track&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input type="checkbox" id="DOM_trackingCheckbox"></input><span id="DOM_trackingPositionSpan"></span><br>
+			<span>grid&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input type="checkbox" id="DOM_showGrid"></input><br>
+			<span>show fn&nbsp;&nbsp;&nbsp; </span><input type="checkbox" id="DOM_showFunctionString"></input><br>
+			<hr>
+			<span>function&nbsp;&nbsp; </span><select name="function" id="DOM_selectFunction">
+				<option value="butterfly">butterfly</option>
+				<option value="cardioid">cardioid</option>
+				<option value="circle">circle</option>
+				<option value="limacon">lima&ccedil;on</option>
+				<option value="lissajous">lissajous</option>
+				<option value="rose">rose</option>
+			</select><br>
+			
+			<div id="functionOptions_rose" class="function-options">
+				<span>K&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="DOM_functionOption_rose_k" type="range"></input><br>
+			</div>
+			<div id="functionOptions_cardioid" class="function-options">
+				<!-- no extra options -->
+			</div>
+			<div id="functionOptions_circle" class="function-options">
+				<!-- no extra options -->
+			</div>
+			<div id="functionOptions_limacon" class="function-options">
+				<span>A&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="DOM_functionOption_limacon_a" type="range"></input><br>
+				<span>B&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="DOM_functionOption_limacon_b" type="range"></input><br>
+			</div>
+			<div id="functionOptions_lissajous" class="function-options">
+				<span>A&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="DOM_functionOption_lissajous_a" type="range"></input><br>
+				<span>B&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="DOM_functionOption_lissajous_b" type="range"></input><br>
+				<span>Kx&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="DOM_functionOption_lissajous_kx" type="range"></input><br>
+				<span>Ky&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="DOM_functionOption_lissajous_ky" type="range"></input><br>
+				<span>&delta;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="DOM_functionOption_lissajous_delta" type="range"></input><br>
+			</div>
+			<div id="functionOptions_butterfly" class="function-options">
+				<!-- no extra options -->
+			</div>
+			
+		</div>
+		
+		<div class="function-string">
+			<span id="functionStringX">x function string here...</span><br>
+			<span id="functionStringY">y function string here...</span>
+		</div>
+		
+		<div id="DOM_commandLineDiv" class="command-div">
+			<input type="text" id="DOM_commandLineInput" style="color: white; font-family: monospace; margin: 0; background-color: transparent; border-top: none; border-right: none;"></input>
+		</div>
+		
+		<div class="ftr ftr-version">
+			<span style="font-size: 8">6/19/17 v 1.02</span>
+		</div>
+		<div class="ftr ftr-top">
+			<span>&copy; Zach Reznicek</span>
+		</div>
+		<div class="ftr ftr-bottom">
+			<span style="font-size: 8">like a copyright does anything</span>
+		</div>
+		
+		<canvas id="gameCanvas" style="border: none;"></canvas>
+	</body>
+
 </html>
