@@ -1,7 +1,7 @@
 <html>
 
 	<head>
-		<title>WebGL</title>
+		<title>WebGL &mdash; Function Viewer</title>
 		<meta charset="utf-8">
 		
 		<style>
@@ -117,14 +117,57 @@
 
 		<script type="text/javascript">
 
-			var canvas;
-			var gl;
-			var SIMULATION_SCALE = 6;
+			/**
+			 * A GLSL shader.
+			 * @typedef {Object} GLSLShader
+			*/
 			
+			/**
+			 * A WebGL Vertex Buffer Object
+			 * @typedef {Object} VBO
+			*/
+			
+			/**
+			 * A 4x4 Matrix
+			 * @typedef {Object} Matrix4
+			*/
+			
+			/**
+			 * A WebGL Texture reference
+			 * @typedef {Object} WebGLTexture
+			*/
+
+			/**
+			 * The canvas element reference.
+			 * @type {Element}
+			*/
+			var canvas;
+			
+			/**
+			 * The canvas's WebGL context reference.
+			 * @type {Object}
+			*/
+			var gl;
+			
+			/**
+			 * The constant simulation scale size. Everything drawn is rendered this many times larger.
+			 * @type {Number}
+			*/
+			const SIMULATION_SCALE = 6;
+			
+			/**
+			 * The world's x-position offset.
+			 * @type {Number}
+			*/
 			var worldOffsetX = 0.0;
+			
+			/**
+			 * The world's y-position offset.
+			 * @type {Number}
+			*/
 			var worldOffsetY = 0.0;
 			
-			// DOM Objects
+			// DOM Object references
 			var DOM_sliderSpeed;
 			var DOM_sliderAmplitude;
 			var DOM_sliderNumberOfCircles;
@@ -138,7 +181,6 @@
 			var DOM_trackingPositionSpan;
 			var DOM_functionStringX;
 			var DOM_functionStringY;
-			var functionStringUpdateBuffer = 0;
 			var DOM_functionOption_rose_k;
 			var DOM_functionOption_lissajous_a;
 			var DOM_functionOption_lissajous_b;
@@ -148,17 +190,155 @@
 			var DOM_functionOption_limacon_a;
 			var DOM_functionOption_limacon_b;
 			
+			/**
+			 * For sake of performance, I only update the function text in the top right 4 times a second. Once this value reaches 15 (as it is updated once per second) the text will update.
+			 * @type {Number}
+			*/
+			var functionStringUpdateBuffer = 0;
+			
+			/**
+			 * Array of strings representing the previous entered console commands
+			 * @type {String[]}
+			*/
 			var previousCommands = [];
+			
+			/**
+			 * An index/counter of the "current" read value of previousCommands
+			 * @type {Number}
+			*/
 			var previousCommandIndex = 0;
-			
-			var colorVertex = 0.0;
-			var clearColorOpacity = 0.2;
-			var clearColorStep = 0.001;
-			var clearColorDampen = 15.0;
-			
-			var goBonkers = false;
-			var goBonkersCounter = 0;
 
+			/**
+			 * A Date object used to determine elapsed time between frame animation updates
+			 * @type {Date}
+			*/
+			var lastTime = 0;
+			
+			/**
+			 * The "index" for the WebGL clear color background. 0 designates entirely red, 1 designates entirely green, 2 designates entirely blue
+			 * @type {Number}
+			*/
+			var colorVertex = 0.0;
+			
+			/**
+			 * The constant opacity value for the WebGL clear color.
+			 * @type {Number}
+			*/
+			const CLEAR_COLOR_OPACITY = 0.2;
+			
+			/**
+			 * The constant step increase for updating colorVertex.
+			 * @type {Number}
+			 * @see {@link colorVertex}
+			*/
+			const CLEAR_COLOR_STEP = 0.001;
+			
+			/**
+			 * The constant value that the clear color is divided by to dampen the color saturation.
+			 * @type {Number}
+			*/
+			const CLEAR_COLOR_DAMPEN = 15.0;
+			
+			/**
+			 * A little easter-egg. Typing "gobonkers" in the console will enable this, and "enoughbonkers" will disable this.
+			 * @type {Boolean}
+			*/
+			var goBonkers = false;
+			
+			/**
+			 * A frame counter for the bonkers setting. Colors will only change every time this value is greater than goBonkersUpdateCount.
+			 * @type {Number}
+			 * @see {@link goBonkersUpdateCount}
+			*/
+			var goBonkersCounter = 0;
+			
+			/**
+			 * The number of frames that must pass before the circles change color while in bonkers mode.
+			 * @type {Number}
+			*/
+			var goBonkersUpdateCount = 4;
+
+			/**
+			 * A reference to the circle GLSL shader program.
+			 * @type {GLSLShader}
+			*/
+			var circleShaderProgram;
+			
+			/**
+			 * A reference to the grid GLSL shader program.
+			 * @type {GLSLShader}
+			*/
+			var gridShaderProgram;
+
+			/**
+			 * An array buffer reference for the circle vertex positions.
+			 * @type {VBO}
+			*/
+			var circleVertexPositionBuffer;
+			
+			/**
+			 * An array buffer reference for the circle texture coordinate positions.
+			 * @type {VBO}
+			*/
+			var circleVertexTextureCoordBuffer;
+			
+			/**
+			 * An array buffer reference for the grid vertex positions.
+			 * @type {VBO}
+			*/
+			var gridVertexPositionBuffer;
+			
+			/**
+			 * The array that holds all of the circle object instances.
+			 * @type {Circle[]}
+			*/
+			var circles = [];
+
+			/**
+			 * The global transformation matrix.
+			 * @type {Matrix4}
+			*/
+			var transformationMatrix = mat4.create();
+			
+			/**
+			 * All objects that are rendered use the same "transformation matrix" and thus they need to edit the base one (the world transformation) differently. The base gets pushed to the stack, and the invidiual renders pop an instance of that to use each time.
+			 * @type {Matrix4}
+			*/
+			var transformationMatrixStack = [];
+			
+			/**
+			 * The scene's projection matrix.
+			 * @type {Matrix4}
+			*/
+			var projectionMatrix = mat4.create();
+
+			/**
+			 * The only texture that is used in the entire project. This is the reference to the WebGL generated texture.
+			 * @type {WebGLTexture}
+			*/
+			var circleTexture;
+			
+			/**
+			 * An object that keeps track of key presses based on their .keyCode values as object keys.
+			 * @type {Object.<Number, Boolean>}
+			*/
+			var currentlyPressedKeys = {};
+			
+			/**
+			 * Used to fire an event only once when a key is pressed, not the entire time the key is held.
+			 * @type {Object.<Number, Boolean>}
+			*/
+			var keyFlag = {};
+			
+			// Initially set some of these values to false so that they aren't undefined when the program starts
+			keyFlag[192] = false;
+			keyFlag[38] = false;
+			keyFlag[40] = false;
+
+			/**
+			 * Grabs the WebGL context from the canvas DOM element.
+			 * @param {Element} canvas The canvas element to extract the WebGL context from.
+			*/
 			function initGL(canvas) {
 				try {
 					gl = canvas.getContext("experimental-webgl");
@@ -174,6 +354,9 @@
 				}
 			}
 
+			/**
+			 * Resizes the WebGL context when the browser window is resized.
+			*/
 			function resizeGL() {
 				canvas.width = document.body.clientWidth;
 				canvas.height = document.body.clientHeight;
@@ -185,6 +368,12 @@
 				gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 			}
 
+			/**
+			 * Reads and compiles GLSL shaders from an embedded <script> element. Will check compile status of the shader source.
+			 * @param {Object} gl The active WebGL context.
+			 * @param {String} id The <script> element id
+			 * @return {Number} shader The compiled GLSL shader ID generated with WebGL.
+			*/
 			function getShader(gl, id) {
 				var shaderScript = document.getElementById(id);
 				if (!shaderScript) {
@@ -220,9 +409,10 @@
 				return shader;
 			}
 
-			var circleShaderProgram;
-			var gridShaderProgram;
-
+			/**
+			 * Initializes the circle shader and the grid shader using the <script> elements.
+			 * @see {@link getShader}
+			*/
 			function initShaders() {
 				var fragmentShader = getShader(gl, "circle-shader-fs");
 				var vertexShader = getShader(gl, "circle-shader-vs");
@@ -244,15 +434,15 @@
 				circleShaderProgram.textureCoordAttribute = gl.getAttribLocation(circleShaderProgram, "aTextureCoord");
 				gl.enableVertexAttribArray(circleShaderProgram.textureCoordAttribute);
 
-				circleShaderProgram.pMatrixUniform = gl.getUniformLocation(circleShaderProgram, "uPMatrix");
-				circleShaderProgram.mvMatrixUniform = gl.getUniformLocation(circleShaderProgram, "uMVMatrix");
+				circleShaderProgram.projectionMatrixUniform = gl.getUniformLocation(circleShaderProgram, "uPMatrix");
+				circleShaderProgram.transformationMatrixUniform = gl.getUniformLocation(circleShaderProgram, "uMVMatrix");
 				circleShaderProgram.samplerUniform = gl.getUniformLocation(circleShaderProgram, "uSampler");
 				circleShaderProgram.colorUniform = gl.getUniformLocation(circleShaderProgram, "uColor");
 				
 				gl.disableVertexAttribArray(circleShaderProgram.vertexPositionAttribute);
 				gl.disableVertexAttribArray(circleShaderProgram.textureCoordAttribute);
 				
-				/*****/
+				// now load the grid shader
 				
 				fragmentShader = getShader(gl, "grid-shader-fs");
 				vertexShader = getShader(gl, "grid-shader-vs");
@@ -271,13 +461,29 @@
 				gridShaderProgram.vertexPositionAttribute = gl.getAttribLocation(gridShaderProgram, "aVertexPosition");
 				gl.enableVertexAttribArray(gridShaderProgram.vertexPositionAttribute);
 
-				gridShaderProgram.pMatrixUniform = gl.getUniformLocation(gridShaderProgram, "uPMatrix");
-				gridShaderProgram.mvMatrixUniform = gl.getUniformLocation(gridShaderProgram, "uMVMatrix");
+				gridShaderProgram.projectionMatrixUniform = gl.getUniformLocation(gridShaderProgram, "uPMatrix");
+				gridShaderProgram.transformationMatrixUniform = gl.getUniformLocation(gridShaderProgram, "uMVMatrix");
 				
 				gl.disableVertexAttribArray(gridShaderProgram.vertexPositionAttribute);
 			}
+			
+			/**
+			 * Initializes the circleTexture object with WebGL's createTexture() function.
+			 * @see {@link handleLoadedTexture}
+			*/
+			function initTexture() {
+				circleTexture = gl.createTexture();
+				circleTexture.image = new Image();
+				circleTexture.image.onload = function () {
+					handleLoadedTexture(circleTexture)
+				}
+				circleTexture.image.src = "circle.png";
+			}
 
-
+			/**
+			 * Generate texture's image data from the source image.
+			 * @param {Object} texture The WebGL texture object.
+			*/
 			function handleLoadedTexture(texture) {
 				gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 				gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -291,67 +497,76 @@
 				gl.bindTexture(gl.TEXTURE_2D, circleTexture);
 			}
 
-
-			var circleTexture;
-
-			function initTexture() {
-				circleTexture = gl.createTexture();
-				circleTexture.image = new Image();
-				circleTexture.image.onload = function () {
-					handleLoadedTexture(circleTexture)
-				}
-
-				circleTexture.image.src = "circle.png";
-			}
-
-
-			var mvMatrix = mat4.create();
-			var mvMatrixStack = [];
-			var pMatrix = mat4.create();
-
+			/**
+			 * Creates a copy of the current transformationMatrix and pushes it to the matrix stack.
+			*/
 			function mvPushMatrix() {
 				var copy = mat4.create();
-				mat4.set(mvMatrix, copy);
-				mvMatrixStack.push(copy);
+				mat4.set(transformationMatrix, copy);
+				transformationMatrixStack.push(copy);
 			}
 
-			function mvPopMatrix() {
-				if (mvMatrixStack.length == 0) {
-					throw "Invalid popMatrix!";
+			/**
+			 * Pop the last element of the array off of the array and sets transformationMatrix equal to it.
+			 * @throws {NoSuchElementException} Will error if the matrix stack size is 0.
+			*/
+			function mvPoprojectionMatrix() {
+				if (transformationMatrixStack.length == 0) {
+					throw "Invalid poprojectionMatrix!";
 				}
-				mvMatrix = mvMatrixStack.pop();
+				transformationMatrix = transformationMatrixStack.pop();
 			}
 
+			/**
+			 * Uploads the move matrix and projection matrix to the uniform locations in the grid shader.
+			*/
 			function setGridShaderMatrixUniforms() {
-				gl.uniformMatrix4fv(gridShaderProgram.pMatrixUniform, false, pMatrix);
-				gl.uniformMatrix4fv(gridShaderProgram.mvMatrixUniform, false, mvMatrix);
+				gl.uniformMatrix4fv(gridShaderProgram.projectionMatrixUniform, false, projectionMatrix);
+				gl.uniformMatrix4fv(gridShaderProgram.transformationMatrixUniform, false, transformationMatrix);
 			}
 			
+			/**
+			 * Uploads the move matrix and projection matrix to the uniform locations in the circle shader.
+			*/
 			function setCircleShaderMatrixUniforms() {
-				gl.uniformMatrix4fv(circleShaderProgram.pMatrixUniform, false, pMatrix);
-				gl.uniformMatrix4fv(circleShaderProgram.mvMatrixUniform, false, mvMatrix);
+				gl.uniformMatrix4fv(circleShaderProgram.projectionMatrixUniform, false, projectionMatrix);
+				gl.uniformMatrix4fv(circleShaderProgram.transformationMatrixUniform, false, transformationMatrix);
 			}
 
+			/**
+			 * Convert an angle in degrees to an angle in radians.
+			 * @param {number} degrees The value in degrees to convert to radians.
+			 * @returns {number} A radian value representation of the degrees parameter.
+			*/
 			function degToRad(degrees) {
 				return degrees * Math.PI / 180;
 			}
 
-			var currentlyPressedKeys = {};
-			var keyFlag = {};
-			keyFlag[192] = false;
-			keyFlag[38] = false;
-			keyFlag[40] = false;
-
+			/**
+			 * Handles the onkeydown document event.
+			 * Prevents default operation of the tilde key.
+			 * @param {Object} event The document's onkeydown event.
+			*/
 			function handleKeyDown(event) {
 				currentlyPressedKeys[event.keyCode] = true;
 				if (event.keyCode == 192) return false;
 			}
+			
+			/**
+			 * Handles the onkeyup document event.
+			 * Prevents default operation of the tilde key.
+			 * @param {Object} event The document's onkeyup event.
+			*/
 			function handleKeyUp(event) {
 				currentlyPressedKeys[event.keyCode] = false;
 				keyFlag[event.keyCode] = false;
 				if (event.keyCode == 192) return false;
 			}
 
+			/**
+			 * Reads the currently pressed keys and does an action based on those keys.
+			 * This function is called as fast as your screen's refresh rate.
+			*/
 			function handleKeys() {
 				if (currentlyPressedKeys[192] && keyFlag[192] == false) {
 					// grave aka tilde
@@ -416,7 +631,7 @@
 						} else {
 							DOM_commandLineInput.value = previousCommands[previousCommandIndex];
 						}
-					keyFlag[40] = true;
+						keyFlag[40] = true;
 					} else {
 						worldOffsetY++;
 					}
@@ -431,6 +646,9 @@
 				}
 			}
 			
+			/**
+			 * Parse the text in the command line input, and do an action based on that text.
+			*/
 			function parseCommandLineInput() {
 				var input = DOM_commandLineInput.value;
 				if (input.startsWith("circles=")) {
@@ -443,6 +661,8 @@
 						} else {
 							displayCommandLineMessage("0 < circles <= 200", false);
 						}
+					} else {
+						displayCommandLineMessage("circles=<int>", false);
 					}
 				} else if (input.startsWith("speed=")) {
 					var n = parseInt(input.substring(6));
@@ -453,6 +673,8 @@
 						} else {
 							displayCommandLineMessage("0 < speed <= 100", false);
 						}
+					} else {
+						displayCommandLineMessage("speed=<int>", false);
 					}
 				} else if (input.startsWith("zoom=")) {
 					var n = parseInt(input.substring(5));
@@ -463,6 +685,8 @@
 						} else {
 							displayCommandLineMessage("0 < zoom <= 200", false);
 						}
+					} else {
+						displayCommandLineMessage("zoom=<int>", false);
 					}
 				} else if (input.startsWith("amplitude=")) {
 					var n = parseFloat(input.substring(10));
@@ -515,8 +739,10 @@
 					}
 				} else if (input == "gobonkers") {
 					goBonkers = true;
+					displayCommandLineMessage("going bonkers", true);
 				} else if (input == "enoughbonkers") {
 					goBonkers = false;
+					displayCommandLineMessage("that's enough bonkers", true);
 				} else if (input == "regen") {
 					initWorldObjects();
 					displayCommandLineMessage("regenerated circles", true);
@@ -530,10 +756,10 @@
 				previousCommandIndex = previousCommands.length - 1;
 			}
 
-			var circleVertexPositionBuffer;
-			var circleVertexTextureCoordBuffer;
-			var gridVertexPositionBuffer;
-
+			/**
+			 * Initializes the WebGL vertex and texture array buffers for the circle objects,
+			 * and initializes the vertex array buffer for the grid.
+			*/
 			function initBuffers() {
 				circleVertexPositionBuffer = gl.createBuffer();
 				gl.bindBuffer(gl.ARRAY_BUFFER, circleVertexPositionBuffer);
@@ -572,6 +798,9 @@
 				gridVertexPositionBuffer.numItems = 4;
 			}
 			
+			/**
+			 * The circle class.
+			*/
 			class Circle {
 			
 				constructor(startingTheta) {
@@ -582,7 +811,7 @@
 				
 				draw(isFirstCircle) {
 					mvPushMatrix();
-					mat4.translate(mvMatrix, [this.x, this.y, 0.0]);
+					mat4.translate(transformationMatrix, [this.x, this.y, 0.0]);
 					
 					if (DOM_trackingCheckbox.checked) {
 						if (isFirstCircle) {
@@ -596,11 +825,11 @@
 					
 					setCircleShaderMatrixUniforms();
 					gl.drawArrays(gl.TRIANGLE_STRIP, 0, circleVertexPositionBuffer.numItems);
-					mvPopMatrix();
+					mvPoprojectionMatrix();
 				}
 				
 				animate(elapsedTime) {
-					//              PI          slider value   constant   ms per frame   elapsed ms
+					//              PI    *     slider value  *   constant *  ms per frame * elapsed ms
 					this.theta += Math.PI * DOM_sliderSpeed.value * 0.0001 * (60 / 1000) * elapsedTime;
 					if (this.theta > 2 * Math.PI) {
 						this.theta = 0.0;
@@ -614,6 +843,10 @@
 					this.b = Math.random();
 				}
 				
+				/**
+				 * Based on the selected function and the circle's theta value, determine the (x, y)
+				 * position of the circle by using the function's parametric equation.
+				*/
 				updatePosition() {
 					var func = DOM_selectFunction.value;
 					if (func == "rose") {
@@ -626,12 +859,13 @@
 						this.x = Math.cos(this.theta);
 						this.y = Math.sin(this.theta);
 					} else if (func == "lissajous") {
-						this.x = DOM_functionOption_lissajous_a.value * Math.sin(DOM_functionOption_lissajous_kx.value * this.theta + (Math.PI * 0.5 * DOM_functionOption_lissajous_delta.value));
+						var delta = Math.PI * 0.25 * DOM_functionOption_lissajous_delta.value;
+						this.x = DOM_functionOption_lissajous_a.value * Math.sin(DOM_functionOption_lissajous_kx.value * this.theta + delta);
 						this.y = DOM_functionOption_lissajous_b.value * Math.sin(DOM_functionOption_lissajous_ky.value * this.theta);
 					} else if (func == "butterfly") {
 						var val = Math.sin(this.theta / 12.0);
-						this.x = Math.sin(this.theta) * (   Math.pow(Math.E, Math.cos(this.theta))   -   (2 * Math.cos(4 * this.theta))   -   ( Math.pow(val, 5))  );
-						this.y = Math.cos(this.theta) * (   Math.pow(Math.E, Math.cos(this.theta))   -   (2 * Math.cos(4 * this.theta))   -   ( Math.pow(val, 5))  );
+						this.x = Math.sin(this.theta) * (Math.pow(Math.E, Math.cos(this.theta)) - (2 * Math.cos(4 * this.theta)) - (Math.pow(val, 5)));
+						this.y = Math.cos(this.theta) * (Math.pow(Math.E, Math.cos(this.theta)) - (2 * Math.cos(4 * this.theta)) - (Math.pow(val, 5)));
 					} else if (func == "limacon") {
 						var a = DOM_functionOption_limacon_a.value - 4;
 						var b = DOM_functionOption_limacon_b.value - 4;
@@ -647,9 +881,10 @@
 					
 				}
 			}
-			
-			var circles = [];
 
+			/**
+			 * Regenerates a number of circles based on the value of the DOM slider.
+			*/
 			function initWorldObjects() {
 				var numCircles = DOM_sliderNumberOfCircles.value;
 				circles = [];
@@ -659,28 +894,26 @@
 				}
 			}
 
+			/**
+			 * Draws the WebGL scene and updates DOM elements accordingly.
+			*/
 			function drawScene() {
 				gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
 				gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-				// set up perspective matrix
-				mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 400.0, pMatrix);
+				mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 400.0, projectionMatrix);
 				
-				// translate the world back
-				mat4.identity(mvMatrix);
-				mat4.translate(mvMatrix, [worldOffsetX, worldOffsetY, -(260 - DOM_sliderZoom.value)]);
+				mat4.identity(transformationMatrix);
+				mat4.translate(transformationMatrix, [worldOffsetX, worldOffsetY, -(260 - DOM_sliderZoom.value)]);
 				
 				updateClearColor();
 				
-				// draw circles
 				drawCircles();
 				
-				// Draw grid
 				if (DOM_showGrid.checked) {
 					drawGrid();
 				}
 				
-				// show/hide track coordinates
 				if (DOM_trackingCheckbox.checked) {
 					if (DOM_trackingPositionSpan.style.display == "none") DOM_trackingPositionSpan.style.display = "inline";
 					DOM_trackingPositionSpan.innerHTML = " (" + (Math.round(circles[0].x * 100 / SIMULATION_SCALE) / 100).toFixed(2) + ", " + (Math.round(circles[0].y * 100 / SIMULATION_SCALE) / 100).toFixed(2) + "), &theta; = " + (Math.round((circles[0].theta / Math.PI) * 100) / 100.0).toFixed(2) + " &pi;";
@@ -704,7 +937,7 @@
 							DOM_functionStringX.innerHTML = "X = " + amplitude + " * cos(&theta;)";
 							DOM_functionStringY.innerHTML = "Y = " + amplitude + " * sin(&theta;)";
 						} else if (func == "lissajous") {
-							DOM_functionStringX.innerHTML = "X = " + amplitude + " * [ " + DOM_functionOption_lissajous_a.value + " * sin(" + DOM_functionOption_lissajous_kx.value + " * &theta; + " + (0.5 * DOM_functionOption_lissajous_delta.value) + "&pi;) ]";
+							DOM_functionStringX.innerHTML = "X = " + amplitude + " * [ " + DOM_functionOption_lissajous_a.value + " * sin(" + DOM_functionOption_lissajous_kx.value + " * &theta; + " + (0.25 * DOM_functionOption_lissajous_delta.value) + "&pi;) ]";
 							DOM_functionStringY.innerHTML = "Y = " + amplitude + " * [ " + DOM_functionOption_lissajous_b.value + " * sin(" + DOM_functionOption_lissajous_ky.value + " * &theta;) ]";
 						} else if (func == "butterfly") {
 							DOM_functionStringX.innerHTML = "X = " + amplitude + " * sin(&theta;) * [ e^cos(&theta;) - 2cos(4 * &theta;) - sin^5(&theta; / 12) ]";
@@ -720,7 +953,7 @@
 				
 				if (goBonkers) {
 					goBonkersCounter++;
-					if (goBonkersCounter > 4) {
+					if (goBonkersCounter > goBonkersUpdateCount) {
 						for (var i in circles) {
 							circles[i].randomizeColors();
 						}
@@ -729,6 +962,9 @@
 				}
 			}
 			
+			/**
+			 * Draw all circles in the circles[] array.
+			*/
 			function drawCircles() {
 				gl.useProgram(circleShaderProgram);
 				gl.enableVertexAttribArray(circleShaderProgram.vertexPositionAttribute);
@@ -752,9 +988,11 @@
 				
 				gl.disableVertexAttribArray(circleShaderProgram.vertexPositionAttribute);
 				gl.disableVertexAttribArray(circleShaderProgram.textureCoordAttribute);
-
 			}
 			
+			/**
+			 * For now, draw a 40x40 grid around the center of the scene.
+			*/
 			function drawGrid() {
 				gl.useProgram(gridShaderProgram);
 				gl.enableVertexAttribArray(gridShaderProgram.vertexPositionAttribute);
@@ -764,43 +1002,49 @@
 				for (var i = 0; i < 40; i++) {
 					for (var j = 0; j < 40; j++) {
 						mvPushMatrix();
-						mat4.translate(mvMatrix, [(j-20) * SIMULATION_SCALE + (SIMULATION_SCALE / 2.0), (i-20) * SIMULATION_SCALE + (SIMULATION_SCALE / 2.0), 0.0]);
+						mat4.translate(transformationMatrix, [(j-20) * SIMULATION_SCALE + (SIMULATION_SCALE / 2.0), (i-20) * SIMULATION_SCALE + (SIMULATION_SCALE / 2.0), 0.0]);
 						
 						setGridShaderMatrixUniforms();
 						gl.drawArrays(gl.LINE_LOOP, 0, gridVertexPositionBuffer.numItems);
 
-						mvPopMatrix();
+						mvPoprojectionMatrix();
 					}
 				}
 				
 				gl.disableVertexAttribArray(gridShaderProgram.vertexPositionAttribute);
 			}
 			
+			/**
+			 * Linearly interpolates the WebGL clear color between all RGB colors.
+			*/
 			function updateClearColor() {
 				if (colorVertex == 0) {
-					gl.clearColor(1.0, 0.0, 0.0, clearColorOpacity);
+					gl.clearColor(1.0, 0.0, 0.0, CLEAR_COLOR_OPACITY);
 				} else if (colorVertex == 1) {
-					gl.clearColor(0.0, 1.0, 0.0, clearColorOpacity);
+					gl.clearColor(0.0, 1.0, 0.0, CLEAR_COLOR_OPACITY);
 				} else if (colorVertex == 2) {
-					gl.clearColor(0.0, 0.0, 1.0, clearColorOpacity);
+					gl.clearColor(0.0, 0.0, 1.0, CLEAR_COLOR_OPACITY);
 				} else if (0 < colorVertex && colorVertex < 1) {
-					gl.clearColor(1.0 - colorVertex, colorVertex, 0.0, clearColorOpacity);
+					gl.clearColor(1.0 - colorVertex, colorVertex, 0.0, CLEAR_COLOR_OPACITY);
 				} else if (1 < colorVertex && colorVertex < 2) {
-					gl.clearColor(0.0, 2.0 - colorVertex, colorVertex - 1.0, clearColorOpacity);
+					gl.clearColor(0.0, 2.0 - colorVertex, colorVertex - 1.0, CLEAR_COLOR_OPACITY);
 				} else if (2 < colorVertex && colorVertex < 3) {
-					gl.clearColor(colorVertex - 2.0, 0.0, 3.0 - colorVertex, clearColorOpacity);
+					gl.clearColor(colorVertex - 2.0, 0.0, 3.0 - colorVertex, CLEAR_COLOR_OPACITY);
 				}
 				gl.clearColor(
-					gl.getParameter(gl.COLOR_CLEAR_VALUE)[0] / clearColorDampen,
-					gl.getParameter(gl.COLOR_CLEAR_VALUE)[1] / clearColorDampen,
-					gl.getParameter(gl.COLOR_CLEAR_VALUE)[2] / clearColorDampen,
+					gl.getParameter(gl.COLOR_CLEAR_VALUE)[0] / CLEAR_COLOR_DAMPEN,
+					gl.getParameter(gl.COLOR_CLEAR_VALUE)[1] / CLEAR_COLOR_DAMPEN,
+					gl.getParameter(gl.COLOR_CLEAR_VALUE)[2] / CLEAR_COLOR_DAMPEN,
 					1.0
 				);
-				colorVertex += clearColorStep;
-				if (colorVertex >= 3) colorVertex = 0;
+				colorVertex += CLEAR_COLOR_STEP;
+				colorVertex %= 3;
 			}
-
-			var lastTime = 0;
+			
+			/**
+			 * Using a timer, updates all circles based on the elapsed time instead of at a constant rate.
+			 * This means that framerate drops will not affect the animation.
+			*/
 			function animate() {
 				var timeNow = new Date().getTime();
 				if (lastTime != 0) {
@@ -813,36 +1057,35 @@
 				lastTime = timeNow;
 			}
 
+			/**
+			 * The heartbeat of the program. Requests this function to happen again on frame refresh,
+			 * handle input, draw the scene, and update all of the circles.
+			*/
 			function tick() {
 				requestAnimFrame(tick);
 				handleKeys();
 				drawScene();
 				animate();
 			}
-
-			var defaultDOMSettings = {
-				speed: 20,
-				numberOfCircles: 12,
-				zoom: 25,
-				func: "circle",
-				tracking: false,
-				amplitude: 10
-			}
+			
+			/**
+			 * Initialize all of the DOM element reference variables and set their attributes.
+			*/
 			function initDOM() {
 				DOM_sliderSpeed = document.getElementById("DOM_sliderSpeed");
 				DOM_sliderSpeed.max = 100;
 				DOM_sliderSpeed.min = 1;
-				DOM_sliderSpeed.value = defaultDOMSettings.speed;
+				DOM_sliderSpeed.value = 20;
 				
 				DOM_sliderAmplitude = document.getElementById("DOM_sliderAmplitude");
 				DOM_sliderAmplitude.max = 100;
 				DOM_sliderAmplitude.min = 1;
-				DOM_sliderAmplitude.value = defaultDOMSettings.amplitude;
+				DOM_sliderAmplitude.value = 10;
 				
 				DOM_sliderNumberOfCircles = document.getElementById("DOM_sliderNumberOfCircles");
 				DOM_sliderNumberOfCircles.max = 200;
 				DOM_sliderNumberOfCircles.min = 1;
-				DOM_sliderNumberOfCircles.value = defaultDOMSettings.numberOfCircles;
+				DOM_sliderNumberOfCircles.value = 12;
 				DOM_sliderNumberOfCircles.oninput = function() {
 					initWorldObjects();
 				}
@@ -850,10 +1093,10 @@
 				DOM_sliderZoom = document.getElementById("DOM_sliderZoom");
 				DOM_sliderZoom.max = 200;
 				DOM_sliderZoom.min = 1;
-				DOM_sliderZoom.value = defaultDOMSettings.zoom;
+				DOM_sliderZoom.value = 25;
 				
 				DOM_selectFunction = document.getElementById("DOM_selectFunction");
-				DOM_selectFunction.value = defaultDOMSettings.func;
+				DOM_selectFunction.value = "circle";
 				DOM_selectFunction.onchange = function() {
 					for (var i = 0; i < DOM_selectFunction.options.length; i++) {
 						document.getElementById("functionOptions_" + DOM_selectFunction.options[i].value).style.display = "none";
@@ -863,16 +1106,13 @@
 				document.getElementById("functionOptions_circle").style.display = "block";
 				
 				DOM_trackingCheckbox = document.getElementById("DOM_trackingCheckbox");
-				DOM_trackingCheckbox.checked = defaultDOMSettings.tracked;
+				DOM_trackingCheckbox.checked = false;
 				
 				DOM_trackingPositionSpan = document.getElementById("DOM_trackingPositionSpan");
 				DOM_trackingPositionSpan.style.display = "none";
 				
 				DOM_showGrid = document.getElementById("DOM_showGrid");
 				DOM_showGrid.checked = false;
-				DOM_showGrid.onchange = function() {
-					shouldDrawGrid = DOM_showGrid.checked;
-				}
 				
 				DOM_showFunctionString = document.getElementById("DOM_showFunctionString");
 				DOM_showFunctionString.checked = true;
@@ -916,7 +1156,7 @@
 				DOM_functionOption_lissajous_ky.value = 1;
 				
 				DOM_functionOption_lissajous_delta = document.getElementById("DOM_functionOption_lissajous_delta");
-				DOM_functionOption_lissajous_delta.max = 4;
+				DOM_functionOption_lissajous_delta.max = 8;
 				DOM_functionOption_lissajous_delta.min = 0;
 				DOM_functionOption_lissajous_delta.value = 0;
 				
@@ -935,6 +1175,11 @@
 				
 			}
 			
+			/**
+			 * Display a single message by appending it to the command line <div> element. Depending on the passed parameter it will display differently.
+			 * @param {String} text The message text
+			 * @param {Boolean} passed Whether the message is information or an error.
+			*/
 			function displayCommandLineMessage(text, passed) {
 				var span = document.createElement("span");
 				if (passed) {
@@ -952,6 +1197,10 @@
 				DOM_commandLineDiv.insertBefore(document.createElement("br"), DOM_commandLineDiv.children[DOM_commandLineDiv.children.length - 1]);
 			}
 			
+			/**
+			 * Display a bunch of help information in the console.
+			 * @see {@link displayCommandLineMessage}
+			*/
 			function displayCommandLineHelp() {
 				displayCommandLineMessage("--- Help -------------------------------------", true);
 				displayCommandLineMessage("help........: display this window", true);
@@ -967,10 +1216,14 @@
 				displayCommandLineMessage("----------------------------------------------", true);
 			}
 
+			/**
+			 * Entry point for the page. Initializes everything and starts the loop.
+			*/
 			function webGLStart() {
 				canvas = document.getElementById("gameCanvas");
 				canvas.width = document.body.clientWidth;
 				canvas.height = document.body.clientHeight;
+				
 				initGL(canvas);
 				initDOM();
 				initShaders();
@@ -991,8 +1244,7 @@
 
 	</head>
 
-	<body oncontextmenu="return false;" onload="webGLStart()" onresize="resizeGL()" style="padding: 0; margin: 0; position: absolute; overflow: hidden;" style="">
-		
+	<body oncontextmenu="return false;" onload="webGLStart()" onresize="resizeGL()" style="padding: 0; margin: 0; position: absolute; overflow: hidden;">
 		<div class="general-options">
 			<span>speed&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="DOM_sliderSpeed" type="range"></input><br>
 			<span>amplitude </span><input id="DOM_sliderAmplitude" type="range"></input><br>
@@ -1015,10 +1267,10 @@
 				<span>K&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="DOM_functionOption_rose_k" type="range"></input><br>
 			</div>
 			<div id="functionOptions_cardioid" class="function-options">
-				<!-- the limacon handles all modifying of the cardioid, since a cardioid is a specific limacon -->
+				<!-- no extra options -->
 			</div>
 			<div id="functionOptions_circle" class="function-options">
-				<!-- the only thing you can change is size and that's amplitude -->
+				<!-- no extra options -->
 			</div>
 			<div id="functionOptions_limacon" class="function-options">
 				<span>A&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="DOM_functionOption_limacon_a" type="range"></input><br>
@@ -1032,7 +1284,7 @@
 				<span>&delta;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><input id="DOM_functionOption_lissajous_delta" type="range"></input><br>
 			</div>
 			<div id="functionOptions_butterfly" class="function-options">
-				<!-- no options for butterfly, it's way too complicated to begin with -->
+				<!-- no extra options -->
 			</div>
 			
 		</div>
@@ -1047,7 +1299,7 @@
 		</div>
 		
 		<div class="ftr ftr-version">
-			<span style="font-size: 8">6/15/17 v 1.0</span>
+			<span style="font-size: 8">6/19/17 v 1.01</span>
 		</div>
 		<div class="ftr ftr-top">
 			<span>&copy; Zach Reznicek</span>
@@ -1057,7 +1309,6 @@
 		</div>
 		
 		<canvas id="gameCanvas" style="border: none;"></canvas>
-	
 	</body>
 
 </html>
