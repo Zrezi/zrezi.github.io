@@ -1,0 +1,160 @@
+<html>
+
+<head>
+<title>Learning WebGL &mdash; lesson 1</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+
+<script type="text/javascript" src="glMatrix-0.9.5.min.js"></script>
+<script type="text/javascript" src="webgl-utils.js"></script>
+<script type="text/javascript" src="webglstuff.js"></script>
+
+<script id="shader-fs" type="x-shader/x-fragment">
+    precision mediump float;
+
+    varying vec2 vTextureCoord;
+
+    uniform sampler2D uSampler;
+
+    void main(void) {
+        gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));
+    }
+</script>
+
+<script id="shader-vs" type="x-shader/x-vertex">
+    attribute vec3 aVertexPosition;
+    attribute vec2 aTextureCoord;
+
+    uniform mat4 uModelViewMatrix;
+    uniform mat4 uProjectMatrix;
+
+    varying vec2 vTextureCoord;
+
+
+    void main(void) {
+        gl_Position = uProjectMatrix * uModelViewMatrix * vec4(aVertexPosition, 1.0);
+        vTextureCoord = aTextureCoord;
+    }
+</script>
+
+
+<script type="text/javascript">
+
+    var shaderProgram;
+    function initShaders() {
+		shaderProgram = new WebGLShaderProgram("script-element", "shader-fs", "shader-vs");
+        shaderProgram.use();
+
+        shaderProgram.addAttribute("aVertexPosition");
+		shaderProgram.enableAttribute("aVertexPosition");
+		
+        shaderProgram.addAttribute("aTextureCoord");
+		shaderProgram.enableAttribute("aTextureCoord");
+
+		shaderProgram.addUniform("uProjectMatrix");
+		shaderProgram.addUniform("uModelViewMatrix")
+		shaderProgram.addUniform("uSampler");
+    }
+	
+	var ioTexture;
+    function initTexture() {
+		ioTexture = new WebGLTexture("ioreset.png");
+    }
+
+    var mvMatrix = mat4.create();
+    var pMatrix = mat4.create();
+	var moonRotationMatrix = mat4.create();
+    mat4.identity(moonRotationMatrix);
+
+    function setMatrixUniforms() {
+        shaderProgram.setUniformMatrix4fv("uModelViewMatrix", mvMatrix);
+        shaderProgram.setUniformMatrix4fv("uProjectMatrix", pMatrix);
+    }
+
+    var squareVertexPositionBuffer;
+	var squareTextureCoordBuffer;
+	var squareIndexBuffer;
+
+    function initBuffers() {
+		squareVertexPositionBuffer = new WebGLBuffer(WebGLBuffer.squareVerticesBuffer(), gl.ARRAY_BUFFER, gl.FLOAT, 3, 4);
+		squareTextureCoordBuffer = new WebGLBuffer(WebGLBuffer.squareTextureBuffer(), gl.ARRAY_BUFFER, gl.FLOAT, 2, 4);
+		squareIndexBuffer = new WebGLBuffer(WebGLBuffer.squareIndicesBuffer(), gl.ELEMENT_ARRAY_BUFFER, gl.INT, 1, 6);
+    }
+
+	var aa = 0;
+	var ismars = false;
+	var iscircle = false;
+    function drawScene() {
+        gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+		mat4.identity(pMatrix);
+        mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
+
+        mat4.identity(mvMatrix);
+
+        mat4.translate(mvMatrix, [0.0, 0.0, -5.0]);
+
+        mat4.rotate(mvMatrix, degToRad(xRot), [1, 0, 0]);
+        mat4.rotate(mvMatrix, degToRad(yRot), [0, 1, 0]);
+        mat4.rotate(mvMatrix, degToRad(zRot), [0, 0, 1]);
+		
+		squareVertexPositionBuffer.bind();
+        shaderProgram.attributePointer("aVertexPosition", squareVertexPositionBuffer.itemSize);
+        
+		squareTextureCoordBuffer.bind();
+		shaderProgram.attributePointer("aTextureCoord", squareTextureCoordBuffer.itemSize);
+		
+		squareIndexBuffer.bind();
+		setMatrixUniforms();
+        gl.drawElements(gl.TRIANGLES, squareIndexBuffer.itemCount, gl.UNSIGNED_SHORT, 0);
+    }
+	
+	var once = false;
+	
+	var xRot = 0;
+    var yRot = 0;
+    var zRot = 0;
+	
+	function degToRad(degrees) {
+        return degrees * Math.PI / 180;
+    }
+
+	var lastTime = 0;
+	function animate() {
+        var timeNow = new Date().getTime();
+        if (lastTime != 0) {
+            var elapsed = timeNow - lastTime;
+
+            xRot += (90 * elapsed) / 10000.0;
+            yRot += (90 * elapsed) / 10000.0;
+            zRot += (90 * elapsed) / 10000.0;
+        }
+        lastTime = timeNow;
+    }
+	
+	function tick() {
+        requestAnimFrame(tick);
+		//if (ioTexture.isLoaded == false) return;
+        drawScene();
+        animate();
+    }
+
+    
+
+
+</script>
+
+
+</head>
+
+
+<body onload="WebGLStart();">
+    <a href="http://learningwebgl.com/blog/?p=28">&lt;&lt; Back to Lesson 1</a><br />
+
+    <canvas id="webgl-canvas" style="border: none;" width="500" height="500"></canvas>
+
+    <br/>
+    <a href="http://learningwebgl.com/blog/?p=28">&lt;&lt; Back to Lesson 1</a><br />
+</body>
+
+</html>
