@@ -15,7 +15,7 @@
 		</style>
 
 		<script type="text/javascript" src="../gl-matrix-min.js"></script>
-		<script type="text/javascript" src="../whip.js"></script>
+		<script type="text/javascript" src="../../whip.js"></script>
 
 		<script id="shader-fs" type="fs">
 			precision mediump float;
@@ -23,9 +23,14 @@
 			varying vec2 vTextureCoord;
 
 			uniform sampler2D uSampler;
+			uniform bool uIsWireframe;
 
 			void main(void) {
-				gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.x, vTextureCoord.y));
+				if (!uIsWireframe) {
+					gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.x, vTextureCoord.y));
+				} else {
+					gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+				}
 			}
 		</script>
 
@@ -86,6 +91,9 @@
 				shaderProgram.addUniform("uProjectMatrix");
 				shaderProgram.addUniform("uModelViewMatrix")
 				shaderProgram.addUniform("uSampler");
+				shaderProgram.addUniform("uIsWireframe");
+				
+				shaderProgram.setUniform("1i", "uIsWireframe", false);
 			}
 
 			function initBuffers() {
@@ -110,22 +118,17 @@
 
 			function draw() {
 				
-				// Clear the screen
 				WHIP.clear();
 				
-				// Calculate the perspective matrix
-				mat4.perspective(projectionMatrix, 45, WHIP.getPerspectiveRatio(), 0.1, 100.0);
+				mat4.perspective(projectionMatrix, 45, WHIP.getPerspectiveRatio(), 0.1, 10.0);
 
-				// Calculate the new position of the plane
 				mat4.fromTranslation(modelViewMatrix, [0.0, 0.0, -5.0]);
 				mat4.rotate(modelViewMatrix, modelViewMatrix, degToRad(xRot), [1, 0, 0]);
 				mat4.rotate(modelViewMatrix, modelViewMatrix, degToRad(yRot), [0, 1, 0]);
 				mat4.rotate(modelViewMatrix, modelViewMatrix, degToRad(zRot), [0, 0, 1]);
 				
-				// Update the shader matrix uniforms
 				shaderProgram.setUniform("Matrix4fv", "uModelViewMatrix", modelViewMatrix);
 				shaderProgram.setUniform("Matrix4fv", "uProjectMatrix", projectionMatrix);
-				
 				
 				squareVertexPositionBuffer.bind();
 				shaderProgram.attributePointer("aVertexPosition", squareVertexPositionBuffer.itemSize);
@@ -155,6 +158,10 @@
 					xRot = 0;
 					yRot = 0;
 					zRot = 0;
+				}
+				if (WHIP.ifKeyPressed(WHIP.KEY_BACKSPACE)) {
+					WHIP.toggleWireframe();
+					shaderProgram.setUniform("1i", "uIsWireframe", WHIP.isWireframe());
 				}
 				if (WHIP.ifKeyHeld(WHIP.KEY_X)) {
 					if (WHIP.ifKeyHeld(WHIP.KEY_UP)) {
@@ -193,6 +200,7 @@
 	<body oncontextmenu="return false;" onload="WHIP.start()" onresize="WHIP.resize()">
 		<canvas id="webgl-canvas" width="500" height="500"></canvas>
 		<p>Tab resets the rotations</p>
+		<p>Backspace toggles wireframe mode</p>
 		<p>Holding UP or DOWN, and then holding X or Y or Z will rotate the plane around that axis</p>
 	</body>
 
