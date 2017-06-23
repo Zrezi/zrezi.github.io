@@ -73,7 +73,7 @@
 				initBuffers();
 				initTexture();
 
-				WHIP.setClearColor(WHIP.BLACK);
+				WHIP.setClearColor(WHIP.colors.BLACK);
 				
 				update();
 			}
@@ -88,18 +88,18 @@
 				shaderProgram.addAttribute("aTextureCoord");
 				shaderProgram.enableAttribute("aTextureCoord");
 
-				shaderProgram.addUniform("uProjectMatrix");
-				shaderProgram.addUniform("uModelViewMatrix")
-				shaderProgram.addUniform("uSampler");
-				shaderProgram.addUniform("uIsWireframe");
+				shaderProgram.addUniform("uProjectMatrix", "Matrix4fv");
+				shaderProgram.addUniform("uModelViewMatrix", "Matrix4fv")
+				shaderProgram.addUniform("uSampler", "1i");
+				shaderProgram.addUniform("uIsWireframe", "1i");
 				
-				shaderProgram.setUniform("1i", "uIsWireframe", false);
+				shaderProgram.setUniform("uIsWireframe", false);
 			}
 
 			function initBuffers() {
-				squareVertexPositionBuffer = WHIP.Buffer.squareVerticesBuffer();
-				squareTextureCoordBuffer = WHIP.Buffer.squareTextureBuffer();
-				squareIndexBuffer = WHIP.Buffer.squareIndicesBuffer();
+				squareVertexPositionBuffer = WHIP.Buffer.squareVerticesBufferInstance();
+				squareTextureCoordBuffer = WHIP.Buffer.squareTextureBufferInstance();
+				squareIndexBuffer = WHIP.Buffer.squareIndicesBufferInstance();
 			}
 			
 			function initTexture() {
@@ -127,8 +127,8 @@
 				mat4.rotate(modelViewMatrix, modelViewMatrix, degToRad(yRot), [0, 1, 0]);
 				mat4.rotate(modelViewMatrix, modelViewMatrix, degToRad(zRot), [0, 0, 1]);
 				
-				shaderProgram.setUniform("Matrix4fv", "uModelViewMatrix", modelViewMatrix);
-				shaderProgram.setUniform("Matrix4fv", "uProjectMatrix", projectionMatrix);
+				shaderProgram.setUniform("uModelViewMatrix", modelViewMatrix);
+				shaderProgram.setUniform("uProjectMatrix", projectionMatrix);
 				
 				squareVertexPositionBuffer.bind();
 				shaderProgram.attributePointer("aVertexPosition", squareVertexPositionBuffer.itemSize);
@@ -161,7 +161,7 @@
 				}
 				if (WHIP.ifKeyPressed(WHIP.KEY_BACKSPACE)) {
 					WHIP.toggleWireframe();
-					shaderProgram.setUniform("1i", "uIsWireframe", WHIP.isWireframe());
+					shaderProgram.setUniform("uIsWireframe", WHIP.isWireframe());
 				}
 				if (WHIP.ifKeyHeld(WHIP.KEY_X)) {
 					if (WHIP.ifKeyHeld(WHIP.KEY_UP)) {
