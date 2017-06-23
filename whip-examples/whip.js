@@ -274,21 +274,37 @@ var WHIP = (function() {
 	}
 	
 	/**
-	 * Just some basic color definitions. Might add more...might not.
+	 * Just some basic color definitions.
 	 * @private
 	 * @since 0.0.2
 	*/
 	function initColors() {
-		WHIP.WHITE   = [ 255 / 255, 255 / 255, 255 / 255, 255 / 255 ];
-		WHIP.BLACK   = [   0 / 255,   0 / 255,   0 / 255, 255 / 255 ];
-		WHIP.RED     = [ 255 / 255,   0 / 255,   0 / 255, 255 / 255 ];
-		WHIP.GREEN   = [   0 / 255, 255 / 255,   0 / 255, 255 / 255 ];
-		WHIP.BLUE    = [   0 / 255,   0 / 255, 255 / 255, 255 / 255 ];
-		WHIP.ORANGE  = [ 255 / 255, 165 / 255,   0 / 255, 255 / 255 ];
-		WHIP.YELLOW  = [ 255 / 255, 255 / 255,   0 / 255, 255 / 255 ];
-		WHIP.CYAN    = [   0 / 255, 255 / 255, 255 / 255, 255 / 255 ];
-		WHIP.FUCHSIA = [ 255 / 255,   0 / 255, 255 / 255, 255 / 255 ];
-		WHIP.PURPLE  = [ 127 / 255,   0 / 255, 127 / 255, 255 / 255 ];
+		WHIP.colors = {};
+		WHIP.colors.BLACK      = [   0 / 255,   0 / 255,   0 / 255, 255 / 255 ];
+		WHIP.colors.BLUE       = [   0 / 255,   0 / 255, 255 / 255, 255 / 255 ];
+		WHIP.colors.BROWN      = [ 165 / 255,  42 / 255,  42 / 255, 255 / 255 ];
+		WHIP.colors.CRIMSON    = [ 220 / 255,  20 / 255,  60 / 255, 255 / 255 ];
+		WHIP.colors.CYAN       = [   0 / 255, 255 / 255, 255 / 255, 255 / 255 ];
+		WHIP.colors.DARK_BLUE  = [   0 / 255,   0 / 255, 139 / 255, 255 / 255 ];
+		WHIP.colors.DARK_GREEN = [   0 / 255, 100 / 255,   0 / 255, 255 / 255 ];
+		WHIP.colors.DARK_RED   = [ 139 / 255,   0 / 255,   0 / 255, 255 / 255 ];
+		WHIP.colors.GOLD       = [ 255 / 255, 215 / 255,   0 / 255, 255 / 255 ];
+		WHIP.colors.GREEN      = [   0 / 255, 128 / 255,   0 / 255, 255 / 255 ];
+		WHIP.colors.GREY       = [ 128 / 255, 128 / 255, 128 / 255, 255 / 255 ];
+		WHIP.colors.INDIGO     = [  75 / 255,   0 / 255, 130 / 255, 255 / 255 ];
+		WHIP.colors.LIME       = [   0 / 255, 255 / 255,   0 / 255, 255 / 255 ];
+		WHIP.colors.MAGENTA    = [ 255 / 255,   0 / 255, 255 / 255, 255 / 255 ];
+		WHIP.colors.MAROON     = [ 139 / 255,   0 / 255,   0 / 255, 255 / 255 ];
+		WHIP.colors.ORANGE     = [ 255 / 255, 165 / 255,   0 / 255, 255 / 255 ];
+		WHIP.colors.ORANGERED  = [ 255 / 255,  69 / 255,   0 / 255, 255 / 255 ];
+		WHIP.colors.PINK       = [ 255 / 255, 105 / 255, 180 / 255, 255 / 255 ];
+		WHIP.colors.PURPLE     = [ 127 / 255,   0 / 255, 127 / 255, 255 / 255 ];
+		WHIP.colors.RED        = [ 255 / 255,   0 / 255,   0 / 255, 255 / 255 ];
+		WHIP.colors.SLATE      = [  47 / 255,  79 / 255,  79 / 255, 255 / 255 ];
+		WHIP.colors.TAN        = [ 210 / 255, 180 / 255, 140 / 255, 255 / 255 ];
+		WHIP.colors.VIOLET     = [ 238 / 255, 130 / 255, 238 / 255, 255 / 255 ];
+		WHIP.colors.WHITE      = [ 255 / 255, 255 / 255, 255 / 255, 255 / 255 ];
+		WHIP.colors.YELLOW     = [ 255 / 255, 255 / 255,   0 / 255, 255 / 255 ];
 	}
 
 	// Public
@@ -636,8 +652,10 @@ var WHIP = (function() {
 			 * @param {String} uniform The uniform name.
 			 * @since 0.0.1
 			 */
-			addUniform(uniform) {
-				this[uniform] = gl.getUniformLocation(this.glProgram, uniform);
+			addUniform(uniform, type) {
+				this[uniform] = {};
+				this[uniform].location = gl.getUniformLocation(this.glProgram, uniform);
+				this[uniform].type = type; // TODO: error check this type
 			}
 
 			/**
@@ -662,46 +680,47 @@ var WHIP = (function() {
 			 * @param {Number} value The uniform value.
 			 * @since 0.0.1
 			 */
-			setUniform(uniformType, uniformName, value) {
-				switch (uniformType) {
+			setUniform(uniformName, value) {
+				var uniform = this.getUniform(uniformName);
+				switch (uniform.type) {
 					case "1i":
-						gl.uniform1i(this.getUniform(uniformName), value);
+						gl.uniform1i(uniform.location, value);
 						break;
 					case "1f":
-						gl.uniform1f(this.getUniform(uniformName), value);
+						gl.uniform1f(uniform.location, value);
 						break;
 					case "2f":
-						gl.uniform2f(this.getUniform(uniformName), value);
+						gl.uniform2f(uniform.location, value);
 						break;
 					case "3f":
-						gl.uniform3f(this.getUniform(uniformName), value);
+						gl.uniform3f(uniform.location, value);
 						break;
 					case "4f":
-						gl.uniform4f(this.getUniform(uniformName), value);
+						gl.uniform4f(uniform.location, value);
 						break;
 					case "1iv":
-						gl.uniform1iv(this.getUniform(uniformName), value);
+						gl.uniform1iv(uniform.location, value);
 						break;
 					case "3iv":
-						gl.uniform3iv(this.getUniform(uniformName), value);
+						gl.uniform3iv(uniform.location, value);
 						break;
 					case "1fv":
-						gl.uniform1fv(this.getUniform(uniformName), value);
+						gl.uniform1fv(uniform.location, value);
 						break;
 					case "2fv":
-						gl.uniform2fv(this.getUniform(uniformName), value);
+						gl.uniform2fv(uniform.location, value);
 						break;
 					case "3fv":
-						gl.uniform3fv(this.getUniform(uniformName), value);
+						gl.uniform3fv(uniform.location, value);
 						break;
 					case "4fv":
-						gl.uniform4fv(this.getUniform(uniformName), value);
+						gl.uniform4fv(uniform.location, value);
 						break;
 					case "Matrix3fv":
-						gl.uniformMatrix3fv(this.getUniform(uniformName), false, value);
+						gl.uniformMatrix3fv(uniform.location, false, value);
 						break;
 					case "Matrix4fv":
-						gl.uniformMatrix4fv(this.getUniform(uniformName), false, value);
+						gl.uniformMatrix4fv(uniform.location, false, value);
 						break;
 					default:
 						throw new Error("Uniform type \"" + uniformType + "\" is not a valid uniform type.");
@@ -867,7 +886,7 @@ var WHIP = (function() {
 				}
 
 				slot += gl.TEXTURE0;
-				if (slot < 33984 || slot > 34015) {
+				if (slot < gl.TEXTURE0 || slot > gl.TEXTURE31) {
 					throw new Error("Can't use that texture slot. Please use gl.TEXTURE0 through gl.TEXTURE31");
 				}
 
@@ -956,18 +975,137 @@ var WHIP = (function() {
 			bind() {
 				gl.bindBuffer(this.bufferType, this.glBuffer);
 			}
+			
+			/**
+			 * Generates 4 WHIP.Buffer objects, storing them in an object, and returns that object,
+			 * that represent a circle. Generated following the method developed by the WebKit team.
+			 *
+			 * Argument Count and Description:
+			 * 0 - Generates a sphere with 24 lat/long bands and a radius of 1.0
+			 * 1 - Generates a sphere with 24 lat/long bands and a radius of arguments[0]
+			 * 2 - Generates a sphere with arguments[1] lat/long bands a radius of arguments[0]
+			 * 3 - Generates a sphere with arguments[1] lat bands, arguments[2] long bands, and a radius of
+			 *     arguments[0]
+			 *
+			 * @param {Number} radius The size of the sphere.
+			 * @param {Number} latitudeBands The "resolution" of the north/south curves.
+			 * @param {Number} longitudeBands The "resolution" of the east/west curves.
+			 * @return {Object} circle The generated buffers for the sphere.
+			 * @since 0.0.5
+			*/
+			static generateSphereBuffers(radius, latitudeBands, longitudeBands) {
+				if (latitudeBands !== undefined && longitudeBands === undefined) {
+					longitudeBands = latitudeBands;
+				}
+				if (latitudeBands === undefined && longitudeBands === undefined) {
+					latitudeBands = longitudeBands = 24;
+				}
+				if (radius === undefined) {
+					radius = 1.0;
+				}
+				
+				var circle = {};
+				
+				var vertices = [];
+				var normals = [];
+				var textureCoords = [];
+				var indices = [];
+				
+				for (var latNumber = 0; latNumber <= latitudeBands; latNumber++) {
+					var theta = latNumber * Math.PI / latitudeBands;
+					var sinTheta = Math.sin(theta);
+					var cosTheta = Math.cos(theta);
+					
+					for (var longNumber = 0; longNumber <= longitudeBands; longNumber++) {
+						var phi = longNumber * 2 * Math.PI / longitudeBands;
+						var sinPhi = Math.sin(phi);
+						var cosPhi = Math.cos(phi);
+						
+						var x = cosPhi * sinTheta;
+						var y = cosTheta;
+						var z = sinPhi * sinTheta;
+						var u = 1 - (longNumber / longitudeBands);
+						var v = 1 - (latNumber / latitudeBands);
+						
+						normals.push(x);
+						normals.push(y);
+						normals.push(z);
+						textureCoords.push(u);
+						textureCoords.push(v);
+						vertices.push(radius * x);
+						vertices.push(radius * y);
+						vertices.push(radius * z);
+					}
+				}
+				
+				for (var latNumber = 0; latNumber < latitudeBands; latNumber++) {
+					for (var longNumber = 0; longNumber < longitudeBands; longNumber++) {
+						var first = (latNumber * (longitudeBands + 1)) + longNumber;
+						var second = first + longitudeBands + 1;
+						
+						indices.push(first);
+						indices.push(second);
+						indices.push(first + 1);
+						
+						indices.push(second);
+						indices.push(second + 1);
+						indices.push(first + 1);
+					}
+				}
+				
+				circle.vertices = new WHIP.Buffer(vertices, gl.ARRAY_BUFFER, gl.FLOAT, 3, vertices.length / 3);
+				circle.textureCoords = new WHIP.Buffer(textureCoords, gl.ARRAY_BUFFER, gl.FLOAT, 2, textureCoords.length / 2);
+				circle.normals = new WHIP.Buffer(normals, gl.ARRAY_BUFFER, gl.FLOAT, 3, normals.length / 3);
+				circle.indices = new WHIP.Buffer(indices, gl.ELEMENT_ARRAY_BUFFER, gl.INT, 1, indices.length);
+				
+				return circle;
+			}
+			
+			/**
+			 * Combines the below functions into a single call, returning an object with
+			 * properties relating to the content of each of the buffers.
+			 * Follows the same multi-argument pattern as squareVerticesBufferInstance().
+			 * @param {Number} scaleX The size of the square in the X dimension.
+			 * @param {Number} scaleY The size of the square in the Y dimension.
+			 * @return {Object} rect The generated buffers for a rectangle.
+			 * @see {@link squareVerticesBufferInstance}
+			 * @since 0.0.5
+			 */
+			static generateRectangleBuffers(scaleX, scaleY) {
+				var rect = {};
+				
+				rect.vertices = WHIP.Buffer.squareVerticesBufferInstance(scaleX, scaleY);
+				rect.textureCoords = WHIP.Buffer.squareTextureBufferInstance();
+				rect.indices = WHIP.Buffer.squareIndicesBufferInstance();
+				
+				return rect;
+			}
 
 			/**
 			 * A "static" WHIP.Buffer instance representing vertex positions for a square.
+			 *
+			 * Argument Count and Description:
+			 * 0 - Generates a square buffer with scaleX = scaleY = 1.0;
+			 * 1 - Generates a square buffer with scaleX = scaleY = arguments[0]
+			 * 2 - Generates a square buffer with scaleX = arguments[0] and scaleY = arguments[1]
+			 *
+			 * @param {Number} scaleX The size of the square in the X dimension.
+			 * @param {Number} scaleY The size of the square in the Y dimension.
 			 * @return {WHIP.Buffer} Vertex position buffer object.
 			 * @since 0.0.1
 			 */
-			static squareVerticesBuffer() {
+			static squareVerticesBufferInstance(scaleX, scaleY) {
+				if (scaleX === undefined && scaleY === undefined) {
+					scaleX = scaleY = 1.0;
+				}
+				if (scaleX !== undefined && scaleY === undefined) {
+					scaleY = scaleX;
+				}
 				var vertices = [
-				   -1.0, -1.0, 1.0,
-				    1.0, -1.0, 1.0,
-				    1.0, 1.0, 1.0,
-				   -1.0, 1.0, 1.0,
+				   -scaleX, -scaleY,  0.0,
+				    scaleX, -scaleY,  0.0,
+				    scaleX,  scaleY,  0.0,
+				   -scaleX,  scaleY,  0.0,
 				];
 				return new WHIP.Buffer(vertices, gl.ARRAY_BUFFER, gl.FLOAT, 3, 4);
 			}
@@ -977,7 +1115,7 @@ var WHIP = (function() {
 			 * @return {WHIP.Buffer} Texture coordinate buffer object.
 			 * @since 0.0.1
 			 */
-			static squareTextureBuffer() {
+			static squareTextureBufferInstance() {
 				var coords = [
 					0.0, 0.0,
 					1.0, 0.0,
@@ -992,7 +1130,7 @@ var WHIP = (function() {
 			 * @return {WHIP.Buffer} Indices buffer object.
 			 * @since 0.0.1
 			 */
-			static squareIndicesBuffer() {
+			static squareIndicesBufferInstance() {
 				var indices = [
 					0, 1, 2,
 					0, 2, 3
