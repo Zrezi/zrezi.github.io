@@ -152,6 +152,52 @@ var WHIP = (function() {
 		WHIP.TRIANGLES = gl.TRIANGLES;
 		WHIP.TRIANGLE_STRIP = gl.TRIANGLE_STRIP;
 		WHIP.TRIANGLE_FAN = gl.TRIANGLE_FAN;
+		
+		// Copy over gl.enable() values to shortcuts
+		WHIP.BLEND                    = gl.BLEND;
+		WHIP.CULL_FACE                = gl.CULL_FACE;
+		WHIP.DEPTH_TEST               = gl.DEPTH_TEST;
+		WHIP.DITHER                   = gl.DITHER;
+		WHIP.POLYGON_OFFSET_FILL      = gl.POLYGON_OFFSET_FILL;
+		WHIP.SAMPLE_ALPHA_TO_COVERAGE = gl.SAMPLE_ALPHA_TO_COVERAGE;
+		WHIP.SAMPLE_COVERAGE          = gl.SAMPLE_COVERAGE;
+		WHIP.SCISSOR_TEST             = gl.SCISSOR_TEST;
+		WHIP.STENCIL_TEST             = gl.STENCIL_TEST;
+		
+		// Copy over blend functions
+		WHIP.BLENDING = {};
+		WHIP.BLENDING.ZERO                     = gl.ZERO;
+		WHIP.BLENDING.ONE                      = gl.ONE;
+		WHIP.BLENDING.SRC_COLOR                = gl.SRC_COLOR;
+		WHIP.BLENDING.ONE_MINUS_SRC_COLOR      = gl.ONE_MINUS_SRC_COLOR;
+		WHIP.BLENDING.DST_COLOR                = gl.DST_COLOR;
+		WHIP.BLENDING.ONE_MINUS_DST_COLOR      = gl.ONE_MINUS_DST_COLOR;
+		WHIP.BLENDING.SRC_ALPHA                = gl.SRC_ALPHA;
+		WHIP.BLENDING.ONE_MINUS_SRC_ALPHA      = gl.ONE_MINUS_SRC_ALPHA;
+		WHIP.BLENDING.DST_ALPHA                = gl.DST_ALPHA;
+		WHIP.BLENDING.ONE_MINUS_DST_ALPHA      = gl.ONE_MINUS_DST_ALPHA;
+		WHIP.BLENDING.CONSTANT_COLOR           = gl.CONSTANT_COLOR;
+		WHIP.BLENDING.ONE_MINUS_CONSTANT_COLOR = gl.ONE_MINUS_CONSTANT_COLOR;
+		WHIP.BLENDING.CONSTANT_ALPHA           = gl.CONSTANT_ALPHA;
+		WHIP.BLENDING.ONE_MINUS_CONSTANT_ALPHA = gl.ONE_MINUS_CONSTANT_ALPHA;
+		WHIP.BLENDING.SRC_ALPHA_SATURATE       = gl.SRC_ALPHA_SATURATE;
+		
+		// Copy over culling modes
+		WHIP.CULLING = {};
+		WHIP.CULLING.FRONT = gl.FRONT;
+		WHIP.CULLING.BACK = gl.BACK;
+		WHIP.CULLING.FRONT_AND_BACK = gl.FRONT_AND_BACK;
+		
+		// Copy over depth functions
+		WHIP.FUNC = {};
+		WHIP.FUNC.NEVER = gl.NEVER;
+		WHIP.FUNC.LESS = gl.LESS;
+		WHIP.FUNC.EQUAL = gl.EQUAL;
+		WHIP.FUNC.LEQUAL = gl.LEQUAL;
+		WHIP.FUNC.GREATER = gl.GREATER;
+		WHIP.FUNC.NOTEQUAL = gl.NOTEQUAL;
+		WHIP.FUNC.GEQUAL = gl.GEQUAL;
+		WHIP.FUNC.ALWAYS = gl.ALWAYS;
 	}
 	
 	/**
@@ -169,6 +215,110 @@ var WHIP = (function() {
 		for (var i = 0; i < 256; i++) {
 			keyFlag[i] = false;
 		}
+		
+		WHIP.KEYSTRINGS = {
+			"backspace":       8,
+			"tab":             9,
+			"enter":          13,
+			"shift":          16,
+			"control":        17,
+			"alt":            18,
+			"pausebreak":     19,
+			"caps lock":      20,
+			"escape":         27,
+			"space":          32,
+			"page up":        33,
+			"page down":      34,
+			"end":            35,
+			"home":           36,
+			"left":           37,
+			"up":             38,
+			"right":          39,
+			"down":           40,
+			"insert":         45,
+			"delete":         46,
+			"0":              48,
+			"1":              49,
+			"2":              50,
+			"3":              51,
+			"4":              52,
+			"5":              53,
+			"6":              54,
+			"7":              55,
+			"8":              56,
+			"9":              57,
+			"a":              65,
+			"b":              66,
+			"c":              67,
+			"d":              68,
+			"e":              69,
+			"f":              70,
+			"g":              71,
+			"h":              72,
+			"i":              73,
+			"j":              74,
+			"k":              75,
+			"l":              76,
+			"m":              77,
+			"n":              78,
+			"o":              79,
+			"p":              80,
+			"q":              81,
+			"r":              82,
+			"s":              83,
+			"t":              84,
+			"u":              85,
+			"v":              86,
+			"w":              87,
+			"x":              88,
+			"y":              89,
+			"z":              90,
+			"windows":        91,
+			"menu":           93,
+			"numpad 0":       96,
+			"numpad 1":       97,
+			"numpad 2":       98,
+			"numpad 3":       99,
+			"numpad 4":      100,
+			"numpad 5":      101,
+			"numpad 6":      102,
+			"numpad 7":      103,
+			"numpad 8":      104,
+			"numpad 9":      105,
+			"numpad star":   106,
+			"numpad plus":   107,
+			"numpad minus":  109,
+			"numpad period": 110,
+			"numpad slash":  111,
+			"f1":            112,
+			"f2":            113,
+			"f3":            114,
+			"f4":            115,
+			"f5":            116,
+			"f6":            117,
+			"f7":            118,
+			"f8":            119,
+			"f9":            120,
+			"f10":           121,
+			"f11":           122,
+			"f12":           123,
+			"number lock":   144,
+			"scroll lock":   145,
+			"computer":      182,
+			"calculator":    183,
+			"semicolon":     186,
+			"equals":        187,
+			"comma":         188,
+			"dash":          189,
+			"period":        190,
+			"forward slash": 191,
+			"tick":          192,
+			"grave":         192,
+			"bracket left":  219,
+			"back slash":    220,
+			"bracket right": 221,
+			"apostrophe":    222
+		};
 
 		// Initialize key event keycodes
 		WHIP.KEY_BACKSPACE = 8;
@@ -279,32 +429,33 @@ var WHIP = (function() {
 	 * @since 0.0.2
 	*/
 	function initColors() {
-		WHIP.colors = {};
-		WHIP.colors.BLACK      = [   0 / 255,   0 / 255,   0 / 255, 255 / 255 ];
-		WHIP.colors.BLUE       = [   0 / 255,   0 / 255, 255 / 255, 255 / 255 ];
-		WHIP.colors.BROWN      = [ 165 / 255,  42 / 255,  42 / 255, 255 / 255 ];
-		WHIP.colors.CRIMSON    = [ 220 / 255,  20 / 255,  60 / 255, 255 / 255 ];
-		WHIP.colors.CYAN       = [   0 / 255, 255 / 255, 255 / 255, 255 / 255 ];
-		WHIP.colors.DARK_BLUE  = [   0 / 255,   0 / 255, 139 / 255, 255 / 255 ];
-		WHIP.colors.DARK_GREEN = [   0 / 255, 100 / 255,   0 / 255, 255 / 255 ];
-		WHIP.colors.DARK_RED   = [ 139 / 255,   0 / 255,   0 / 255, 255 / 255 ];
-		WHIP.colors.GOLD       = [ 255 / 255, 215 / 255,   0 / 255, 255 / 255 ];
-		WHIP.colors.GREEN      = [   0 / 255, 128 / 255,   0 / 255, 255 / 255 ];
-		WHIP.colors.GREY       = [ 128 / 255, 128 / 255, 128 / 255, 255 / 255 ];
-		WHIP.colors.INDIGO     = [  75 / 255,   0 / 255, 130 / 255, 255 / 255 ];
-		WHIP.colors.LIME       = [   0 / 255, 255 / 255,   0 / 255, 255 / 255 ];
-		WHIP.colors.MAGENTA    = [ 255 / 255,   0 / 255, 255 / 255, 255 / 255 ];
-		WHIP.colors.MAROON     = [ 139 / 255,   0 / 255,   0 / 255, 255 / 255 ];
-		WHIP.colors.ORANGE     = [ 255 / 255, 165 / 255,   0 / 255, 255 / 255 ];
-		WHIP.colors.ORANGERED  = [ 255 / 255,  69 / 255,   0 / 255, 255 / 255 ];
-		WHIP.colors.PINK       = [ 255 / 255, 105 / 255, 180 / 255, 255 / 255 ];
-		WHIP.colors.PURPLE     = [ 127 / 255,   0 / 255, 127 / 255, 255 / 255 ];
-		WHIP.colors.RED        = [ 255 / 255,   0 / 255,   0 / 255, 255 / 255 ];
-		WHIP.colors.SLATE      = [  47 / 255,  79 / 255,  79 / 255, 255 / 255 ];
-		WHIP.colors.TAN        = [ 210 / 255, 180 / 255, 140 / 255, 255 / 255 ];
-		WHIP.colors.VIOLET     = [ 238 / 255, 130 / 255, 238 / 255, 255 / 255 ];
-		WHIP.colors.WHITE      = [ 255 / 255, 255 / 255, 255 / 255, 255 / 255 ];
-		WHIP.colors.YELLOW     = [ 255 / 255, 255 / 255,   0 / 255, 255 / 255 ];
+		WHIP.COLORS = {};
+		WHIP.COLORS.BLACK      = [   0 / 255,   0 / 255,   0 / 255, 255 / 255 ];
+		WHIP.COLORS.BLUE       = [   0 / 255,   0 / 255, 255 / 255, 255 / 255 ];
+		WHIP.COLORS.BROWN      = [ 165 / 255,  42 / 255,  42 / 255, 255 / 255 ];
+		WHIP.COLORS.CRIMSON    = [ 220 / 255,  20 / 255,  60 / 255, 255 / 255 ];
+		WHIP.COLORS.CYAN       = [   0 / 255, 255 / 255, 255 / 255, 255 / 255 ];
+		WHIP.COLORS.DARK_BLUE  = [   0 / 255,   0 / 255, 139 / 255, 255 / 255 ];
+		WHIP.COLORS.DARK_GREEN = [   0 / 255, 100 / 255,   0 / 255, 255 / 255 ];
+		WHIP.COLORS.DARK_RED   = [ 139 / 255,   0 / 255,   0 / 255, 255 / 255 ];
+		WHIP.COLORS.GOLD       = [ 255 / 255, 215 / 255,   0 / 255, 255 / 255 ];
+		WHIP.COLORS.GREEN      = [   0 / 255, 128 / 255,   0 / 255, 255 / 255 ];
+		WHIP.COLORS.GRAY       = [ 128 / 255, 128 / 255, 128 / 255, 255 / 255 ];
+		WHIP.COLORS.GREY       = [ 128 / 255, 128 / 255, 128 / 255, 255 / 255 ];
+		WHIP.COLORS.INDIGO     = [  75 / 255,   0 / 255, 130 / 255, 255 / 255 ];
+		WHIP.COLORS.LIME       = [   0 / 255, 255 / 255,   0 / 255, 255 / 255 ];
+		WHIP.COLORS.MAGENTA    = [ 255 / 255,   0 / 255, 255 / 255, 255 / 255 ];
+		WHIP.COLORS.MAROON     = [ 139 / 255,   0 / 255,   0 / 255, 255 / 255 ];
+		WHIP.COLORS.ORANGE     = [ 255 / 255, 165 / 255,   0 / 255, 255 / 255 ];
+		WHIP.COLORS.ORANGE_RED = [ 255 / 255,  69 / 255,   0 / 255, 255 / 255 ];
+		WHIP.COLORS.PINK       = [ 255 / 255, 105 / 255, 180 / 255, 255 / 255 ];
+		WHIP.COLORS.PURPLE     = [ 127 / 255,   0 / 255, 127 / 255, 255 / 255 ];
+		WHIP.COLORS.RED        = [ 255 / 255,   0 / 255,   0 / 255, 255 / 255 ];
+		WHIP.COLORS.SLATE      = [  47 / 255,  79 / 255,  79 / 255, 255 / 255 ];
+		WHIP.COLORS.TAN        = [ 210 / 255, 180 / 255, 140 / 255, 255 / 255 ];
+		WHIP.COLORS.VIOLET     = [ 238 / 255, 130 / 255, 238 / 255, 255 / 255 ];
+		WHIP.COLORS.WHITE      = [ 255 / 255, 255 / 255, 255 / 255, 255 / 255 ];
+		WHIP.COLORS.YELLOW     = [ 255 / 255, 255 / 255,   0 / 255, 255 / 255 ];
 	}
 
 	// Public
@@ -338,7 +489,7 @@ var WHIP = (function() {
 			if (typeof WHIPPostInit !== "function") {
 				throw new Error("Need to implement a global function \"WHIPPostInit()\"");
 			}
-			WHIPPostInit()
+			WHIPPostInit();
 		},
 
 		/**
@@ -402,16 +553,101 @@ var WHIP = (function() {
 
 		/**
 		 * Little wrapper for gl.clearColor so you don't have to call WHIP.getGL().clearColor() every time.
-		 * This function can take either an array of 4 colors (RGBA), or 4 individual parameters r, g, b, a.
-		 * @param {Number} r The red component of the clear color.
+		 * This function can take either an array of 4 colors (RGBA), 4 individual parameters (r, g, b, a),
+		 * or a string of the color's name.
+		 * @param {Number} r The red component of the clear color OR an array of 4 values OR a string.
 		 * @param {Number} g The green component of the clear color.
 		 * @param {Number} b The blue component of the clear color.
 		 * @param {Number} a The alpha component of the clear color.
+		 * @throw {IllegalArgumentException} The specified color string isn't an available color.
 		 * @throw {IllegalArgumentException} Wrong number of colors supplied to the call as an array.
 		 * @throw {IllegalArgumentException} Wrong number of colors supplied to the call as individual values.
 		 * @since 0.0.1
 		 */
 		setClearColor: function(r /* ... */ ) {
+			if (typeof r === "string") {
+				switch (r.toLowerCase()) {
+					case "black":
+						WHIP.setClearColor(WHIP.COLORS.BLACK);
+						break;
+					case "blue":
+						WHIP.setClearColor(WHIP.COLORS.BLUE);
+						break;
+					case "brown":
+						WHIP.setClearColor(WHIP.COLORS.BROWN);
+						break;
+					case "cyan":
+						WHIP.setClearColor(WHIP.COLORS.CYAN);
+						break;
+					case "dark blue":
+						WHIP.setClearColor(WHIP.COLORS.DARK_BLUE);
+						break;
+					case "dark green":
+						WHIP.setClearColor(WHIP.COLORS.DARK_GREEN);
+						break;
+					case "dark red":
+						WHIP.setClearColor(WHIP.COLORS.DARK_RED);
+						break;
+					case "gold":
+						WHIP.setClearColor(WHIP.COLORS.GOLD);
+						break;
+					case "green":
+						WHIP.setClearColor(WHIP.COLORS.GREEN);
+						break;
+					case "gray":
+						WHIP.setClearColor(WHIP.COLORS.GREY);
+						break;
+					case "grey":
+						WHIP.setClearColor(WHIP.COLORS.GREY);
+						break;
+					case "indigo":
+						WHIP.setClearColor(WHIP.COLORS.INDIGO);
+						break;
+					case "lime":
+						WHIP.setClearColor(WHIP.COLORS.LIME);
+						break;
+					case "magenta":
+						WHIP.setClearColor(WHIP.COLORS.MAGENTA);
+						break;
+					case "maroon":
+						WHIP.setClearColor(WHIP.COLORS.MAROON);
+						break;
+					case "orange":
+						WHIP.setClearColor(WHIP.COLORS.ORANGE);
+						break;
+					case "orange red":
+						WHIP.setClearColor(WHIP.COLORS.ORANGE_RED);
+						break;
+					case "pink":
+						WHIP.setClearColor(WHIP.COLORS.PINK);
+						break;
+					case "purple":
+						WHIP.setClearColor(WHIP.COLORS.PURPLE);
+						break;
+					case "red":
+						WHIP.setClearColor(WHIP.COLORS.RED);
+						break;
+					case "slate":
+						WHIP.setClearColor(WHIP.COLORS.SLATE);
+						break;
+					case "tan":
+						WHIP.setClearColor(WHIP.COLORS.TAN);
+						break;
+					case "violet":
+						WHIP.setClearColor(WHIP.COLORS.VIOLET);
+						break;
+					case "white":
+						WHIP.setClearColor(WHIP.COLORS.WHITE);
+						break;
+					case "yellow":
+						WHIP.setClearColor(WHIP.COLORS.YELLOW);
+						break;
+					default:
+						throw new Error("Color \"" + r + "\" doesn't exist.");
+						break;
+				}
+				return;
+			}
 			if (r.constructor === Array) {
 				if (r.length != 4) {
 					throw new Error("Wrong number of arguments in array that was passed to WHIP.setClearColor().");
@@ -453,6 +689,282 @@ var WHIP = (function() {
 		},
 		
 		/**
+		 * Enable a specific WebGL capability.
+		 * @param {Number} cap The capability to enable.
+		 * @since 0.06
+		*/
+		enableCapability: function(cap) {
+			gl.enable(cap);
+		},
+		
+		/**
+		 * Disable a specific WebGL capability.
+		 * @param {Number} cap The capability to enable.
+		 * @since 0.06
+		*/
+		disableCapability: function(cap) {
+			gl.disable(cap);
+		},
+		
+		/**
+		 * Enable blending capability.
+		 * @since 0.0.6
+		*/
+		enableBlending: function() {
+			gl.enable(gl.BLEND);
+		},
+		
+		/**
+		 * Disable blending capability.
+		 * @since 0.0.6
+		*/
+		disableBlending: function() {
+			gl.disable(gl.BLEND);
+		},
+		
+		/**
+		 * Sets the blending function.
+		 * "... defines which function is used for blending pixel arithmetic."
+		 * @param {Number} srcFunc The WHIP.BLENDING value for the type of blending.
+		 * @param {Number} dstFunc The WHIP.BLENDING value for the type of blending.
+		 * @throw {NoSuchElementException} the function that was tried doesn't exist.
+		 * @since 0.0.6
+		*/
+		setBlendingFunction: function(srcFunc, dstFunc) {
+			if (Object.values(WHIP.BLENDING).indexOf(srcFunc) == -1) {
+				console.log(WHIP.BLENDING);
+				throw new Error("Blending function \"" + srcFunc + "\" is not a valid function. WHIP.BLENDING keys are valid.");
+			}
+			if (Object.values(WHIP.BLENDING).indexOf(dstFunc) == -1) {
+				console.log(WHIP.BLENDING);
+				throw new Error("Blending function \"" + dstFunc + "\" is not a valid function. WHIP.BLENDING keys are valid.");
+			}
+			gl.blendFunc(srcFunc, dstFunc);
+		},
+		
+		/**
+		 * Enable culling capability.
+		 * @since 0.0.6
+		*/
+		enableCulling: function() {
+			gl.enable(gl.CULL_FACE);
+		},
+		
+		/**
+		 * Disable culling capability.
+		 * @since 0.0.6
+		*/
+		disableCulling: function() {
+			gl.disable(gl.CULL_FACE);
+		},
+		
+		/**
+		 * Sets the face culling function.
+		 * "... specifies whether or not front- and/or back-facing polygons can be culled."
+		 * @param {Number} func The WHIP.FUNC value for the type of test.
+		 * @throw {NoSuchElementException} the function that was tried doesn't exist.
+		 * @since 0.0.6
+		*/
+		setCullingFunction: function(func) {
+			if (Object.values(WHIP.CULLING).indexOf(func) == -1) {
+				console.log(WHIP.CULLING);
+				throw new Error("Culling function \"" + func + "\" is not a valid function. WHIP.CULLING keys are valid.");
+			}
+			gl.cullFace(func);
+		},
+		
+		/**
+		 * Enable depth test capability.
+		 * @since 0.0.6
+		*/
+		enableDepthTest: function() {
+			gl.enable(gl.DEPTH_TEST);
+		},
+		
+		/**
+		 * Disable depth test capability.
+		 * @since 0.0.6
+		*/
+		disableDepthTest: function() {
+			gl.disable(gl.DEPTH_TEST);
+		},
+		
+		/**
+		 * Sets the depth function.
+		 * "... specifies a function that compares incoming pixel depth to the current depth buffer value."
+		 * @param {Number} func The WHIP.FUNC value for the type of test.
+		 * @throw {NoSuchElementException} the function that was tried doesn't exist.
+		 * @since 0.0.6
+		*/
+		setDepthFunction: function(func) {
+			if (Object.values(WHIP.FUNC).indexOf(func) == -1) {
+				console.log(WHIP.FUNC);
+				throw new Error("Depth function \"" + func + "\" is not a valid function. WHIP.FUNC keys are valid.");
+			}
+			gl.depthFunc(func);
+		},
+		
+		/**
+		 * Enable dither capability.
+		 * @since 0.0.6
+		*/
+		enableDither: function() {
+			gl.enable(gl.DITHER);
+		},
+		
+		/**
+		 * Disable dither capability.
+		 * @since 0.0.6
+		*/
+		disableDither: function() {
+			gl.disable(gl.DITHER);
+		},
+		
+		/**
+		 * Enable polygon offset capability.
+		 * @since 0.0.6
+		*/
+		enablePolygonOffset: function() {
+			gl.enable(gl.POLYGON_OFFSET_FILL);
+		},
+		
+		/**
+		 * Disable polygon offset capability.
+		 * @since 0.0.6
+		*/
+		disablePolygonOffset: function() {
+			gl.disable(gl.POLYGON_OFFSET_FILL);
+		},
+		
+		/**
+		 * Sets the polygon offset depth value.
+		 * @param {Number} factor The scale factor for the units.
+		 * @param {Number} units Sets the multiplier that combines with the constant depth offset.
+		 * @throw {IllegalArgumentException} the arguments are not numbers.
+		 * @since 0.0.6
+		*/
+		setPolygonOffset: function(factor, units) {
+			if (!(typeof factor === "number") || !(typeof units === "number")) {
+				throw new Error("Tried to set polygon offset function to a value that wasn't a float!");
+			}
+			gl.polygonOffset(factor, units);
+		},
+		
+		/**
+		 * Enable sample alpha to coverage capability.
+		 * @since 0.0.6
+		*/
+		enableSATC: function() {
+			gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE);
+		},
+		
+		/**
+		 * Disable sample alpha to coverage capability.
+		 * @since 0.0.6
+		*/
+		disableSATC: function() {
+			gl.disable(gl.SAMPLE_ALPHA_TO_COVERAGE);
+		},
+		
+		/**
+		 * Enable sample coverage capability.
+		 * @since 0.0.6
+		*/
+		enableSampleCoverage: function() {
+			gl.enable(gl.SAMPLE_COVERAGE);
+		},
+		
+		/**
+		 * Disable sample coverage capability.
+		 * @since 0.0.6
+		*/
+		disableSampleCoverage: function() {
+			gl.disable(gl.SAMPLE_COVERAGE);
+		},
+		
+		/**
+		 * Sets the sample coverage value and whether or not to invert that value.
+		 * "... specifies multi-sample coverage parameters for anti-aliasing effects."
+		 * @param {Number} value Clamped value for the coverage.
+		 * @param {Boolean} invert Sets whether or not the coverage is inverted.
+		 * @since 0.0.6
+		*/
+		setSampleCoverage: function(value, invert) {
+			if (invert === undefined) {
+				console.log("setSampleCoverage call invert value left undefined. Setting to false...");
+				invert = false;
+			}
+			gl.sampleCoverage(value, invert);
+		},
+		
+		/**
+		 * Enable scissor test capability.
+		 * @since 0.0.6
+		*/
+		enableScissorTest: function() {
+			gl.enable(gl.SCISSOR_TEST);
+		},
+		
+		/**
+		 * Disable scissor test capability.
+		 * @since 0.0.6
+		*/
+		disableScissorTest: function() {
+			gl.disable(gl.SCISSOR_TEST);
+		},
+		
+		/**
+		 * Sets the scissor function.
+		 * "... sets a scissor box, which limits the drawing to a specified rectangle."
+		 * @param {Number} x The starting x-coordinate of the scissor box.
+		 * @param {Number} y The starting y-coordinate of the scissor box.
+		 * @param {Number} width The width of the scissor box.
+		 * @param {Number} height The height of the scissor box.
+		 * @throw {UndefinedArgumentException} there was an undefined argument.
+		 * @since 0.0.6
+		*/
+		setScissorBox: function(x, y, width, height) {
+			if (x === undefined || y === undefined || width === undefined || height === undefined) {
+				throw new Error("Need to specify (x, y, width, height) for setScissorBox()!");
+			}
+			gl.scissor(x, y, width, height);
+		},
+		
+		/**
+		 * Enable stencil test capability.
+		 * @since 0.0.6
+		*/
+		enableStencilTest: function() {
+			gl.enable(gl.STENCIL_TEST);
+		},
+		
+		/**
+		 * Disable stencil test capability.
+		 * @since 0.0.6
+		*/
+		disableStencilTest: function() {
+			gl.disable(gl.STENCIL_TEST);
+		},
+		
+		/**
+		 * Sets the stencil function.
+		 * "Stencilling enables and disables drawing on a per-pixel basis. It is 
+		 * typically used in multipass rendering to achieve special effects."
+		 * @param {Number} func The WHIP.FUNC value for the type of test.
+		 * @param {Number} ref Reference value for the stencil test.
+		 * @param {Number} mask An "8-bit" mask of 1's and 0's.
+		 * @throw {NoSuchElementException} the function that was tried doesn't exist.
+		 * @since 0.0.6
+		*/
+		setStencilFunction: function(func, ref, mask) {
+			if (Object.values(WHIP.FUNC).indexOf(func) == -1) {
+				console.log(WHIP.FUNC);
+				throw new Error("Depth function \"" + func + "\" is not a valid function. WHIP.FUNC keys are valid.");
+			}
+			gl.stencilFunc(func, ref, mask);
+		},
+		
+		/**
 		 * Set wireframe status.
 		 * @param {Boolean} val
 		 * #throw {IllegalArgumentException} needs to be boolean true or false
@@ -487,27 +999,52 @@ var WHIP = (function() {
 
 		/**
 		 * Determines whether or not the key is currently pressed.
-		 * @param {Number} key The keyCode of the key.
+		 * @param {Number | String} key The keyCode of the key.
 		 * @return {Boolean} whether or not the key is pressed.
 		 * @since 0.0.1
 		 */
 		ifKeyHeld: function(key) {
-			return (currentlyPressedKeys[key]) ? true : false;
+			var keyvalue;
+			
+			if (typeof key === "string") {
+				keyvalue = WHIP.KEYSTRINGS[key];
+				if (!key) {
+					throw new Error("Key \"" + key + "\" is not valid");
+					return null;
+				}
+			} else {
+				keyvalue = key;
+			}
+			
+			return (currentlyPressedKeys[keyvalue]) ? true : false;
 		},
 
 		/**
 		 * Determines whether or not the key was currently pressed.
 		 * When true, it sets a flag and won't fire again until the key is released.
-		 * @param {Number} key The keyCode of the key.
+		 * @param {Number | String} key The keyCode of the key.
 		 * @return {Boolean} whether or not the key was pressed.
 		 * @since 0.0.1
 		 */
 		ifKeyPressed: function(key) {
+			var keyvalue;
 			var value = false;
-			if (currentlyPressedKeys[key] && keyFlag[key] == false) {
-				value = true;
-				keyFlag[key] = true;
+			
+			if (typeof key === "string") {
+				keyvalue = WHIP.KEYSTRINGS[key];
+				if (!key) {
+					throw new Error("Key \"" + key + "\" is not valid");
+					return null;
+				}
+			} else {
+				keyvalue = key;
 			}
+			
+			if (currentlyPressedKeys[keyvalue] && keyFlag[keyvalue] == false) {
+				value = true;
+				keyFlag[keyvalue] = true;
+			}
+			
 			return value;
 		},
 
@@ -535,6 +1072,26 @@ var WHIP = (function() {
 				style = WHIP.LINE_LOOP;
 			}
 			gl.drawArrays(style, 0, itemCount);
+		},
+		
+		/**
+		 * Convert a degree value to a radian value.
+		 * @param {Number} degrees The angle value in degrees.
+		 * @return {Number} the angle in radians.
+		 * @since 0.0.8
+		*/
+		degreesToRadians: function(degrees) {
+			return degrees * Math.PI / 180;
+		},
+		
+		/**
+		 * Convert a radian value to a degree value.
+		 * @param {Number} radians The angle value in radians.
+		 * @return {Number} the angle in degrees.
+		 * @since 0.0.8
+		*/
+		radiansToDegrees: function(radians) {
+			return radians * 180 / Math.PI;
 		},
 
 		/**
