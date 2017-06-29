@@ -2,30 +2,40 @@
 <html>
 	<head>
 		<meta charset="utf-8">
-		<title>Zach Reznicek &mdash; Github IO</title>
+		<title>Zach Reznicek</title>
+		<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+		<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.99.0/css/materialize.min.css">
+		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Share+Tech+Mono">
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.99.0/js/materialize.min.js"></script>
 		<style>
-			* {
-				font-family: monospace;
-				font-size: 20px;
+			.container {
+				margin-top: 150px;
+			}
+			#name {
+				color: #9F9F9F;
+				font-family: 'Share Tech Mono', monospace;
+			}
+			.link {
+				display: inline-flex;
+				vertical-align: middle;
 			}
 		</style>
-		
-		<script>
-			
-		</script>
 	</head>
+
 	<body>
-		<h5>This is bad, but click on stuff for now</h5>
-		<hr>
-		<p>> <a href="https://github.com/Zrezi">github</a></p>
-		<p>> <a href="circles/circles.html">webgl circles</a></p>
-		<p>> <a href="gc-whiite/gc-whiite-guide.html">wii linux</a></p>
-		<hr>
-		<h4>whip examples</h4>
-		<p>> <a href="whip-examples/rotating plane/rotating_plane.html">rotating plane</a></p>
-		<p>> <a href="whip-examples/rotating sphere/rotating_sphere.html">rotating sphere</a></p>
-		<hr>
-		<p>> <a href="jscommentremover/jscommentremover.html">javascript comment remover</a></p>
+		<div class="container">
+			<div class="row center-align">
+				<h3 id="name"></h3>
+				<p class="link" id="link-about"><a href="pages/about.html"><i class="medium material-icons">help_outline</i></a></p>
+				<br>
+				<p class="link" id="link-code"><a href="pages/projects.html"><i class="medium material-icons">polymer</i></a></p>
+				<br>
+				<p class="link" id="link-contact"><a href="pages/contactme.html"><i class="medium material-icons">email</i></a></p>
+			</div>
+		</div>
+		<script>
+			function update(){requestAnimationFrame(update);for(var t=0;iteration_steps>t;t++)if(DOM_name.innerHTML!=ttit){for(var e=DOM_name.innerHTML;e.charAt(e.length-char_offset)===ttit.charAt(ttit.length-char_offset);)char_offset++;if(e.length==ttit.length)DOM_name.innerHTML=do_character(e);else if(e.length<ttit.length)if(char_offset<=e.length)DOM_name.innerHTML=do_character(e);else{var n=DOM_name.innerHTML;DOM_name.innerHTML=String.fromCharCode(randInt(65,90))+n}else if(e.length>ttit.length)if(char_offset<=ttit.length)DOM_name.innerHTML=do_character(e);else{for(var a="",o=0;o<e.length-ttit.length;o++)a+=" ";a+=ttit,ttit=a}}}function do_character(t){if(char_offset<=ttit.length){var e=DOM_name.innerHTML.charCodeAt(t.length-char_offset);ttit.charCodeAt(ttit.length-char_offset)>e?(e++,65>e&&(e=65),e>90&&97>e&&(e=97)):(e--,e>90&&97>e&&(e=90),32==ttit.charCodeAt(ttit.length-char_offset)&&65>e&&(e=32));var n=t.substring(0,t.length-char_offset),a=t.substring(t.length-char_offset+1);return t="",t+=n,t+=String.fromCharCode(e),t+=""!=a?a:""}}function randInt(t,e){return Math.floor(Math.random()*(e-t+1)+t)}var DOM_name,DOM_link_about,DOM_link_code,DOM_link_contact,update_about=!1,update_code=!1,update_contact=!1;const default_name="zach reznicek",iteration_steps=10;var ttit=default_name,char_offset=1;DOM_name=document.getElementById("name"),DOM_name.innerHTML=default_name,DOM_link_about=document.getElementById("link-about"),DOM_link_about.onmouseover=function(){ttit="about me",char_offset=1},DOM_link_about.onmouseleave=function(){ttit=default_name,char_offset=1},DOM_link_code=document.getElementById("link-code"),DOM_link_code.onmouseover=function(){ttit="my projects",char_offset=1},DOM_link_code.onmouseleave=function(){ttit=default_name,char_offset=1},DOM_link_contact=document.getElementById("link-contact"),DOM_link_contact.onmouseover=function(){ttit="contact me",char_offset=1},DOM_link_contact.onmouseleave=function(){ttit=default_name,char_offset=1},requestAnimationFrame(update);
+		</script>
 	</body>
-	<!--<script>window.location.href="circles/index.html";</script>-->
 </html>

@@ -1,0 +1,128 @@
+<!--<script>
+			var DOM_name, DOM_link_about, DOM_link_code, DOM_link_contact;
+			var update_about = false, update_code = false, update_contact = false;
+			
+			const default_name = "Zach Reznicek";
+			const iteration_steps = 10;
+			var ttit = default_name;
+			var char_offset = 1;
+			
+			DOM_name = document.getElementById("name");
+			DOM_name.innerHTML = default_name;
+			
+			DOM_link_about = document.getElementById("link-about");
+			DOM_link_about.onmouseover = function() {
+				ttit = "About Me";
+				char_offset = 1;
+			}
+			DOM_link_about.onmouseleave = function() {
+				ttit = default_name;
+				char_offset = 1;
+			}
+		
+			DOM_link_code = document.getElementById("link-code");
+			DOM_link_code.onmouseover = function() {
+				ttit = "My Projects";
+				char_offset = 1;
+			}
+			DOM_link_code.onmouseleave = function() {
+				ttit = default_name;
+				char_offset = 1;
+			}
+			
+			DOM_link_contact = document.getElementById("link-contact");
+			DOM_link_contact.onmouseover = function() {
+				ttit = "Contact Me";
+				char_offset = 1;
+			}
+			DOM_link_contact.onmouseleave = function() {
+				ttit = default_name;
+				char_offset = 1;
+			}
+			
+			requestAnimationFrame(update);
+			
+			function update() {
+			
+				requestAnimationFrame(update);
+				
+				// Run it 3 times per frame otherwise it takes forever
+				for (var i = 0; i < iteration_steps; i++) {
+					if (DOM_name.innerHTML != ttit) {
+					
+						// Get the text from the name element
+						var name_text = DOM_name.innerHTML;
+						
+						// Skip any characters that are already equal
+						while (name_text.charAt(name_text.length - char_offset) === ttit.charAt(ttit.length - char_offset)) {
+							char_offset++;
+						}
+						
+						if (name_text.length == ttit.length) {
+							DOM_name.innerHTML = do_character(name_text);
+							
+							
+						} else if (name_text.length < ttit.length) { // what you have is smaller than what you're going to
+							if (char_offset <= name_text.length) {
+								DOM_name.innerHTML = do_character(name_text);
+							} else {
+								var preserved = DOM_name.innerHTML;
+								DOM_name.innerHTML = String.fromCharCode(randInt(65, 90)) + preserved;
+							}
+						} else if (name_text.length > ttit.length) { // what you have is larger than what you're going to
+							if (char_offset <= ttit.length) {
+								DOM_name.innerHTML = do_character(name_text);
+							} else {
+								var new_ttit = "";
+								for (var j = 0; j < name_text.length - ttit.length; j++) {
+									new_ttit += " ";
+								}
+								new_ttit += ttit;
+								ttit = new_ttit;
+							}
+						}
+						
+					} // end if the text isn't equal
+					
+				} // end for loop
+				
+			} // end update
+			
+			function do_character(name_text) {
+				if (char_offset <= ttit.length) {
+							
+					var char_code = DOM_name.innerHTML.charCodeAt(name_text.length - char_offset);
+					if (ttit.charCodeAt(ttit.length - char_offset) > char_code) {
+						char_code++;
+						if (char_code < 65) {
+							char_code = 65;
+						}
+						if (90 < char_code && char_code < 97) {
+							char_code = 97;
+						}
+					} else {
+						char_code--;
+						if (90 < char_code && char_code < 97) {
+							char_code = 90;
+						}
+						if (ttit.charCodeAt(ttit.length - char_offset) == 32 && char_code < 65) {
+							char_code = 32;
+						}
+					}
+					
+					var preserved_before = name_text.substring(0, name_text.length - char_offset);
+					var preserved_after = name_text.substring(name_text.length - char_offset + 1);
+					
+					name_text = "";
+					name_text += preserved_before;
+					name_text += String.fromCharCode(char_code);
+					name_text += (preserved_after != "") ? preserved_after : "";
+					
+					return name_text;
+				}
+			}
+			
+			function randInt(min,max) {
+				return Math.floor(Math.random()*(max-min+1)+min);
+			}
+		</script>-->
