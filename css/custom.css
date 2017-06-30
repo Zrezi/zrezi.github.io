@@ -3,6 +3,7 @@ html {
 	min-height: 100%;
 	box-shadow: 0 0 175px rgba(0,0,0,0.9) inset;
 	overflow-y: scroll;
+	background-color: #ffffef;
 }
 
 /* header styling */
@@ -22,9 +23,6 @@ a {
 }
 a:hover {
 	color: #01547a;
-}
-.disabled a {
-	color: #8F8F8F;
 }
 
 hr {
@@ -54,7 +52,7 @@ blockquote {
 
 /* change color of paragraphs to grey */
 p {
-	color: #8F8F8F;
+	color: #707070;
 	font-family: 'Share Tech Mono', monospace;
 }
 
