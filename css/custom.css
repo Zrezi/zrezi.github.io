@@ -2,12 +2,17 @@
 html {
 	min-height: 100%;
 	box-shadow: 0 0 200px rgba(0,0,0,0.9) inset;
+	overflow-y: scroll;
 }
 
 /* header styling */
 h3, h4, h5, h6 {
 	color: #9F9F9F;
 	font-family: 'Share Tech Mono', monospace;
+}
+
+hr {
+	color: #EFEFEF
 }
 
 blockquote {

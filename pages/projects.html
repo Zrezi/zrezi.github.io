@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<meta charset="utf-8">
-		<title>Zach Reznicek</title>
+		<title>Zach Reznicek &mdash; Projects</title>
 		<script src="../js/jquery-3.2.1.min.js"></script>
 		<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.99.0/css/materialize.min.css">
@@ -28,7 +28,7 @@
 						<p class="link" id="link-tinyinput"><a href="projects/tinyinput.html">TinyInput</a></p>
 					</div>
 					<div class="col s4">
-						<p class="link" id="link-">coming soon...</p>
+						<p class="link" id="link-jcr"><a href="jscommentremover/jscommentremover.html">Javascript Comment Remover</a></p>
 						<br>
 						<p class="link" id="link-">coming soon...</p>
 						<br>
@@ -48,7 +48,7 @@
 				(function() {
 					window.onunload = function() {};
 					
-					var DOM_body_wrapper, DOM_name, DOM_back, DOM_link_emulator, DOM_link_whip, DOM_link_tinyinput, DOM_link_github;
+					var DOM_body_wrapper, DOM_name, DOM_back, DOM_link_emulator, DOM_link_whip, DOM_link_tinyinput, DOM_link_github, DOM_link_jcr;
 					
 					const default_text = "my projects";
 					const iteration_steps = 10;
@@ -119,6 +119,18 @@
 					DOM_link_github.onclick = function(event) {
 						event.preventDefault();
 						changePageOnAnimation("https://github.com/Zrezi");
+					}
+					
+					DOM_link_jcr = document.getElementById("link-jcr");
+					DOM_link_jcr.onmouseover = function() {
+						interpolation_text = "comment remover";
+					}
+					DOM_link_jcr.onmouseleave = function() {
+						interpolation_text = default_text;
+					}
+					DOM_link_jcr.onclick = function(event) {
+						event.preventDefault();
+						changePageOnAnimation("jscommentremover/jscommentremover.html");
 					}
 					
 					function changePageOnAnimation(path) {

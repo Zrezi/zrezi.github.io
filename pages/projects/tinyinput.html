@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<meta charset="utf-8">
-		<title>Zach Reznicek</title>
+		<title>Zach Reznicek &mdash; Tiny Input &mdash; Javascript Input Capturer</title>
 		<script src="../../js/jquery-3.2.1.min.js"></script>
 		<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.99.0/css/materialize.min.css">
@@ -18,7 +18,40 @@
 				<div class="row center-align">
 					<h3 id="name">tinyinput</h3>
 					<br>
-					<p>Write-up coming soon...</p>
+					<p><a href="https://github.com/Zrezi/tinyinput">GitHub Link</a> &mdash; <a href="https://raw.githubusercontent.com/Zrezi/TinyInput/master/tinyinput-min.js">Raw Minified</a></p>
+					<p>
+						Whenever I make graphics projects in a browser, I always end up implemented roughly
+						the same input handling code. TinyInput is a small ~6 KB script that handles keyboard
+						input, mouse clicks, mouse movement, as well as support for fire a function on a press
+						or a hold. The library also supports multi-argument parameter. Thus it is possible, for
+						example, to fire an event if <i>both</i> "T" and "Tab" are held at the same time.
+					</p>
+					<p>
+						There's still a bug with multi-key or multi-mouse-click presses. Holds work as intended,
+						but currently for a multi-press to work you need to input both events within exactly
+						the same frame, otherwise one press will be read before the other and it won't detect
+						them as both being pressed once.
+					</p>
+					<p>
+						I know of a few methods to fix this, I'll experiment and post an update once that happens.
+					</p>
+					<hr>
+					<p>
+						Using TinyInput is extremely simple. Everything is disabled by default, to not interfere unless you specify.
+						To check for a key press, the following code is sufficient:
+					</p>
+					<blockquote>
+						TINYINPUT.init();<br>
+						TINYINPUT.enableKeyboard();<br><br>
+						if (TINYINPUT.keyHeld("t")) {<br>
+						&nbsp;&nbsp;console.log("t is being held!");<br>
+						}
+					</blockquote>
+					<p>
+						For documentation, refer to the <a href="https://github.com/Zrezi/TinyInput/blob/master/tinyinput.js">source code</a>. It's documented with JSDoc style, and
+						should be fairly straightforward to follow. Note that in the above example, you are allowed to use
+						string literals like "t", but you could also use TINYINPUT.KEY_T and it would acheive the same effect.
+					</p>
 					<br>
 					<p class="link" id="back"><a href="../index.html"><i class="medium material-icons">keyboard_return</i></a></p>
 				</div>
