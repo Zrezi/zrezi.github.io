@@ -48,6 +48,16 @@
 						}
 					</blockquote>
 					<p>
+						To check multiple keys at once, simply add each one as it's own parameter:
+					</p>
+					<blockquote>
+						TINYINPUT.init();<br>
+						TINYINPUT.enableKeyboard();<br><br>
+						if (TINYINPUT.keyHeld("t", "a", "shift")) {<br>
+						&nbsp;&nbsp;console.log("SHIFT+T+A is being held!");<br>
+						}
+					</blockquote>
+					<p>
 						For documentation, refer to the <a href="https://github.com/Zrezi/TinyInput/blob/master/tinyinput.js">source code</a>. It's documented with JSDoc style, and
 						should be fairly straightforward to follow. Note that in the above example, you are allowed to use
 						string literals like "t", but you could also use TINYINPUT.KEY_T and it would acheive the same effect.
@@ -55,6 +65,9 @@
 					<br>
 					<p class="link" id="back"><a href="../index.html"><i class="medium material-icons">keyboard_return</i></a></p>
 				</div>
+			</div>
+			<div class="footer">
+				<p>630171</p>
 			</div>
 			<script>
 				(function() {

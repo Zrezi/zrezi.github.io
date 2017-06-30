@@ -26,6 +26,15 @@ blockquote {
 	text-align: left;
 }
 
+.footer {
+	position: fixed;
+	right: 2em;
+	bottom: 1em;
+}
+.footer p {
+	color: #030303;
+}
+
 /* upper spacing */
 .container {
 	margin-top: 175px;
