@@ -9,6 +9,7 @@
 		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Share+Tech+Mono">
 		<link rel="stylesheet" href="../css/custom.css">
 		<script src="../js/materialize.min.js"></script>
+		<script src="../js/interpolate.js"></script>
 		<style>
 			#name {
 				color: #9F9F9F;
@@ -42,10 +43,8 @@
 					DOM_body_wrapper.classList.add("fade-in-wrapper");
 					
 					DOM_back = document.getElementById("back");
-					console.log(DOM_back);
 					DOM_back.onclick = function(event) {
 						event.preventDefault();
-						console.log('clicked');
 						changePageOnAnimation("../index.html");
 					}
 					

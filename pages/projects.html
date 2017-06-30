@@ -9,6 +9,7 @@
 		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Share+Tech+Mono">
 		<link rel="stylesheet" href="../css/custom.css">
 		<script src="../js/materialize.min.js"></script>
+		<script src="../js/interpolate.js"></script>
 		<style>
 			#name {
 				color: #9F9F9F;
@@ -21,13 +22,15 @@
 		<div id="body-wrapper">
 			<div class="container">
 				<div class="row center-align">
-					<h3 id="name">my projects</h3>
+					<h3 id="name"></h3>
 					<br>
-					<p><a href="projects/emulator.html">Gameboy Emulator</a></p>
-					<p><a href="projects/whip.html">WHIP - WebGL Library</a></p>
-					<p><a href="projects/tinyinput.html">TinyInput</a></p>
+					<p class="link" id="link-emulator"><a href="projects/emulator.html">Gameboy Emulator</a></p>
 					<br>
-					<p>You can also checkout my <a href="https://github.com/Zrezi">GitHub</a>.</p>
+					<p class="link" id="link-whip"><a href="projects/whip.html">WHIP - WebGL Library</a></p>
+					<br>
+					<p class="link" id="link-tinyinput"><a href="projects/tinyinput.html">TinyInput</a></p>
+					<br>
+					<p>You can also checkout my <a id="link-github" href="https://github.com/Zrezi">GitHub</a>.</p>
 					<br>
 					<p class="link" id="back"><a href="../index.html"><i class="medium material-icons">keyboard_return</i></a></p>
 				</div>
@@ -36,17 +39,73 @@
 				(function() {
 					window.onunload = function() {};
 					
-					var DOM_body_wrapper, DOM_back;
+					var DOM_body_wrapper, DOM_name, DOM_back, DOM_link_emulator, DOM_link_whip, DOM_link_tinyinput, DOM_link_github;
+					
+					const default_text = "my projects";
+					const iteration_steps = 10;
+					var interpolation_text = default_text;
+					var char_offset = 1;
 					
 					DOM_body_wrapper = document.getElementById("body-wrapper");
 					DOM_body_wrapper.classList.add("fade-in-wrapper");
 					
+					DOM_name = document.getElementById("name");
+					DOM_name.innerHTML = default_text;
+					
 					DOM_back = document.getElementById("back");
-					console.log(DOM_back);
+					DOM_back.onmouseover = function() {
+						interpolation_text = "return";
+					}
+					DOM_back.onmouseleave = function() {
+						interpolation_text = default_text;
+					}
 					DOM_back.onclick = function(event) {
 						event.preventDefault();
-						console.log('clicked');
 						changePageOnAnimation("../index.html");
+					}
+					
+					DOM_link_emulator = document.getElementById("link-emulator");
+					DOM_link_emulator.onmouseover = function() {
+						interpolation_text = "emulator";
+					}
+					DOM_link_emulator.onmouseleave = function() {
+						interpolation_text = default_text;
+					}
+					DOM_link_emulator.onclick = function(event) {
+					
+					}
+					
+					DOM_link_whip = document.getElementById("link-whip");
+					DOM_link_whip.onmouseover = function() {
+						interpolation_text = "webgl library";
+					}
+					DOM_link_whip.onmouseleave = function() {
+						interpolation_text = default_text;
+					}
+					DOM_link_whip.onclick = function(event) {
+					
+					}
+					
+					DOM_link_tinyinput = document.getElementById("link-tinyinput");
+					DOM_link_tinyinput.onmouseover = function() {
+						interpolation_text = "javascript input";
+					}
+					DOM_link_tinyinput.onmouseleave = function() {
+						interpolation_text = default_text;
+					}
+					DOM_link_tinyinput.onclick = function(event) {
+					
+					}
+					
+					DOM_link_github = document.getElementById("link-github");
+					DOM_link_github.onmouseover = function() {
+						interpolation_text = "github";
+					}
+					DOM_link_github.onmouseleave = function() {
+						interpolation_text = default_text;
+					}
+					DOM_link_github.onclick = function(event) {
+					
 					}
 					
 					function changePageOnAnimation(path) {
@@ -58,6 +117,21 @@
 							window.location = path;
 						};
 					}
+					
+					requestAnimationFrame(update);
+					
+					function update() {
+					
+						requestAnimationFrame(update);
+						
+						interpolate.string({
+							element: DOM_name,
+							interpolate: interpolation_text,
+							offset: char_offset,
+							steps: iteration_steps
+						});
+						
+					} // end update
 				})();
 			</script>
 		</div>
