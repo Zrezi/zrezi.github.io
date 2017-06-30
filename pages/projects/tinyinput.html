@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Zach Reznicek</title>
+		<script src="../../js/jquery-3.2.1.min.js"></script>
+		<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.99.0/css/materialize.min.css">
+		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Share+Tech+Mono">
+		<link rel="stylesheet" href="../../css/custom.css">
+		<script src="../../js/materialize.min.js"></script>
+		<script src="../../js/interpolate.js"></script>
+	</head>
+
+	<body>
+		<div id="body-wrapper">
+			<div class="container">
+				<div class="row center-align">
+					<h3 id="name">tinyinput</h3>
+					<br>
+					<p>Write-up coming soon...</p>
+					<br>
+					<p class="link" id="back"><a href="../index.html"><i class="medium material-icons">keyboard_return</i></a></p>
+				</div>
+			</div>
+			<script>
+				(function() {
+					window.onunload = function() {};
+					
+					var DOM_body_wrapper, DOM_name, DOM_back;
+					
+					const default_text = "tinyinput";
+					const iteration_steps = 10;
+					var interpolation_text = default_text;
+					var char_offset = 1;
+					
+					DOM_body_wrapper = document.getElementById("body-wrapper");
+					DOM_body_wrapper.classList.add("fade-in-wrapper");
+					
+					DOM_name = document.getElementById("name");
+					DOM_name.innerHTML = default_text;
+					
+					DOM_back = document.getElementById("back");
+					DOM_back.onmouseover = function() {
+						interpolation_text = "return";
+					}
+					DOM_back.onmouseleave = function() {
+						interpolation_text = default_text;
+					}
+					DOM_back.onclick = function(event) {
+						event.preventDefault();
+						changePageOnAnimation("../projects.html");
+					}
+					
+					function changePageOnAnimation(path) {
+						DOM_body_wrapper.style.opacity = 1;
+						DOM_body_wrapper.classList.remove("fade-in-wrapper");
+						DOM_body_wrapper.classList.add("fade-out-wrapper");
+						DOM_body_wrapper.onanimationend = function() {
+							DOM_body_wrapper.style.opacity = 0;
+							window.location = path;
+						};
+					}
+					
+					requestAnimationFrame(update);
+					
+					function update() {
+					
+						requestAnimationFrame(update);
+						
+						interpolate.string({
+							element: DOM_name,
+							interpolate: interpolation_text,
+							offset: char_offset,
+							steps: iteration_steps
+						});
+						
+					} // end update
+				})();
+			</script>
+		</div>
+	</body>
+</html>

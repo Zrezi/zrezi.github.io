@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Zach Reznicek</title>
+		<script src="../../js/jquery-3.2.1.min.js"></script>
+		<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.99.0/css/materialize.min.css">
+		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Share+Tech+Mono">
+		<link rel="stylesheet" href="../../css/custom.css">
+		<script src="../../js/materialize.min.js"></script>
+		<script src="../../js/interpolate.js"></script>
+		<style>
+			table tr th {
+				text-align: right;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div id="body-wrapper">
+			<div class="container">
+				<div class="row center-align">
+					<h3 id="name">gameboy emulator</h3>
+					<br>
+					<p><a href="https://github.com/Zrezi/gb-emulator">GitHub Link</a></p>
+					<p>
+						While the emulator itself remains nameless, and will probably never be finished,
+						the purpose of this project was to learn about the GameBoy's hardware architecture
+						and how emulation takes place as a concept.
+						I can definitely say that I've succeeded in that goal. The project was originally
+						written in C, but then converted midway through to C++ to make use of objects and to
+						further my knowledge of the language.
+						On this page I'll go through some of the things I've learned throughout the
+						(albeit early) stages.
+					</p>
+					<br>
+					<h5>registers</h5>
+					<p>
+						I closely followed 2 implementations of the GameBoy's architecture, <a id="link-cinoop" href="https://cturt.github.io/cinoop.html">Cinoop</a>
+						and, aptly named, <a id="link-jge" href="https://github.com/bryanjjohnson/Java-Gameboy-Emulator">Java-Gameboy-Emulator</a> (JGE).
+						Initially, my emulator was a near clone of Cinoop, adding piece by piece as I understood it.
+						The GameBoy's CPU is heavily influenced by the Zilog Z80 microprocessor, with a few differences.
+						Luckily I found a document floating around the internet, <a id="link-manual" href="http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf">this</a>, that tells you literally
+						everything you'd need to know about the GameBoy. It documents everything: inputs, sound, display, memory mapping,
+						ALU functions, opCodes... the list goes on and on.
+					</p>
+					<p>
+						I started in the same way that CTurt, the author of Cinoop, did &mdash; with registers. The way he
+						implemented registers was very straightforward using <code>anonymous struct</code>s. The GameBoy has
+						eight 8-bit registers { A, F, B, C, D, E, H, L }, but certain opCodes can take advantage of two registers,
+						effectively creating four 16-bit registers { AF, BC, DE, HL }. In order to reflect this in C, it was
+						simple to create a <code>struct</code> of more <code>struct</code>s and <code>union</code>s to hold
+						either two 8-bit integers, or one 16-bit integer.
+					</p>
+					<br>
+					<h5>memory mapping and cartridge loading</h5>
+					<p>
+						After I had registers working correctly, I decided to get a start on the memory system. GameBoy game
+						cartridges come in many different forms &mdash; I implement 29 different types. Cinoop was only able
+						to load the most basic of these cartridges, the 0<sup>th</sup> index of cartridges &mdash; a cartridge
+						with ROM only. At this time I branched out to JGE to see how its author handled cartridge loading, since
+						JGE was able to load a few more types of cartridges.
+					</p>
+					<p>
+						Depending on the type of cartridge that was loaded, the GameBoy's "memory map" &mdash; how it knows
+						<i>where</i> to store data, changes.
+					</p>
+					<p>Coming soon...</p>
+					<br>
+					<h5>enums with functionality?</h5>
+					<p>Coming soon...</p>
+					<br>
+					<h5>the heart</h5>
+					<p>Coming soon...</p>
+					<br>
+					<p class="link" id="back"><a href="../index.html"><i class="medium material-icons">keyboard_return</i></a></p>
+				</div>
+			</div>
+			<script>
+				(function() {
+					window.onunload = function() {};
+					
+					var DOM_body_wrapper, DOM_name, DOM_back, DOM_link_cinoop, DOM_link_jge, DOM_link_manual;
+					
+					const default_text = "gameboy emulator";
+					const iteration_steps = 10;
+					var interpolation_text = default_text;
+					var char_offset = 1;
+					
+					DOM_body_wrapper = document.getElementById("body-wrapper");
+					DOM_body_wrapper.classList.add("fade-in-wrapper");
+					
+					DOM_name = document.getElementById("name");
+					DOM_name.innerHTML = default_text;
+					
+					DOM_back = document.getElementById("back");
+					DOM_back.onmouseover = function() {
+						interpolation_text = "return";
+					}
+					DOM_back.onmouseleave = function() {
+						interpolation_text = default_text;
+					}
+					DOM_back.onclick = function(event) {
+						event.preventDefault();
+						changePageOnAnimation("../projects.html");
+					}
+					
+					DOM_link_cinoop = document.getElementById("link-cinoop");
+					DOM_link_cinoop.onclick = function(event) {
+						event.preventDefault();
+						changePageOnAnimation(this.href);
+					}
+					
+					DOM_link_jge = document.getElementById("link-jge");
+					DOM_link_jge.onclick = function(event) {
+						event.preventDefault();
+						changePageOnAnimation(this.href);
+					}
+					
+					DOM_link_manual = document.getElementById("link-manual");
+					DOM_link_manual.onclick = function(event) {
+						event.preventDefault();
+						changePageOnAnimation(this.href);
+					}
+					
+					function changePageOnAnimation(path) {
+						DOM_body_wrapper.style.opacity = 1;
+						DOM_body_wrapper.classList.remove("fade-in-wrapper");
+						DOM_body_wrapper.classList.add("fade-out-wrapper");
+						DOM_body_wrapper.onanimationend = function() {
+							DOM_body_wrapper.style.opacity = 0;
+							window.location = path;
+						};
+					}
+					
+					requestAnimationFrame(update);
+					
+					function update() {
+					
+						requestAnimationFrame(update);
+						
+						interpolate.string({
+							element: DOM_name,
+							interpolate: interpolation_text,
+							offset: char_offset,
+							steps: iteration_steps
+						});
+						
+					} // end update
+				})();
+			</script>
+		</div>
+	</body>
+</html>

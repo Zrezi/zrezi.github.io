@@ -10,12 +10,6 @@
 		<link rel="stylesheet" href="../css/custom.css">
 		<script src="../js/materialize.min.js"></script>
 		<script src="../js/interpolate.js"></script>
-		<style>
-			#name {
-				color: #9F9F9F;
-				font-family: 'Share Tech Mono', monospace;
-			}
-		</style>
 	</head>
 
 	<body>
@@ -24,13 +18,28 @@
 				<div class="row center-align">
 					<h3 id="name"></h3>
 					<br>
-					<p class="link" id="link-emulator"><a href="projects/emulator.html">Gameboy Emulator</a></p>
-					<br>
-					<p class="link" id="link-whip"><a href="projects/whip.html">WHIP - WebGL Library</a></p>
-					<br>
-					<p class="link" id="link-tinyinput"><a href="projects/tinyinput.html">TinyInput</a></p>
-					<br>
-					<p>You can also checkout my <a id="link-github" href="https://github.com/Zrezi">GitHub</a>.</p>
+					
+					<div class="col s2"></div>
+					<div class="col s4">
+						<p class="link" id="link-emulator"><a href="projects/emulator.html">Gameboy Emulator</a></p>
+						<br>
+						<p class="link" id="link-whip"><a href="projects/whip.html">WHIP</a></p>
+						<br>
+						<p class="link" id="link-tinyinput"><a href="projects/tinyinput.html">TinyInput</a></p>
+					</div>
+					<div class="col s4">
+						<p class="link" id="link-">coming soon...</p>
+						<br>
+						<p class="link" id="link-">coming soon...</p>
+						<br>
+						<p class="link" id="link-">coming soon...</p>
+					</div>
+					<div class="col s2"></div>
+					
+				</div>
+				<div class="row center-align">
+						<br>
+					<p>Alternatively, you can check out my <a id="link-github" href="https://github.com/Zrezi">GitHub</a>.</p>
 					<br>
 					<p class="link" id="back"><a href="../index.html"><i class="medium material-icons">keyboard_return</i></a></p>
 				</div>
@@ -72,7 +81,8 @@
 						interpolation_text = default_text;
 					}
 					DOM_link_emulator.onclick = function(event) {
-					
+						event.preventDefault();
+						changePageOnAnimation("projects/emulator.html");
 					}
 					
 					DOM_link_whip = document.getElementById("link-whip");
@@ -83,7 +93,8 @@
 						interpolation_text = default_text;
 					}
 					DOM_link_whip.onclick = function(event) {
-					
+						event.preventDefault();
+						changePageOnAnimation("projects/whip.html");
 					}
 					
 					DOM_link_tinyinput = document.getElementById("link-tinyinput");
@@ -94,7 +105,8 @@
 						interpolation_text = default_text;
 					}
 					DOM_link_tinyinput.onclick = function(event) {
-					
+						event.preventDefault();
+						changePageOnAnimation("projects/tinyinput.html");
 					}
 					
 					DOM_link_github = document.getElementById("link-github");
@@ -105,7 +117,8 @@
 						interpolation_text = default_text;
 					}
 					DOM_link_github.onclick = function(event) {
-					
+						event.preventDefault();
+						changePageOnAnimation("https://github.com/Zrezi");
 					}
 					
 					function changePageOnAnimation(path) {

@@ -10,12 +10,6 @@
 		<link rel="stylesheet" href="css/custom.css">
 		<script src="js/materialize.min.js"></script>
 		<script src="js/interpolate.js"></script>
-		<style>
-			#name {
-				color: #9F9F9F;
-				font-family: 'Share Tech Mono', monospace;
-			}
-		</style>
 	</head>
 
 	<body>
@@ -39,7 +33,7 @@
 					
 					const default_name = "zach reznicek";
 					const iteration_steps = 10;
-					var ttit = default_name;
+					var interpolation_text = default_name;
 					var char_offset = 1;
 					
 					DOM_body_wrapper = document.getElementById("body-wrapper");
@@ -50,10 +44,10 @@
 					
 					DOM_link_about = document.getElementById("link-about");
 					DOM_link_about.onmouseover = function() {
-						ttit = "about me";
+						interpolation_text = "about me";
 					}
 					DOM_link_about.onmouseleave = function() {
-						ttit = default_name;
+						interpolation_text = default_name;
 					}
 					DOM_link_about.onclick = function(event) {
 						event.preventDefault();
@@ -62,10 +56,10 @@
 					
 					DOM_link_code = document.getElementById("link-code");
 					DOM_link_code.onmouseover = function() {
-						ttit = "my projects";
+						interpolation_text = "my projects";
 					}
 					DOM_link_code.onmouseleave = function() {
-						ttit = default_name;
+						interpolation_text = default_name;
 					}
 					DOM_link_code.onclick = function(event) {
 						event.preventDefault();
@@ -74,10 +68,10 @@
 					
 					DOM_link_contact = document.getElementById("link-contact");
 					DOM_link_contact.onmouseover = function() {
-						ttit = "contact me";
+						interpolation_text = "contact me";
 					}
 					DOM_link_contact.onmouseleave = function() {
-						ttit = default_name;
+						interpolation_text = default_name;
 					}
 					DOM_link_contact.onclick = function(event) {
 						event.preventDefault();
@@ -102,7 +96,7 @@
 						
 						interpolate.string({
 							element: DOM_name,
-							interpolate: ttit,
+							interpolate: interpolation_text,
 							offset: char_offset,
 							steps: iteration_steps
 						});

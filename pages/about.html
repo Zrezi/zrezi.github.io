@@ -10,12 +10,6 @@
 		<link rel="stylesheet" href="../css/custom.css">
 		<script src="../js/materialize.min.js"></script>
 		<script src="../js/interpolate.js"></script>
-		<style>
-			#name {
-				color: #9F9F9F;
-				font-family: 'Share Tech Mono', monospace;
-			}
-		</style>
 	</head>
 
 	<body>
@@ -26,7 +20,7 @@
 					<br>
 					<p>Hello, I'm Zach.</p>
 					<p>I'm currently a senior in Software Engineering at Iowa State University.</p>
-					<p>I'm interested in low-level computing like what's found in the <a href="">Z80 Gameboy CPU</a>,</p>
+					<p>I'm interested in low-level computing like what's found in the <a id="link-emulator" href="projects/emulator.html">Z80 Gameboy CPU</a>,</p>
 					<p>as well as heavily intrigued by computer graphics with <a href="">OpenGL</a> and <a href="">WebGL</a>.</p>
 					<p>In my free time I'm an avid musician, a runner, and a deliberate YouTube time-waster.</p>
 					<br>
@@ -37,15 +31,41 @@
 				(function() {
 					window.onunload = function() {};
 					
-					var DOM_body_wrapper, DOM_back;
+					var DOM_body_wrapper, DOM_name, DOM_back, DOM_link_emulator;
+					
+					const default_text = "about me";
+					const iteration_steps = 10;
+					var interpolation_text = default_text;
+					var char_offset = 1;
 					
 					DOM_body_wrapper = document.getElementById("body-wrapper");
 					DOM_body_wrapper.classList.add("fade-in-wrapper");
 					
+					DOM_name = document.getElementById("name");
+					DOM_name.innerHTML = default_text;
+					
 					DOM_back = document.getElementById("back");
+					DOM_back.onmouseover = function() {
+						interpolation_text = "return";
+					}
+					DOM_back.onmouseleave = function() {
+						interpolation_text = default_text;
+					}
 					DOM_back.onclick = function(event) {
 						event.preventDefault();
 						changePageOnAnimation("../index.html");
+					}
+					
+					DOM_link_emulator = document.getElementById("link-emulator");
+					DOM_link_emulator.onmouseover = function() {
+						interpolation_text = "emulator";
+					}
+					DOM_link_emulator.onmouseleave = function() {
+						interpolation_text = default_text;
+					}
+					DOM_link_emulator.onclick = function(event) {
+						event.preventDefault();
+						changePageOnAnimation("projects/emulator.html");
 					}
 					
 					function changePageOnAnimation(path) {
@@ -57,6 +77,21 @@
 							window.location = path;
 						};
 					}
+					
+					requestAnimationFrame(update);
+					
+					function update() {
+					
+						requestAnimationFrame(update);
+						
+						interpolate.string({
+							element: DOM_name,
+							interpolate: interpolation_text,
+							offset: char_offset,
+							steps: iteration_steps
+						});
+						
+					} // end update
 				})();
 			</script>
 		</div>
