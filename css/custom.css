@@ -1,7 +1,7 @@
 /* the vignette effect */
 html {
 	min-height: 100%;
-	box-shadow: 0 0 200px rgba(0,0,0,0.9) inset;
+	box-shadow: 0 0 175px rgba(0,0,0,0.9) inset;
 	overflow-y: scroll;
 }
 
@@ -13,6 +13,18 @@ h3, h4, h5, h6 {
 
 a {
 	color: #03a9f4;
+	
+	-o-transition:.25s;
+	-ms-transition:.25s;
+	-moz-transition:.25s;
+	-webkit-transition:.25s;
+	transition:.25s;
+}
+a:hover {
+	color: #01547a;
+}
+.disabled a {
+	color: #8F8F8F;
 }
 
 hr {
@@ -50,6 +62,7 @@ p {
 .link {
 	display: inline-flex;
 	vertical-align: middle;
+	margin: 20px;
 }
 
 .fade-in-wrapper {
@@ -75,6 +88,7 @@ p {
 	from { opacity:0; }
 	to { opacity:1; }
 }
+
 .fade-out-wrapper {
 	opacity: 0;
 	animation: fadeout 0.5s;
@@ -98,3 +112,27 @@ p {
 	from { opacity:1; }
 	to { opacity:0; }
 }
+
+.blink-link-wrapper {
+	animation: blink-link 0.5s;
+	-webket-animation: blink-link 0.5s;
+	-o-animation: blink-link 0.5s;
+}
+@keyframes blink-link {
+	from ( background-color: 03a9f4; }
+	to { background-color: #FF0F0F; }
+}
+@-moz-keyframes blink-link {
+	from (background-color : #a23aj }
+	to { background-color: #FF0F0F; }
+}
+-webkit-keyframes blink-link {
+	from (background-color : #a23aj }
+	to { background-color: #FF0F0F; }
+	
+}
+-o-keyframes blink-link {
+	from (background-color : #a23aj }
+	to { background-color: #FF0F0F; }
+}
+	

@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html style="html-unclicked">
+<html>
 	<head>
 		<meta charset="utf-8">
-		<title>Zach Reznicek</title>
+		<title>Zach Reznicek &mdash; GitHub</title>
 		<script src="js/jquery-3.2.1.min.js"></script>
 		<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.99.0/css/materialize.min.css">
@@ -17,40 +17,40 @@
 			<div class="container">
 				<div class="row center-align">
 					<h3 id="name"></h3>
-					<p class="link" id="link-about"><a href="pages/about.html"><i class="medium material-icons">help_outline</i></a></p>
+					<p class="link" id="link-about"><a href="pages/about.html"><i class="medium material-icons">radio_button_unchecked</i></a></p>
+					<p class="link" id="link-code"><a href="pages/projects.html"><i class="medium material-icons">code</i></a></p>
 					<br>
-					<p class="link" id="link-code"><a href="pages/projects.html"><i class="medium material-icons">polymer</i></a></p>
-					<br>
-					<p class="link" id="link-contact"><a href="pages/contactme.html"><i class="medium material-icons">email</i></a></p>
+					<p class="link" id="link-contact"><a href="pages/contactme.html"><i class="medium material-icons">mail_outline</i></a></p>
+					<p class="link" id="link-programming-log"><a href="pages/programminglog.html"><i class="medium material-icons">change_history</i></a></p>
 				</div>
 			</div>
 			<div class="footer">
-				<p>630171</p>
+				<p id="footer-text"></p>
 			</div>
 			<script>
 				(function() {
 					window.onunload = function() {};
 				
-					var DOM_body_wrapper, DOM_name, DOM_link_about, DOM_link_code, DOM_link_contact;
+					var DOM_body_wrapper, DOM_name, DOM_link_about, DOM_link_code, DOM_link_contact, DOM_link_lifelog;
 					var update_about = false, update_code = false, update_contact = false;
 					
-					const default_name = "zach reznicek";
+					const default_text = "zach reznicek";
 					const iteration_steps = 10;
-					var interpolation_text = default_name;
+					var interpolation_text = default_text;
 					var char_offset = 1;
 					
 					DOM_body_wrapper = document.getElementById("body-wrapper");
 					DOM_body_wrapper.classList.add("fade-in-wrapper");
 					
 					DOM_name = document.getElementById("name");
-					DOM_name.innerHTML = default_name;
+					DOM_name.innerHTML = default_text;
 					
 					DOM_link_about = document.getElementById("link-about");
 					DOM_link_about.onmouseover = function() {
 						interpolation_text = "about me";
 					}
 					DOM_link_about.onmouseleave = function() {
-						interpolation_text = default_name;
+						interpolation_text = default_text;
 					}
 					DOM_link_about.onclick = function(event) {
 						event.preventDefault();
@@ -62,7 +62,7 @@
 						interpolation_text = "my projects";
 					}
 					DOM_link_code.onmouseleave = function() {
-						interpolation_text = default_name;
+						interpolation_text = default_text;
 					}
 					DOM_link_code.onclick = function(event) {
 						event.preventDefault();
@@ -74,11 +74,23 @@
 						interpolation_text = "contact me";
 					}
 					DOM_link_contact.onmouseleave = function() {
-						interpolation_text = default_name;
+						interpolation_text = default_text;
 					}
 					DOM_link_contact.onclick = function(event) {
 						event.preventDefault();
 						changePageOnAnimation("pages/contactme.html");
+					}
+					
+					DOM_link_lifelog = document.getElementById("link-programming-log");
+					DOM_link_lifelog.onmouseover = function() {
+						interpolation_text = "programming log";
+					}
+					DOM_link_lifelog.onmouseleave = function() {
+						interpolation_text = default_text;
+					}
+					DOM_link_lifelog.onclick = function(event) {
+						event.preventDefault();
+						changePageOnAnimation("pages/programminglog.html");
 					}
 					
 					function changePageOnAnimation(path) {
@@ -108,6 +120,7 @@
 					
 				})();
 			</script>
+			<script src="js/footer-text.js"></script>
 		</div>
 	</body>
 </html>

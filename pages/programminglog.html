@@ -2,23 +2,28 @@
 <html>
 	<head>
 		<meta charset="utf-8">
-		<title>Zach Reznicek</title>
-		<script src="../../js/jquery-3.2.1.min.js"></script>
+		<title>Zach Reznicek &mdash; Programming Log</title>
+		<script src="../js/jquery-3.2.1.min.js"></script>
 		<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.99.0/css/materialize.min.css">
 		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Share+Tech+Mono">
-		<link rel="stylesheet" href="../../css/custom.css">
-		<script src="../../js/materialize.min.js"></script>
-		<script src="../../js/interpolate.js"></script>
+		<link rel="stylesheet" href="../css/custom.css">
+		<script src="../js/materialize.min.js"></script>
+		<script src="../js/interpolate.js"></script>
 	</head>
 
 	<body>
 		<div id="body-wrapper">
 			<div class="container">
 				<div class="row center-align">
-					<h3 id="name">whip</h3>
+					<h3 id="name"></h3>
 					<br>
-					<p>Write-up coming soon...</p>
+					<div class="left-align">
+					<p>630174 [zbrezi.github.io] - Random CSS fixes, renamed files, new icons.</p>
+					<p>630173 [zbrezi.github.io] - Added footer-text.js.</p>
+					<p>630172 [zbrezi.github.io] - Restructured landing page. Added CSS3 transitions to links.</p>
+					<p>630171 [zbrezi.github.io] - First update to include this page</p>
+					</div>
 					<br>
 					<p class="link" id="back"><a href="../index.html"><i class="medium material-icons">keyboard_return</i></a></p>
 				</div>
@@ -32,7 +37,7 @@
 					
 					var DOM_body_wrapper, DOM_name, DOM_back;
 					
-					const default_text = "whip";
+					const default_text = "programming log";
 					const iteration_steps = 10;
 					var interpolation_text = default_text;
 					var char_offset = 1;
@@ -52,7 +57,7 @@
 					}
 					DOM_back.onclick = function(event) {
 						event.preventDefault();
-						changePageOnAnimation("../projects.html");
+						changePageOnAnimation("../index.html");
 					}
 					
 					function changePageOnAnimation(path) {
@@ -81,7 +86,7 @@
 					} // end update
 				})();
 			</script>
-			<script src="../../js/footer-text.js"></script>
+			<script src="../js/footer-text.js"></script>
 		</div>
 	</body>
 </html>
