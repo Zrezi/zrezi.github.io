@@ -10,19 +10,9 @@
 		<link rel="stylesheet" href="../css/custom.css">
 		<script src="../js/materialize.min.js"></script>
 		<style>
-			.container {
-				margin-top: 150px;
-			}
 			#name {
 				color: #9F9F9F;
 				font-family: 'Share Tech Mono', monospace;
-			}
-			p {
-				color: #9F9F9F;
-			}
-			.link {
-				display: inline-flex;
-				vertical-align: middle;
 			}
 		</style>
 	</head>
@@ -40,28 +30,32 @@
 				</div>
 			</div>
 			<script>
-				var DOM_body_wrapper, DOM_back;
-				
-				DOM_body_wrapper = document.getElementById("body-wrapper");
-				DOM_body_wrapper.classList.add("fade-in-wrapper");
-				
-				DOM_back = document.getElementById("back");
-				console.log(DOM_back);
-				DOM_back.onclick = function(event) {
-					event.preventDefault();
-					console.log('clicked');
-					changePageOnAnimation("../index.html");
-				}
-				
-				function changePageOnAnimation(path) {
-					DOM_body_wrapper.style.opacity = 1;
-					DOM_body_wrapper.classList.remove("fade-in-wrapper");
-					DOM_body_wrapper.classList.add("fade-out-wrapper");
-					DOM_body_wrapper.onanimationend = function() {
-						DOM_body_wrapper.style.opacity = 0;
-						window.location = path;
-					};
-				}
+				(function() {
+					window.onunload = function() {};
+					
+					var DOM_body_wrapper, DOM_back;
+					
+					DOM_body_wrapper = document.getElementById("body-wrapper");
+					DOM_body_wrapper.classList.add("fade-in-wrapper");
+					
+					DOM_back = document.getElementById("back");
+					console.log(DOM_back);
+					DOM_back.onclick = function(event) {
+						event.preventDefault();
+						console.log('clicked');
+						changePageOnAnimation("../index.html");
+					}
+					
+					function changePageOnAnimation(path) {
+						DOM_body_wrapper.style.opacity = 1;
+						DOM_body_wrapper.classList.remove("fade-in-wrapper");
+						DOM_body_wrapper.classList.add("fade-out-wrapper");
+						DOM_body_wrapper.onanimationend = function() {
+							DOM_body_wrapper.style.opacity = 0;
+							window.location = path;
+						};
+					}
+				})();
 			</script>
 		</div>
 	</body>

@@ -1,7 +1,25 @@
+/* the vignette effect */
 html {
 	min-height: 100%;
 	box-shadow: 0 0 200px rgba(0,0,0,0.9) inset;
 }
+
+/* upper spacing */
+.container {
+	margin-top: 175px;
+}
+
+/* change color of paragraphs to grey */
+p {
+	color: #9F9F9F;
+}
+
+/* pretty sure this isn't needed anymore. it lines up material icons with text */
+.link {
+	display: inline-flex;
+	vertical-align: middle;
+}
+
 .fade-in-wrapper {
 	opacity: 1;
 	animation: fadein 0.5s;
