@@ -7,8 +7,12 @@ html {
 
 /* header styling */
 h3, h4, h5, h6 {
-	color: #9F9F9F;
+	color: #ffab91;
 	font-family: 'Share Tech Mono', monospace;
+}
+
+a {
+	color: #03a9f4;
 }
 
 hr {
@@ -29,7 +33,7 @@ blockquote {
 
 /* change color of paragraphs to grey */
 p {
-	color: #9F9F9F;
+	color: #8F8F8F;
 	font-family: 'Share Tech Mono', monospace;
 }
 
