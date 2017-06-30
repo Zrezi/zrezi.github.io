@@ -25,7 +25,7 @@
 	</head>
 
 	<body>
-		<div id="body-wrapper" class="fade-in-wrapper">
+		<div id="body-wrapper">
 			<div class="container">
 				<div class="row center-align">
 					<h3 id="name"></h3>
@@ -40,19 +40,20 @@
 				var DOM_body_wrapper, DOM_name, DOM_link_about, DOM_link_code, DOM_link_contact;
 				var update_about = false, update_code = false, update_contact = false;
 				
-				const default_name = "Zach Reznicek";
+				const default_name = "zach reznicek";
 				const iteration_steps = 10;
 				var ttit = default_name;
 				var char_offset = 1;
 				
 				DOM_body_wrapper = document.getElementById("body-wrapper");
+				DOM_body_wrapper.classList.add("fade-in-wrapper");
 				
 				DOM_name = document.getElementById("name");
 				DOM_name.innerHTML = default_name;
 				
 				DOM_link_about = document.getElementById("link-about");
 				DOM_link_about.onmouseover = function() {
-					ttit = "About Me";
+					ttit = "about me";
 					char_offset = 1;
 				}
 				DOM_link_about.onmouseleave = function() {
@@ -66,7 +67,7 @@
 				
 				DOM_link_code = document.getElementById("link-code");
 				DOM_link_code.onmouseover = function() {
-					ttit = "My Projects";
+					ttit = "my projects";
 					char_offset = 1;
 				}
 				DOM_link_code.onmouseleave = function() {
@@ -80,7 +81,7 @@
 				
 				DOM_link_contact = document.getElementById("link-contact");
 				DOM_link_contact.onmouseover = function() {
-					ttit = "Contact Me";
+					ttit = "contact me";
 					char_offset = 1;
 				}
 				DOM_link_contact.onmouseleave = function() {
@@ -93,21 +94,13 @@
 				}
 				
 				function changePageOnAnimation(path) {
+					DOM_body_wrapper.style.opacity = 1;
 					DOM_body_wrapper.classList.remove("fade-in-wrapper");
 					DOM_body_wrapper.classList.add("fade-out-wrapper");
-					DOM_body_wrapper.style.opacity = 0;
-					DOM_body_wrapper.addEventListener("webkitAnimationEnd", function() {
+					DOM_body_wrapper.onanimationend = function() {
+						DOM_body_wrapper.style.opacity = 0;
 						window.location = path;
-						DOM_body_wrapper.classList.remove("fade-out-wrapper");
-						DOM_body_wrapper.classList.add("fade-in-wrapper");
-						DOM_body_wrapper.style.opacity = 1;
-					});
-					DOM_body_wrapper.addEventListener("animationend", function() {
-						window.location = path;
-						DOM_body_wrapper.classList.remove("fade-out-wrapper");
-						DOM_body_wrapper.classList.add("fade-in-wrapper");
-						DOM_body_wrapper.style.opacity = 1;
-					});
+					};
 				}
 				
 				requestAnimationFrame(update);

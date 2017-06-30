@@ -3,11 +3,12 @@
 	<head>
 		<meta charset="utf-8">
 		<title>Zach Reznicek</title>
-		<script src="js/jquery-3.2.1.min.js"></script>
+		<script src="../js/jquery-3.2.1.min.js"></script>
 		<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.99.0/css/materialize.min.css">
 		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Share+Tech+Mono">
-		<script src="js/materialize.min.js"></script>
+		<link rel="stylesheet" href="../css/fadecss.css">
+		<script src="../js/materialize.min.js"></script>
 		<style>
 			.container {
 				margin-top: 150px;
@@ -19,18 +20,48 @@
 			p {
 				color: #9F9F9F;
 			}
+			.link {
+				display: inline-flex;
+				vertical-align: middle;
+			}
 		</style>
 	</head>
 
 	<body>
-		<div class="container">
-			<div class="row center-align">
-				<h3 id="name">my projects</h3>
-				<br>
-				<p>I'll highlight my stuff in here eventually... but for now go to my <a href="https://github.com/Zrezi">GitHub</a></p>
-				<br>
-				<p><a href="../index.html"><i class="medium material-icons">undo</i></a></p>
+		<div id="body-wrapper">
+			<div class="container">
+				<div class="row center-align">
+					<h3 id="name">my projects</h3>
+					<br>
+					<p>I'll highlight my stuff in here eventually... but for now go to my <a href="https://github.com/Zrezi">GitHub</a></p>
+					<br>
+					<p class="link" id="back"><a href="../index.html"><i class="medium material-icons">undo</i></a></p>
+				</div>
 			</div>
+			<script>
+				var DOM_body_wrapper, DOM_back;
+				
+				DOM_body_wrapper = document.getElementById("body-wrapper");
+				DOM_body_wrapper.classList.add("fade-in-wrapper");
+				
+				DOM_back = document.getElementById("back");
+				console.log(DOM_back);
+				DOM_back.onclick = function(event) {
+					event.preventDefault();
+					console.log('clicked');
+					changePageOnAnimation("../index.html");
+				}
+				
+				function changePageOnAnimation(path) {
+					DOM_body_wrapper.style.opacity = 1;
+					DOM_body_wrapper.classList.remove("fade-in-wrapper");
+					DOM_body_wrapper.classList.add("fade-out-wrapper");
+					DOM_body_wrapper.onanimationend = function() {
+						DOM_body_wrapper.style.opacity = 0;
+						window.location = path;
+					};
+				}
+			</script>
 		</div>
 	</body>
 </html>
