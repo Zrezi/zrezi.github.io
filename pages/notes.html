@@ -2,25 +2,25 @@
 <html>
 	<head>
 		<meta charset="utf-8">
-		<title>Zach Reznicek</title>
-		<script src="../../js/jquery-3.2.1.min.js"></script>
+		<title>Zach Reznicek &mdash; Notes</title>
+		<script src="../js/jquery-3.2.1.min.js"></script>
 		<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.99.0/css/materialize.min.css">
 		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Share+Tech+Mono">
-		<link rel="stylesheet" href="../../css/custom.css">
-		<script src="../../js/materialize.min.js"></script>
-		<script src="../../js/interpolate.js"></script>
+		<link rel="stylesheet" href="../css/custom.css">
+		<script src="../js/materialize.min.js"></script>
+		<script src="../js/interpolate.js"></script>
 	</head>
 
 	<body>
 		<div id="body-wrapper">
 			<div class="container">
 				<div class="row center-align">
-					<h3 id="name">whip</h3>
+					<h3 id="name">notes</h3>
 					<br>
-					<p>Write-up coming soon...</p>
+					<p>This is where random notes shall go...eventually.</p>
 					<br>
-					<p class="link" id="back"><a href="../projects.html"><i class="medium material-icons">keyboard_return</i></a></p>
+					<p class="link" id="back"><a href="../index.html"><i class="medium material-icons">keyboard_return</i></a></p>
 				</div>
 			</div>
 			<div class="footer">
@@ -32,7 +32,7 @@
 					
 					var DOM_body_wrapper, DOM_name, DOM_back;
 					
-					const default_text = "whip";
+					const default_text = "notes";
 					const iteration_steps = 10;
 					var interpolation_text = default_text;
 					var char_offset = 1;
@@ -52,7 +52,7 @@
 					}
 					DOM_back.onclick = function(event) {
 						event.preventDefault();
-						changePageOnAnimation("../projects.html");
+						changePageOnAnimation("../index.html");
 					}
 					
 					function changePageOnAnimation(path) {
@@ -81,7 +81,7 @@
 					} // end update
 				})();
 			</script>
-			<script src="../../js/footer-text.js"></script>
+			<script src="../js/footer-text.js"></script>
 		</div>
 	</body>
 </html>
