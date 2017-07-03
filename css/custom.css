@@ -20,6 +20,11 @@ canvas {
 	padding: 0;
 }
 
+li {
+	text-align: left;
+	font-family: 'Share Tech Mono', monospace;
+}
+
 /* header styling */
 h3, h4, h5, h6 {
 	color: #ffab91;

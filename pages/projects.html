@@ -30,7 +30,7 @@
 					<div class="col s4">
 						<p class="link" id="link-jcr"><a href="projects/jscr.html">JSCR</a></p>
 						<br>
-						<p class="link" id="link-">coming soon...</p>
+						<p class="link" id="link-whiite"><a href="projects/whiite.html">Whiite Linux</a></p>
 						<br>
 						<p class="link" id="link-">coming soon...</p>
 					</div>
@@ -51,7 +51,15 @@
 				(function() {
 					window.onunload = function() {};
 					
-					var DOM_body_wrapper, DOM_name, DOM_back, DOM_link_emulator, DOM_link_whip, DOM_link_tinyinput, DOM_link_github, DOM_link_jcr;
+					var DOM_body_wrapper,
+					DOM_name,
+					DOM_back,
+					DOM_link_emulator,
+					DOM_link_whip,
+					DOM_link_tinyinput,
+					DOM_link_github,
+					DOM_link_jcr,
+					DOM_link_whiite;
 					
 					const default_text = "my projects";
 					const iteration_steps = 10;
@@ -134,6 +142,18 @@
 					DOM_link_jcr.onclick = function(event) {
 						event.preventDefault();
 						changePageOnAnimation("projects/jscr.html");
+					}
+					
+					DOM_link_whiite = document.getElementById("link-whiite");
+					DOM_link_whiite.onmouseover = function() {
+						interpolation_text = "whiite linux";
+					}
+					DOM_link_whiite.onmouseleave = function() {
+						interpolation_text = default_text;
+					}
+					DOM_link_whiite.onclick = function(event) {
+						event.preventDefault();
+						changePageOnAnimation("projects/whiite.html");
 					}
 					
 					function changePageOnAnimation(path) {
