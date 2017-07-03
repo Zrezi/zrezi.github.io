@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html class="canvas-wrapper">
 	<head>
 		<meta charset="utf-8">
 		<title>Zach Reznicek &mdash; Home</title>
@@ -10,9 +10,12 @@
 		<link rel="stylesheet" href="css/custom.css">
 		<script src="js/materialize.min.js"></script>
 		<script src="js/interpolate.js"></script>
+		<script src="js/whip-0.0.9.js"></script>
+		<script src="js/tinyinput-min.js"></script>
+		<script src="js/gl-matrix-min.js"></script>
 	</head>
 
-	<body>
+	<body class="canvas-wrapper" onload="WHIP.start()" onresize="WHIP.resize()">
 		<div id="body-wrapper">
 			<div class="container">
 				<div class="row center-align">
@@ -29,18 +32,135 @@
 			<div class="footer">
 				<p id="footer-text"></p>
 			</div>
+			<canvas id="webgl-canvas" fullscreen="true"></canvas>
+			
+			<script id="shader-fs" type="fs">
+				precision mediump float;
+
+				void main(void) {
+					gl_FragColor = vec4(0.60, 0.60, 0.60, 1.00);
+				}
+			</script>
+
+			<script id="shader-vs" type="vs">
+				attribute vec3 aVertexPosition;
+
+				uniform mat4 uModelViewMatrix;
+				uniform mat4 uProjectMatrix;
+
+				void main(void) {
+					gl_Position = uProjectMatrix * uModelViewMatrix * vec4(aVertexPosition, 1.0);
+				}
+			</script>
+			
 			<script>
-				(function() {
+			
+				var shaderProgram;
+
+				var modelViewMatrix = mat4.create();
+				var projectionMatrix = mat4.create();
+				
+				var xRot = 0;
+				var yRot = 0;
+				var zRot = 33;
+				
+				var xRotSpeed = 0.02;
+				var yRotSpeed = 0.05;
+				var zRotSpeed = 0.02;
+				
+				var xOffset = 0.0;
+				var yOffset = 0.0;
+				
+				var buffers;
+				var buffer_index;
+				
+				var positions = [];
+				positions[0] = [-6, -2, -10];
+				positions[1] = [-7, 2, -10];
+				positions[2] = [7, 2, -10];
+				positions[3] = [6, -2, -10];
+				var position_index = Math.round(Math.random() * (positions.length - 1));
+				
+				var rotStep = 0.05;
+				
+				var lastTime = 0;
+			
+				const default_text = "zach reznicek";
+				const iteration_steps = 10;
+				var interpolation_text = default_text;
+				var char_offset = 1;
+				
+				var DOM_body_wrapper, DOM_name, DOM_link_about, DOM_link_code, DOM_link_contact, DOM_link_lifelog, DOM_link_notes;
+				var update_about = false, update_code = false, update_contact = false;
+				
+				function WHIPPostInit() {
+				
+					WHIP.setClearColor("transparent");
+					WHIP.clear();
+					
+					TI.init();
+					TI.enableKeyboard();
+					TI.enableMouse();
+					TI.setMousePosition(WHIP.getCanvas().width / 2.0, WHIP.getCanvas().height / 2.0);
+					
 					window.onunload = function() {};
 				
-					var DOM_body_wrapper, DOM_name, DOM_link_about, DOM_link_code, DOM_link_contact, DOM_link_lifelog, DOM_link_notes;
-					var update_about = false, update_code = false, update_contact = false;
+					initShaders();
+					initBuffers();
 					
-					const default_text = "zach reznicek";
-					const iteration_steps = 10;
-					var interpolation_text = default_text;
-					var char_offset = 1;
+					initDOM();
 					
+					requestAnimationFrame(update);
+				}
+				
+				function initShaders() {
+					shaderProgram = new WHIP.ShaderProgram("script-element", "shader-fs", "shader-vs");
+					shaderProgram.use();
+
+					shaderProgram.addAttribute("aVertexPosition");
+					shaderProgram.enableAttribute("aVertexPosition");
+
+					shaderProgram.addUniform("uProjectMatrix", "Matrix4fv");
+					shaderProgram.addUniform("uModelViewMatrix", "Matrix4fv");
+				}
+
+				function initBuffers() {
+					buffers = [];
+				
+					var s = WHIP.Buffer.generateSphereBuffers(3.5);
+					buffers[0] = {};
+					buffers[0].vertices = s.vertices;
+					buffers[0].indices = s.indices;
+					
+					var r = WHIP.Buffer.generateRectangleBuffers(3);
+					buffers[1] = {};
+					buffers[1].vertices = r.vertices;
+					buffers[1].indices = r.indices;
+					
+					var r = WHIP.Buffer.generateSphereBuffers(3.5, 3, 4);
+					buffers[2] = {};
+					buffers[2].vertices = r.vertices;
+					buffers[2].indices = r.indices;
+					
+					var r = WHIP.Buffer.generateSphereBuffers(3.5, 4, 24);
+					buffers[3] = {};
+					buffers[3].vertices = r.vertices;
+					buffers[3].indices = r.indices;
+					
+					buffer_index = Math.round(Math.random() * (buffers.length - 1));
+				}
+					
+				function changePageOnAnimation(path) {
+					DOM_body_wrapper.style.opacity = 1;
+					DOM_body_wrapper.classList.remove("fade-in-wrapper");
+					DOM_body_wrapper.classList.add("fade-out-wrapper");
+					DOM_body_wrapper.onanimationend = function() {
+						DOM_body_wrapper.style.opacity = 0;
+						window.location = path;
+					};
+				}
+				
+				function initDOM() {
 					DOM_body_wrapper = document.getElementById("body-wrapper");
 					DOM_body_wrapper.classList.add("fade-in-wrapper");
 					
@@ -106,33 +226,86 @@
 						event.preventDefault();
 						changePageOnAnimation("pages/notes.html");
 					}
-					
-					function changePageOnAnimation(path) {
-						DOM_body_wrapper.style.opacity = 1;
-						DOM_body_wrapper.classList.remove("fade-in-wrapper");
-						DOM_body_wrapper.classList.add("fade-out-wrapper");
-						DOM_body_wrapper.onanimationend = function() {
-							DOM_body_wrapper.style.opacity = 0;
-							window.location = path;
-						};
-					}
+				}
+				
+				function update() {
 					
 					requestAnimationFrame(update);
 					
-					function update() {
+					interpolate.string({
+						element: DOM_name,
+						interpolate: interpolation_text,
+						offset: char_offset,
+						steps: iteration_steps
+					});
 					
-						requestAnimationFrame(update);
-						
-						interpolate.string({
-							element: DOM_name,
-							interpolate: interpolation_text,
-							offset: char_offset,
-							steps: iteration_steps
-						});
-						
+					var xOffsetTLT = ((TI.getMousePosition().x - WHIP.getCanvas().width) / (WHIP.getCanvas().width / 2.0) + 1) * 2;
+					var yOffsetTLT = -((TI.getMousePosition().y - WHIP.getCanvas().height) / (WHIP.getCanvas().height / 2.0) + 1) * 2;
+					var lerp = 0.01;
+					
+					xOffset = xOffset + lerp * (xOffsetTLT - xOffset);
+					yOffset = yOffset + lerp * (yOffsetTLT - yOffset);
+					
+					animate();
+					draw();
+				}
+				
+				var canvasUpdateTime = 0;
+				
+				function animate() {
+					var timeNow = new Date().getTime();
+					if (lastTime != 0) {
+						var elapsed = timeNow - lastTime;
+						canvasUpdateTime += elapsed;
+						xRot += xRotSpeed;
+						yRot += yRotSpeed;
+						zRot += zRotSpeed;
 					}
+					if (canvasUpdateTime > 5000) {
+						updateCanvasIndex();
+						canvasUpdateTime = 0;
+					}
+					lastTime = timeNow;
+				}
+				
+				function updateCanvasIndex() {
+					WHIP.getCanvas().classList.remove("fade-in-wrapper");
+					WHIP.getCanvas().classList.add("fade-out-wrapper");
+					WHIP.getCanvas().onanimationend = function() {
+						WHIP.getCanvas().classList.remove("fade-out-wrapper");
+						
+						buffer_index++;
+						buffer_index %= buffers.length;
+						
+						WHIP.getCanvas().classList.add("fade-in-wrapper");
+						WHIP.getCanvas().onanimationend = null;
+						
+						position_index = Math.round(Math.random() * 3); 
+					}
+				}
+				
+				function draw() {
+				
+					WHIP.clear();
 					
-				})();
+					mat4.perspective(projectionMatrix, 45, WHIP.getPerspectiveRatio(), 0.1, 100.0);
+
+					mat4.fromTranslation(modelViewMatrix, positions[position_index]);
+					mat4.translate(modelViewMatrix, modelViewMatrix, [xOffset, yOffset, 0.0]);
+					mat4.rotate(modelViewMatrix, modelViewMatrix, WHIP.degreesToRadians(xRot), [1, 0, 0]);
+					mat4.rotate(modelViewMatrix, modelViewMatrix, WHIP.degreesToRadians(yRot), [0, 1, 0]);
+					mat4.rotate(modelViewMatrix, modelViewMatrix, WHIP.degreesToRadians(zRot), [0, 0, 1]);
+					
+					shaderProgram.setUniform("uModelViewMatrix", modelViewMatrix);
+					shaderProgram.setUniform("uProjectMatrix", projectionMatrix);
+					
+					buffers[buffer_index].vertices.bind();
+					shaderProgram.attributePointer("aVertexPosition", buffers[buffer_index].vertices.itemSize);
+					
+					buffers[buffer_index].indices.bind();
+					WHIP.drawElements(WHIP.LINE_LOOP, buffers[buffer_index].indices.itemCount);
+					
+				}
 			</script>
 			<script src="js/footer-text.js"></script>
 		</div>

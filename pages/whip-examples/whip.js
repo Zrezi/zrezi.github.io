@@ -457,6 +457,75 @@ var WHIP = (function() {
 		WHIP.COLORS.WHITE      = [ 255 / 255, 255 / 255, 255 / 255, 255 / 255 ];
 		WHIP.COLORS.YELLOW     = [ 255 / 255, 255 / 255,   0 / 255, 255 / 255 ];
 	}
+	
+	class Mesh {
+			
+		constructor(vertices, textureCoords, normals, indices) {
+			
+			this.hasTextureCoords = false;
+			this.hasNormals = false;
+			this.hasIndices = false;
+			
+			if (!(vertices instanceof WHIP.Buffer)) {
+				throw new Error("Tried to create a mesh with no vertex buffer.");
+			}
+			
+			if (textureCoords !== undefined) {
+				if (textureCoords instanceof WHIP.Buffer) {
+					this.hasTextureCoords = true;
+					this.textureCoords = textureCoords;
+				} else if (textureCoords === null) {
+					// do nothing
+				} else {
+					throw new Error("Created Mesh has incorrect texture coordinates parameter.");
+				}
+			}
+			
+			if (normals !== undefined) {
+				if (normals instanceof WHIP.Buffer) {
+					this.hasNormals = true;
+					this.normals = normals;
+				} else if (normals === null) {
+					// do nothing
+				} else {
+					throw new Error("Created Mesh has incorrect normals parameter.");
+				}
+			}
+			
+			if (indices !== undefined) {
+				if (indices instanceof WHIP.Buffer) {
+					this.hasIndices = true;
+					this.indices = indices;
+				} else if (indices === null) {
+					// do nothing
+				} else {
+					throw new Error("Created Mesh has incorrect indices parameter.");
+				}
+			}
+			
+			/**
+			 * Vertex Buffer
+			 * @type {WHIP.Buffer)
+			*/
+			this.vertices = vertices;
+		}
+		
+		setTextureCoords(coords) {
+			this.hasTextureCoords = true;
+			this.textureCoords = coords;
+		}
+
+		setNormals(normals) {
+			this.hasNormals = true;
+			this.normals = normals;
+		}
+		
+		setIndices(indices) {
+			this.hasIndices = true;
+			this.indices = indices;
+		}
+		
+	}
 
 	// Public
 	return {
@@ -1008,7 +1077,7 @@ var WHIP = (function() {
 			
 			if (typeof key === "string") {
 				keyvalue = WHIP.KEYSTRINGS[key];
-				if (!key) {
+				if (!keyvalue) {
 					throw new Error("Key \"" + key + "\" is not valid");
 					return null;
 				}
@@ -1032,7 +1101,7 @@ var WHIP = (function() {
 			
 			if (typeof key === "string") {
 				keyvalue = WHIP.KEYSTRINGS[key];
-				if (!key) {
+				if (!keyvalue) {
 					throw new Error("Key \"" + key + "\" is not valid");
 					return null;
 				}
@@ -1114,6 +1183,11 @@ var WHIP = (function() {
 				 * @type {Number}
 				 */
 				this.glProgram = null;
+				
+				this.vertexPositionsAttributeName = null;
+				this.textureCoordsAttributeName = null;
+				this.normalsAttributeName = null;
+				this.indicesAttributeName = null;
 
 				var fragment;
 				var vertex;
@@ -1139,7 +1213,7 @@ var WHIP = (function() {
 				gl.linkProgram(this.glProgram);
 
 				if (!gl.getProgramParameter(this.glProgram, gl.LINK_STATUS)) {
-					alert("Could not initialise shaders");
+					throw new Error("Could not initialise shaders");
 				}
 			}
 
@@ -1203,7 +1277,70 @@ var WHIP = (function() {
 			attributePointer(attrib, itemSize) {
 				gl.vertexAttribPointer(this.getAttribute(attrib), itemSize, gl.FLOAT, false, 0, 0);
 			}
-
+			
+			/**
+			 * Adds the attribute but links it to the shader program's vertex position attribute variable.
+			 * @param {String} attrib The attribute to add and link.
+			 * @since 0.0.9
+			*/
+			addVertexPositionAttribute(attrib) {
+				this.addAttribute(attrib);
+				this.vertexPositionsAttributeName = attrib;
+			}
+			
+			/**
+			 * Adds the attribute but links it to the shader program's vertex position attribute variable.
+			 * Then enables it.
+			 * @param {String} attrib The attribute to add, link, and enable.
+			 * @since 0.0.9
+			*/
+			addAndEnableVertexPositionAttribute(attrib) {
+				this.addVertexPositionAttribute(attrib);
+				this.enableAttribute(attrib);
+			}
+			
+			/**
+			 * Adds the attribute but links it to the shader program's texture coordinate attribute variable.
+			 * @param {String} attrib The attribute to add and link.
+			 * @since 0.0.9
+			*/
+			addTextureCoordsAttribute(attrib) {
+				this.addAttribute(attrib);
+				this.textureCoordsAttributeName = attrib;
+			}
+			
+			/**
+			 * Adds the attribute but links it to the shader program's texture coordinate attribute variable.
+			 * Then enables it.
+			 * @param {String} attrib The attribute to add, link, and enable.
+			 * @since 0.0.9
+			*/
+			addAndEnableTextureCoordsAttribute(attrib) {
+				this.addTextureCoordsAttribute(attrib);
+				this.enableAttribute(attrib);
+			}
+			
+			/**
+			 * Adds the attribute but links it to the shader program's normal attribute variable.
+			 * @param {String} attrib The attribute to add and link.
+			 * @since 0.0.9
+			*/
+			addNormalsAttribute(attrib) {
+				this.addAttribute(attrib);
+				this.normalsAttributeName = attrib;
+			}
+			
+			/**
+			 * Adds the attribute but links it to the shader program's normal attribute variable.
+			 * Then enables it.
+			 * @param {String} attrib The attribute to add, link, and enable.
+			 * @since 0.0.9
+			*/
+			addAndEnableNormalsAttribute(attrib) {
+				this.addNormalsAttribute(attrib)
+				this.enableAttribute(attrib);
+			}
+			
 			/**
 			 * Set a key of the object equal to the WebGL uniform location call.
 			 * @param {String} uniform The uniform name.
@@ -1284,6 +1421,34 @@ var WHIP = (function() {
 						break;
 				}
 			}
+			
+			/**
+			 * Binds all the mesh's buffers, linking them to the shader program attributes automatically.
+			 * @param {WHIP.Mesh} mesh The mesh to bind.
+			 * @since 0.0.9
+			*/
+			bindMesh(mesh) {
+				if (!(mesh instanceof Mesh)) {
+					throw new Error("bindMesh() parameter is not a mesh!");
+				}
+				
+				mesh.vertices.bind();
+				this.attributePointer(this.vertexPositionsAttributeName, mesh.vertices.itemSize);
+				
+				if (mesh.hasTextureCoords) {
+					mesh.textureCoords.bind();
+					this.attributePointer(this.textureCoordsAttributeName, mesh.textureCoords.itemSize);
+				}
+				
+				if (mesh.hasNormals) {
+					mesh.normals.bind();
+					this.attributePointer(this.normalsAttributeName, mesh.normals.itemSize);
+				}
+				
+				if (mesh.hasIndices) {
+					mesh.indices.bind();
+				}
+			}
 
 			/**
 			 * Compiles a WebGLShader from a string.
@@ -1304,7 +1469,7 @@ var WHIP = (function() {
 				gl.compileShader(shader);
 
 				if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-					alert(gl.getShaderInfoLog(shader));
+					throw new Error(gl.getShaderInfoLog(shader));
 					return null;
 				}
 
@@ -1506,8 +1671,10 @@ var WHIP = (function() {
 				 */
 				this.glBuffer = gl.createBuffer();
 
-				if (bufferType == gl.ELEMENT_ARRAY_BUFFER || bufferType == gl.ARRAY_BUFFER) {
-					this.bufferType = bufferType;
+				if (bufferType == gl.ELEMENT_ARRAY_BUFFER || bufferType === "element") {
+					this.bufferType = gl.ELEMENT_ARRAY_BUFFER;
+				} else if (bufferType == gl.ARRAY_BUFFER || bufferType === "array") {
+					this.bufferType = gl.ARRAY_BUFFER;
 				} else {
 					throw new Error("WebGLBuffer buffer type \"" + bufferType + "\" not supported. Use gl.ELEMENT_ARRAY_BUFFER or gl.ARRAY_BUFFER");
 					return;
@@ -1515,9 +1682,9 @@ var WHIP = (function() {
 
 				gl.bindBuffer(this.bufferType, this.glBuffer);
 
-				if (arrayType == gl.FLOAT) {
+				if (arrayType == gl.FLOAT || arrayType === "float") {
 					gl.bufferData(this.bufferType, new Float32Array(bufferData), gl.STATIC_DRAW);
-				} else if (arrayType == gl.INT) {
+				} else if (arrayType == gl.INT || arrayType === "int") {
 					gl.bufferData(this.bufferType, new Uint16Array(bufferData), gl.STATIC_DRAW);
 				} else {
 					throw new Error("WebGLBuffer array type \"" + arrayType + "\" not supported. Use gl.FLOAT or gl.INT");
@@ -1555,7 +1722,7 @@ var WHIP = (function() {
 					longitudeBands = latitudeBands;
 				}
 				if (latitudeBands === undefined && longitudeBands === undefined) {
-					latitudeBands = longitudeBands = 24;
+					latitudeBands = longitudeBands = 16;
 				}
 				if (radius === undefined) {
 					radius = 1.0;
@@ -1694,7 +1861,9 @@ var WHIP = (function() {
 				];
 				return new WHIP.Buffer(indices, gl.ELEMENT_ARRAY_BUFFER, gl.INT, 1, 6);
 			}
-		} // end buffer
+		}, // end buffer
+		
+		Mesh, // end mesh since implemented privately
 
 	}
 
