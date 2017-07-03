@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Javascript Comment Remover</title>
+		<script src="../../js/jquery-3.2.1.min.js"></script>
+		<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.99.0/css/materialize.min.css">
+		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Share+Tech+Mono">
+		<link rel="stylesheet" href="../../css/custom.css">
+		<script src="../../js/materialize.min.js"></script>
+		<script src="../../js/interpolate.js"></script>
+		<style>
+			.container {
+				margin-top: 50px;
+			}
+			textarea {
+				height: 500px;
+				resize: none;
+				background-color: #EDEDED;
+				font-size: 10px;
+			}
+			p {
+				color: #333333;
+			}
+			.btn {
+				background-color: #ffab91;
+			}
+			.btn:hover {
+				background-color: #dd896b
+			}
+		</style>
+	</head>
+
+	<body>
+		<div id="body-wrapper">
+			<div class="container">
+				<div class="row">
+					<div class="col s5 center-align">
+						<p>Raw Code Here</p>
+					</div>
+					<div class="col s2"></div>
+					<div class="col s5 center-align">
+						<p>Formatted Code Here</p>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col s5">
+						<textarea id="in" rows="30" cols="70"></textarea>
+					</div>
+					<div class="col s2 center-align">
+						<button id="button" class="btn tooltipped" data-position="top" data-delay="50" data-tooltip="Remove Comments"><i class="large material-icons">input</i></button>
+						<br>
+						<br>
+						<button id="reset" class="btn tooltipped" data-position="bottom" data-delay="50" data-tooltip="Reset"><i class="large material-icons">replay</i></button>
+					</div>
+					<div class="col s5">
+						<textarea id="out" rows="30" cols="70"></textarea>
+					</div>
+				</div>
+				<div class="row center-align">
+					<br>
+					<p>Lexer code originally by <a href="https://stackoverflow.com/users/239916/thomas-eding">Thomas Eding</a>, modified by me</p>
+					<p>I used his old code. His new code is <a href="https://gist.github.com/SudoPlz/037b229ea53717bbcac1">here</a></p>
+				</div>
+			</div>
+			<script>
+				function Lexer(){this.setIndex=!1,this.useNew=!1;for(var e=0;e<arguments.length;++e){var r=arguments[e];r===Lexer.USE_NEW?this.useNew=!0:r===Lexer.SET_INDEX?this.setIndex=Lexer.DEFAULT_INDEX:r instanceof Lexer.SET_INDEX&&(this.setIndex=r.indexProp)}this.rules=[],this.errorLexeme=null}Lexer.NULL_LEXEME={},Lexer.ERROR_LEXEME={toString:function(){return"[object Lexer.ERROR_LEXEME]"}},Lexer.DEFAULT_INDEX="index",Lexer.USE_NEW={},Lexer.SET_INDEX=function(e){return this instanceof arguments.callee?(void 0===e&&(e=Lexer.DEFAULT_INDEX),void(this.indexProp=e)):new arguments.callee.apply(this,arguments)},function(){function e(e){for(var r="",t=0;t<i.length;++t)e[i[t][0]]&&(r+=i[t][1]);return r}function r(e){return function(r){return e!==r}}function t(r,t){if(!r.global){var n="g"+e(r);r=new RegExp(r.source,n)}this.regex=r,this.lexeme=t}var n=function(){var e=[];return function(){var r=e[arguments.length];if(r)return r.apply(this,arguments);for(var t=[],n=0;n<arguments.length;++n)t.push("a["+n+"]");return r=new Function("var a=arguments;return new this("+t.join()+");"),arguments.length<100&&(e[arguments.length]=r),r.apply(this,arguments)}}(),i=[["global","g"],["ignoreCase","i"],["multiline","m"],["sticky","y"]];Lexer.prototype={constructor:Lexer,addRule:function(e,r){var n=new t(e,r);this.rules.push(n)},setErrorLexeme:function(e){this.errorLexeme=e},runLexeme:function(e,r){if("function"!=typeof e)return e;var t=r.concat(r.index,r.input);return this.useNew?n.apply(e,t):e.apply(null,t)},lex:function(e){var t=0,n=[];for(this.setIndex&&(n.push=function(){for(var e=0;e<arguments.length;++e)arguments[e]&&(arguments[e][this.setIndex]=t);return Array.prototype.push.apply(this,arguments)});t<e.length;){for(var i=null,s=null,u=0;u<this.rules.length;++u){var a=this.rules[u];a.regex.lastIndex=t;var o=a.regex.exec(e);if(o){var l=!i||o.index<i.index||o.index===i.index&&o[0].length>i[0].length;l&&(i=o,s=a)}}if(i){this.errorLexeme&&t!==i.index&&n.push(this.errorLexeme);var h=this.runLexeme(s.lexeme,i);n.push(h),t=s.regex.lastIndex}else{if(this.errorLexeme)return n.push(this.errorLexeme),n.filter(r(Lexer.NULL_LEXEME));++t}}return n.filter(r(Lexer.NULL_LEXEME))}}}(),Array.prototype.filter||(Array.prototype.filter=function(e){for(var r=this.length>>>0,t=[],n=arguments[1],i=0;r>i;++i)if(i in this){var s=this[i];e.call(n,s,i,this)&&t.push(s)}return t});
+			</script>
+			<script>
+				function id(e){return e}Array.prototype.last=function(){return this[this.length-1]},RegExp.prototype.getFlags=function(){var e=[["global","g"],["ignoreCase","i"],["multiline","m"],["sticky","y"]];return function(){for(var n="",t=0;t<e.length;++t)this[e[t][0]]&&(n+=e[t][1]);return n}}(),RegExp.concat=function(){var e=Array.prototype.slice.call(arguments),n="",t=e[0].getFlags&&e[0].getFlags()||"",o=RegExp.concat.INTERSECT_FLAGS;"function"==typeof e.last()&&(o=e.pop());for(var r=0;r<e.length;++r){var c=e[r];"string"==typeof c?(t=o(t,""),n+=c):(t=o(t,c.getFlags()),n+=c.source)}return new RegExp(n,t)},function(){function e(e){var n="";for(var t in e)e.hasOwnProperty(t)&&e[t]&&(n+=t);return n}function n(e){for(var n={},t=0;t<e.length;++t)n[e.charAt(t)]=!0;return n}function t(e,n){for(var t in n)n.hasOwnProperty(t)&&(e[t]=!0);return e}function o(e,n){for(var t in n)n.hasOwnProperty(t)&&!n[t]&&delete e[t];return e}RegExp.concat.UNION_FLAGS=function(o,r){return e(t(n(o),n(r)))},RegExp.concat.INTERSECT_FLAGS=function(t,r){return e(o(n(t),n(r)))}}(),RegExp.prototype.group=function(){return RegExp.concat("(?:",this,")",RegExp.concat.UNION_FLAGS)},RegExp.prototype.optional=function(){return RegExp.concat(this.group(),"?",RegExp.concat.UNION_FLAGS)},RegExp.prototype.or=function(e){return RegExp.concat(this,"|",e,RegExp.concat.UNION_FLAGS).group()},RegExp.prototype.many=function(){return RegExp.concat(this.group(),"*",RegExp.concat.UNION_FLAGS)},RegExp.prototype.many1=function(){return RegExp.concat(this.group(),"+",RegExp.concat.UNION_FLAGS)};var eof=/(?![\S\s])/m,newline=/\r?\n/m,spaces=/[\t ]*/m,leadingSpaces=RegExp.concat(/^/m,spaces),trailingSpaces=RegExp.concat(spaces,/$/m),lineComment=/\/\/(?!@).*/m,blockComment=/\/\*(?!@)(?:[^*]|\*[^\/])*\*\//m,comment=lineComment.or(blockComment),comments=RegExp.concat(comment,RegExp.concat(spaces,comment).many()),eofComments=RegExp.concat(leadingSpaces,comments,trailingSpaces,eof),entireLineComments=RegExp.concat(leadingSpaces,comments,trailingSpaces,newline),lineCondComp=/\/\/@.*/,blockCondComp=/\/\*@(?:[^*]|\*[^@]|\*@[^\/])*@*\*\//,doubleQuotedString=/"(?:[^\\"]|\\.)*"/,singleQuotedString=/'(?:[^\\']|\\.)*'/,regexLiteral=/\/(?![\/*])(?:[^\/\\[]|\\.|\[(?:[^\]\\]|\\.)*\])*\//,anyChar=/[\S\s]/,stripper=new Lexer;stripper.addRule(entireLineComments,Lexer.NULL_LEXEME),stripper.addRule(RegExp.concat(newline,entireLineComments.many(),eofComments),Lexer.NULL_LEXEME),stripper.addRule(RegExp.concat(comment,RegExp.concat(trailingSpaces,newline,eofComments).optional()),Lexer.NULL_LEXEME),stripper.addRule(lineCondComp,id),stripper.addRule(blockCondComp,id),stripper.addRule(doubleQuotedString,id),stripper.addRule(singleQuotedString,id),stripper.addRule(regexLiteral,id),stripper.addRule(anyChar,id),document.getElementById("button").onclick=function(){var e=document.getElementById("in"),n=document.getElementById("out");n.value=stripper.lex(e.value).join("");n.focus();n.select();document.getElementById("button").disabled=true;document.getElementById("button").classList.remove("pulse");};
+			</script>
+			<script>
+				function p(){(k.disabled||n.disabled||!n.classList.contains("pulse"))&&(n.classList.add("pulse"),k.disabled=!1,n.disabled=!1)}function u(){(!k.disabled||n.classList.contains("pulse"))&&(n.classList.remove("pulse"),k.disabled=!0,n.disabled=!0,i.focus())}var n=document.getElementById("button"),k=document.getElementById("reset"),o=document.getElementById("out"),i=document.getElementById("in");k.disabled=!0,n.disabled=!0,o.readOnly=!0,o.value="",i.value="",i.spellcheck=!1,i.onkeyup=function(){""!=this.value?p():u()},k.onclick=function(){i.value="",o.value="",u()};o.onclick=function(){o.select();}
+			</script>
+			<script>
+				window.onunload = function() {};
+				
+				var DOM_body_wrapper = document.getElementById("body-wrapper");
+				DOM_body_wrapper.classList.add("fade-in-wrapper");
+			</script>
+		</div>
+	</body>
+</html>

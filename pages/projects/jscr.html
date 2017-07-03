@@ -2,30 +2,31 @@
 <html>
 	<head>
 		<meta charset="utf-8">
-		<title>Zach Reznicek &mdash; Programming Log</title>
-		<script src="../js/jquery-3.2.1.min.js"></script>
+		<title>Zach Reznicek &mdash; JSCR &mdash; Javascript Comment Remover</title>
+		<script src="../../js/jquery-3.2.1.min.js"></script>
 		<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.99.0/css/materialize.min.css">
 		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Share+Tech+Mono">
-		<link rel="stylesheet" href="../css/custom.css">
-		<script src="../js/materialize.min.js"></script>
-		<script src="../js/interpolate.js"></script>
+		<link rel="stylesheet" href="../../css/custom.css">
+		<script src="../../js/materialize.min.js"></script>
+		<script src="../../js/interpolate.js"></script>
 	</head>
 
 	<body>
 		<div id="body-wrapper">
 			<div class="container">
 				<div class="row center-align">
-					<h3 id="name"></h3>
+					<h3 id="name">jscr</h3>
 					<br>
-					<div class="left-align">
-						<p>0703171 [zbrezi.github.io] - 
-						<p>0630175 [zbrezi.github.io] - Editted the CSS colors to be easier on the eyes.</p>
-						<p>0630174 [zbrezi.github.io] - Random CSS fixes, renamed files, new icons.</p>
-						<p>0630173 [zbrezi.github.io] - Added footer-text.js.</p>
-						<p>0630172 [zbrezi.github.io] - Restructured landing page. Added CSS3 transitions to links.</p>
-						<p>0630171 [zbrezi.github.io] - First update to include this page</p>
-					</div>
+					<p><a id="link-demo" href="../jscr/jscr.html">Link</a></p>
+					<p>
+						This was a short project to basically store a local copy of a Javascript comment parser tool.
+						I decided to throw some CSS on top of what is essentially a direct copy (albeit earlier version) of <a id="link-original" href="https://gist.github.com/SudoPlz/037b229ea53717bbcac1">this</a>.
+						It's pretty simple: put text in, go line by and line and use regex parsing to detect which sections of the text represent
+						comments (i.e. between /* */ and //, but a bit more involved than that), and erase them from the
+						line of text. Append that parsed line of text to a big <code>var</code> that holds the rest of the text's
+						parsed code. Then output that in the other box.
+					</p>
 					<br>
 					<p class="link" id="back"><a href="../index.html"><i class="medium material-icons">keyboard_return</i></a></p>
 				</div>
@@ -37,9 +38,9 @@
 				(function() {
 					window.onunload = function() {};
 					
-					var DOM_body_wrapper, DOM_name, DOM_back;
+					var DOM_body_wrapper, DOM_name, DOM_back, DOM_link_demo, DOM_link_original;
 					
-					const default_text = "programming log";
+					const default_text = "jscr";
 					const iteration_steps = 10;
 					var interpolation_text = default_text;
 					var char_offset = 1;
@@ -59,7 +60,31 @@
 					}
 					DOM_back.onclick = function(event) {
 						event.preventDefault();
-						changePageOnAnimation("../index.html");
+						changePageOnAnimation("../projects.html");
+					}
+					
+					DOM_link_demo = document.getElementById("link-demo");
+					DOM_link_demo.onmouseover = function() {
+						interpolation_text = "demo";
+					}
+					DOM_link_demo.onmouseleave = function() {
+						interpolation_text = default_text;
+					}
+					DOM_link_demo.onclick = function(event) {
+						event.preventDefault();
+						changePageOnAnimation("../jscr/jscr.html");
+					}
+					
+					DOM_link_original = document.getElementById("link-original");
+					DOM_link_original.onmouseover = function() {
+						interpolation_text = "original version";
+					}
+					DOM_link_original.onmouseleave = function() {
+						interpolation_text = default_text;
+					}
+					DOM_link_original.onclick = function(event) {
+						event.preventDefault();
+						changePageOnAnimation(this.href);
 					}
 					
 					function changePageOnAnimation(path) {
@@ -88,7 +113,7 @@
 					} // end update
 				})();
 			</script>
-			<script src="../js/footer-text.js"></script>
+			<script src="../../js/footer-text.js"></script>
 		</div>
 	</body>
 </html>
