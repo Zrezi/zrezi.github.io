@@ -68,8 +68,17 @@
 				var yRotSpeed = 0.05;
 				var zRotSpeed = 0.02;
 				
-				var xOffset = 0.0;
-				var yOffset = 0.0;
+				var xMouseOffset = 0.0;
+				var yMouseOffset = 0.0;
+				
+				var xTranslationOffset = 0.0;
+				var yTranslationOffset = 0.0;
+				var zTranslationOffset = 0.0;
+				
+				var xTranslationSpeed;
+				var yTranslationSpeed;
+				var zTranslationSpeed;
+				randomizeTranslationSpeeds();
 				
 				var buffers;
 				var buffer_index;
@@ -243,8 +252,8 @@
 					var yOffsetTLT = -((TI.getMousePosition().y - WHIP.getCanvas().height) / (WHIP.getCanvas().height / 2.0) + 1) * 2;
 					var lerp = 0.01;
 					
-					xOffset = xOffset + lerp * (xOffsetTLT - xOffset);
-					yOffset = yOffset + lerp * (yOffsetTLT - yOffset);
+					xMouseOffset = xMouseOffset + lerp * (xOffsetTLT - xMouseOffset);
+					yMouseOffset = yMouseOffset + lerp * (yOffsetTLT - yMouseOffset);
 					
 					animate();
 					draw();
@@ -257,9 +266,14 @@
 					if (lastTime != 0) {
 						var elapsed = timeNow - lastTime;
 						canvasUpdateTime += elapsed;
+						
 						xRot += xRotSpeed;
 						yRot += yRotSpeed;
 						zRot += zRotSpeed;
+						
+						xTranslationOffset += xTranslationSpeed;
+						yTranslationOffset += yTranslationSpeed;
+						zTranslationOffset += zTranslationSpeed;
 					}
 					if (canvasUpdateTime > 5000) {
 						updateCanvasIndex();
@@ -280,7 +294,13 @@
 						WHIP.getCanvas().classList.add("fade-in-wrapper");
 						WHIP.getCanvas().onanimationend = null;
 						
-						position_index = Math.round(Math.random() * 3); 
+						position_index = Math.round(Math.random() * 3);
+						
+						xTranslationOffset = 0.0;
+						yTranslationOffset = 0.0;
+						zTranslationOffset = 0.0;
+						
+						randomizeTranslationSpeeds();
 					}
 				}
 				
@@ -291,7 +311,7 @@
 					mat4.perspective(projectionMatrix, 45, WHIP.getPerspectiveRatio(), 0.1, 100.0);
 
 					mat4.fromTranslation(modelViewMatrix, positions[position_index]);
-					mat4.translate(modelViewMatrix, modelViewMatrix, [xOffset, yOffset, 0.0]);
+					mat4.translate(modelViewMatrix, modelViewMatrix, [xMouseOffset + xTranslationOffset, yMouseOffset + yTranslationOffset, zTranslationOffset]);
 					mat4.rotate(modelViewMatrix, modelViewMatrix, WHIP.degreesToRadians(xRot), [1, 0, 0]);
 					mat4.rotate(modelViewMatrix, modelViewMatrix, WHIP.degreesToRadians(yRot), [0, 1, 0]);
 					mat4.rotate(modelViewMatrix, modelViewMatrix, WHIP.degreesToRadians(zRot), [0, 0, 1]);
@@ -305,6 +325,15 @@
 					buffers[buffer_index].indices.bind();
 					WHIP.drawElements(WHIP.LINE_LOOP, buffers[buffer_index].indices.itemCount);
 					
+				}
+				
+				function randomizeTranslationSpeeds() {
+					xTranslationSpeed = Math.random() * 0.005;
+					xTranslationSpeed *= (Math.random() > 0.50) ? 1 : -1;
+					yTranslationSpeed = Math.random() * 0.0005;
+					yTranslationSpeed *= (Math.random() > 0.50) ? 1 : -1;
+					zTranslationSpeed = Math.random() * 0.0005;
+					zTranslationSpeed *= (Math.random() > 0.50) ? 1 : -1;
 				}
 			</script>
 			<script src="js/footer-text.js"></script>
