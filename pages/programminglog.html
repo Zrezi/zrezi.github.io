@@ -4,7 +4,7 @@
 		<meta charset="utf-8">
 		<title>Zach Reznicek &mdash; Programming Log</title>
 		<script src="../js/jquery-3.2.1.min.js"></script>
-		<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+		<link rel="stylesheet" href="../css/font-awesome-4.7.0/css/font-awesome.min.css">
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.99.0/css/materialize.min.css">
 		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Share+Tech+Mono">
 		<link rel="stylesheet" href="../css/custom.css">
@@ -29,6 +29,11 @@
 					</p>
 					<br>
 					<div class="left-align">
+						<p>0705176 [zbrezi.github.io]
+							<div class="container">
+								<p>Removed the material icons and replaced them with <a id="link-fa" href="http://fontawesome.io/">Font Awesome</a>. I would've needed to import a few different libraries of material icons in order to get the icons I wanted...FA had them all. Go figure.</p>
+							</div>
+						</p>
 						<p>0705175 [Multiple]
 							<div class="container">
 								<p>Added run.sh git user bash file and .gitignore to all repos. Also added a picture of me to the about page.</p>
@@ -124,7 +129,7 @@
 						</p>
 					</div>
 					<br>
-					<p class="link" id="back"><a href="../index.html"><i class="medium material-icons">keyboard_return</i></a></p>
+					<p class="link" id="back"><a href="../index.html"><i class="fa fa-reply fa-4x fa-fw" aria-hidden="true"></i></a></p>
 				</div>
 			</div>
 			<div class="footer">
@@ -135,7 +140,7 @@
 					window.onunload = function() {};
 					$('select').material_select();
 					
-					var DOM_body_wrapper, DOM_name, DOM_back;
+					var DOM_body_wrapper, DOM_name, DOM_back, DOM_link_fa;
 					
 					const default_text = "programming log";
 					const iteration_steps = 10;
@@ -158,6 +163,12 @@
 					DOM_back.onclick = function(event) {
 						event.preventDefault();
 						changePageOnAnimation("../index.html");
+					}
+					
+					DOM_link_fa = document.getElementById("link-fa");
+					DOM_link_fa.onclick = function(event) {
+						event.preventDefault();
+						changePageOnAnimation("http://fontawesome.io/");
 					}
 					
 					function changePageOnAnimation(path) {
