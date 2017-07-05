@@ -36,9 +36,11 @@
 			
 			<script id="shader-fs" type="fs">
 				precision mediump float;
+				
+				uniform vec3 color;
 
 				void main(void) {
-					gl_FragColor = vec4(0.60, 0.60, 0.60, 1.00);
+					gl_FragColor = vec4(color, 1.00);
 				}
 			</script>
 
@@ -80,6 +82,8 @@
 				var zTranslationSpeed;
 				randomizeTranslationSpeeds();
 				
+				const translationLerpAmount = 0.005;
+				
 				var buffers;
 				var buffer_index;
 				
@@ -93,8 +97,30 @@
 				var rotStep = 0.05;
 				
 				var lastTime = 0;
+				
+				const default_color = [  3 / 255, 169 / 255, 244 / 255];
+				const highlight_color = [255 / 255, 171 / 255, 145 / 255];
+				
+				var lerp_color = [];
+				function setColorToDefault() {
+					lerp_color[0] = default_color[0];
+					lerp_color[1] = default_color[1];
+					lerp_color[2] = default_color[2];
+				}
+				function setColorToHighlight() {
+					lerp_color[0] = highlight_color[0];
+					lerp_color[1] = highlight_color[1];
+					lerp_color[2] = highlight_color[2];
+				}
+				setColorToDefault();
+				var actual_color = [];
+				actual_color[0] = default_color[0];
+				actual_color[1] = default_color[1];
+				actual_color[2] = default_color[2];
+				
+				const colorLerpAmount = 0.08;
 			
-				const default_text = "zach reznicek";
+				var default_text = "zach reznicek";
 				const iteration_steps = 10;
 				var interpolation_text = default_text;
 				var char_offset = 1;
@@ -129,8 +155,11 @@
 					shaderProgram.addAttribute("aVertexPosition");
 					shaderProgram.enableAttribute("aVertexPosition");
 
+					shaderProgram.addUniform("color", "3fv");
 					shaderProgram.addUniform("uProjectMatrix", "Matrix4fv");
 					shaderProgram.addUniform("uModelViewMatrix", "Matrix4fv");
+					
+					shaderProgram.setUniform("color", default_color);
 				}
 
 				function initBuffers() {
@@ -179,9 +208,11 @@
 					DOM_link_about = document.getElementById("link-about");
 					DOM_link_about.onmouseover = function() {
 						interpolation_text = "about me";
+						setColorToHighlight();
 					}
 					DOM_link_about.onmouseleave = function() {
 						interpolation_text = default_text;
+						setColorToDefault();
 					}
 					DOM_link_about.onclick = function(event) {
 						event.preventDefault();
@@ -191,9 +222,11 @@
 					DOM_link_code = document.getElementById("link-code");
 					DOM_link_code.onmouseover = function() {
 						interpolation_text = "my projects";
+						setColorToHighlight();
 					}
 					DOM_link_code.onmouseleave = function() {
 						interpolation_text = default_text;
+						setColorToDefault();
 					}
 					DOM_link_code.onclick = function(event) {
 						event.preventDefault();
@@ -203,9 +236,11 @@
 					DOM_link_contact = document.getElementById("link-contact");
 					DOM_link_contact.onmouseover = function() {
 						interpolation_text = "contact me";
+						setColorToHighlight();
 					}
 					DOM_link_contact.onmouseleave = function() {
 						interpolation_text = default_text;
+						setColorToDefault();
 					}
 					DOM_link_contact.onclick = function(event) {
 						event.preventDefault();
@@ -215,9 +250,11 @@
 					DOM_link_lifelog = document.getElementById("link-programming-log");
 					DOM_link_lifelog.onmouseover = function() {
 						interpolation_text = "programming log";
+						setColorToHighlight();
 					}
 					DOM_link_lifelog.onmouseleave = function() {
 						interpolation_text = default_text;
+						setColorToDefault();
 					}
 					DOM_link_lifelog.onclick = function(event) {
 						event.preventDefault();
@@ -227,9 +264,11 @@
 					DOM_link_notes = document.getElementById("link-notes");
 					DOM_link_notes.onmouseover = function() {
 						interpolation_text = "notes";
+						setColorToHighlight();
 					}
 					DOM_link_notes.onmouseleave = function() {
 						interpolation_text = default_text;
+						setColorToDefault();
 					}
 					DOM_link_notes.onclick = function (event) {
 						event.preventDefault();
@@ -250,10 +289,9 @@
 					
 					var xOffsetTLT = ((TI.getMousePosition().x - WHIP.getCanvas().width) / (WHIP.getCanvas().width / 2.0) + 1) * 2;
 					var yOffsetTLT = -((TI.getMousePosition().y - WHIP.getCanvas().height) / (WHIP.getCanvas().height / 2.0) + 1) * 2;
-					var lerp = 0.01;
 					
-					xMouseOffset = xMouseOffset + lerp * (xOffsetTLT - xMouseOffset);
-					yMouseOffset = yMouseOffset + lerp * (yOffsetTLT - yMouseOffset);
+					xMouseOffset = xMouseOffset + translationLerpAmount * (xOffsetTLT - xMouseOffset);
+					yMouseOffset = yMouseOffset + translationLerpAmount * (yOffsetTLT - yMouseOffset);
 					
 					animate();
 					draw();
@@ -274,6 +312,8 @@
 						xTranslationOffset += xTranslationSpeed;
 						yTranslationOffset += yTranslationSpeed;
 						zTranslationOffset += zTranslationSpeed;
+						
+						lerpColor();
 					}
 					if (canvasUpdateTime > 5000) {
 						updateCanvasIndex();
@@ -302,6 +342,14 @@
 						
 						randomizeTranslationSpeeds();
 					}
+				}
+				
+				function lerpColor() {
+					actual_color[0] = actual_color[0] + colorLerpAmount * (lerp_color[0] - actual_color[0]);
+					actual_color[1] = actual_color[1] + colorLerpAmount * (lerp_color[1] - actual_color[1]);
+					actual_color[2] = actual_color[2] + colorLerpAmount * (lerp_color[2] - actual_color[2]);
+				
+					shaderProgram.setUniform("color", actual_color);
 				}
 				
 				function draw() {
