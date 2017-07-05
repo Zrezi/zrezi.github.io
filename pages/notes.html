@@ -71,6 +71,7 @@
 					
 						requestAnimationFrame(update);
 						
+						
 						interpolate.string({
 							element: DOM_name,
 							interpolate: interpolation_text,
@@ -79,6 +80,10 @@
 						});
 						
 					} // end update
+					
+					function pi_series(k) {
+						return ((4*Math.pow(-1,k)))*((1/(Math.pow(3,2*k+1)))+(1/(Math.pow(2,2*k+1))))/(2*k+1);
+					}
 				})();
 			</script>
 			<script src="../js/footer-text.js"></script>
