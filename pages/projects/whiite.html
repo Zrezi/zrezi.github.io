@@ -136,8 +136,8 @@
 						<li class="collection-item">Press (1) on the Wiimote, or (A) if you're using a gamecube controller to continue pass the loading screen</li>
 						<li class="collection-item">Choose these options as they appear
 							<ul class="collection">
-								<li class="collection-item">Install Bootmii</li>
-								<li class="collection-item">Install as boot2</li>
+								<li class="collection-item"><code>Install Bootmii</code></li>
+								<li class="collection-item"><code>Install as boot2</code></li>
 							</ul>
 						</li>
 						<li class="collection-item">Confirm the installation, and you should see some information about NAND memory being written to. This means that it worked</li>
@@ -163,7 +163,7 @@
 						<li class="collection-item">
 							Eventually, it will start to install. Using the recommended 2GB SD card, this process will take ~15 minutes. Do NOT unplug anything or turn off your Wii during this time
 							<br><br><i>When the menu appears about "creating the journal", if it appears to freeze that is normal. For some reason this step takes a bit longer than all of the previous steps while installing</i>
-							<br><br><i>I tried using a 16GB card, and this step never completed. Just food for thought.</i>
+							<br><br><i>I tried using a 16GB card, and shut down my Wii after an hour of waiting. Just food for thought.</i>
 						</li>
 						<li class="collection-item">When the process completes, it will prompt you to press enter and restart the system. Do this. It won't restart, or it might. Once it turns completely off or you turn it off, move on to the next step</li>
 					</ul>
@@ -186,8 +186,8 @@
 						<li class="collection-item">Using terminal, the path to the mounted partitions should be something like "/media/$USER/boot/" and "/media/$USER/whiite/"</li>
 						<li class="collection-item">We need to remove all files on both partitions. Using the terminal, run:
 							<ul class="collection">
-								<li><code>rm -rf /media/$USER/boot/*</code></li>
-								<li><code>rm -rf /media/$USER/whiite/*</code></li>
+								<li class="collection-item"><code>rm -rf /media/$USER/boot/*</code></li>
+								<li class="collection-item"><code>rm -rf /media/$USER/whiite/*</code></li>
 							</ul>
 						</li>
 						<li class="collection-item">
@@ -199,13 +199,13 @@
 					
 					<h5>add bootmii</h5>
 					<p>
-						Now you can copy over the bootmii app...boot files. We will be replacing ppcboot.elf however, so we will delete that.
+						Now you can copy over the bootmii app boot files. We will be replacing ppcboot.elf however, so we will delete that.
 					</p>
 					<ul class="collection">
 						<li class="collection-item">Remember the folder you copied from your SD card when you initially installed bootmii? Copy that entire folder into the SD card's boot partition</li>
 						<li class="collection-item">We will be overwriting the ppcboot.elf file in the bootmii folder, so we can delete it first via terminal:
 							<ul class="collection">
-								<li><code>rm /media/$USER/boot/bootmii/ppcboot.elf</code></li>
+								<li class="collection-item"><code>rm /media/$USER/boot/bootmii/ppcboot.elf</code></li>
 							</ul>
 						</li>
 					</ul>
@@ -236,7 +236,7 @@
 						<li class="collection-item">Move the .elf file into the bootmii folder on your SD card, either with the <code>mv</code> terminal command or by dragging and dropping the file</li>
 						<li class="collection-item">Rename the file "ppcboot.elf"
 							<ul class="collection">
-								<li><code>mv /media/$USER/boot/bootmii/mikep5-zImage-2.6.32.mini.480p(NTSC).elf /media/$USER/boot/bootmii/ppcboot.elf</code></li>
+								<li class="collection-item"><code>mv /media/$USER/boot/bootmii/mikep5-zImage-2.6.32.mini.480p(NTSC).elf /media/$USER/boot/bootmii/ppcboot.elf</code></li>
 							</ul>... taking the place of the bootmii ppcboot.elf generated file that you deleted earlier!
 						</li>
 					</ul>
@@ -251,12 +251,12 @@
 						<li class="collection-item">Download <a id="link-filesystem" href="http://downloads.sf.net/gc-linux/debian-lenny-5.0%2Bwhiite-1.10.tar.bz2">this</a> file</li>
 						<li class="collection-item">Navigate to the whiite directory on your SD card
 							<ul class="collection">
-								<li><code>cd /media/$USER/whiite</code></li>
+								<li class="collection-item"><code>cd /media/$USER/whiite</code></li>
 							</ul>
 						</li>
 						<li class="collection-item">Untar the downloaded file into this location using the terminal
 							<ul class="collection">
-								<li><code>sudo tar -xjvf /home/$USER/Downloads/debian-lenny-5.0+whiite-1.10.tar.bz2</code></li>
+								<li class="collection-item nested-li"><code>sudo tar -xjvf /home/$USER/Downloads/debian-lenny-5.0+whiite-1.10.tar.bz2</code></li>
 							</ul>
 						</li>
 						<li class="collection-item">Wait for the untarring process to finish, it may take ~10 seconds to complete</li>
@@ -274,46 +274,112 @@
 					
 					<h5>booting for the first time</h5>
 					<p>
-						
+						This is really the easiest step. Just turn it on and login.
 					</p>
+					<ul class="collection">
+						<li class="collection-item">Make sure that the SD card is in the Wii</li>
+						<li class="collection-item">Turn on the Wii</li>
+						<li class="collection-item">You should see a black background with white text scrolling fairly fast. Wait for it to stop.</li>
+						<li class="collection-item">It shouldn't crash. If so, your best bet is to Google the generic error(s), not specifying the Wii</li>
+						<li class="collection-item">When prompted (a.k.a. when the text stops scrolling), enter whiite's default login information:
+							<ul class="collection">
+								<li class="collection-item">Login: <code>root</code></li>
+								<li class="collection-item">Password: <code>whiite</code></li>
+							</ul>
+						</li>
+						<li class="collection-item">You should now be logged into whiite on your Wii as root</li>
+					</ul>
 					<br>
 					
 					<h5>fixing the keyboard</h5>
 					<p>
-						
+						For some reason the default keyboard layout is in Spanish. Weird.
 					</p>
+					<ul class="collection">
+						<li class="collection-item">If you try typing some symbols, such as '-', you can see that they don't display the correct characters</li>
+						<li class="collection-item">Run the command <code>dpkg-reconfigure console-data</code>. To type the dash, use the numberpad '-' character. That one works.</li>
+						<li class="collection-item">Wait for the configuration tool to load...</li>
+						<li class="collection-item">Choose these options as they appear to load a standard QWERTY English keyboard
+							<ul class="collection">
+								<li class="collection-item">OK</li>
+								<li class="collection-item">Select keymap from full list</li>
+								<li class="collection-item"><i>Scroll down with the arrow keys until you find "pc / qwerty / US american / Standard / Standard"</i></li>
+								<li class="collection-item"><i>Press enter for that choice</i></li>
+							</ul>
+						</li>
+						<li class="collection-item">Wait for the tool to finish working...</li>
+						<li class="collection-item">Now your keyboard should be set up properly</li>
+					</ul>
 					<br>
 					
 					<h5>setting up wifi</h5>
 					<p>
-						
+						WiFi is the most finicky part of the entire installation. If this part doesn't work for you, I most likely have
+						no idea why. Either get Googling or reinstall (but reinstalling probably won't fix it...I tried).
 					</p>
+					<ul class="collection">
+						<li class="collection-item">Whiite comes bundled with an easy installer that automatically modifies the "/etc/network/interfaces" file, aptly called Whiite-ez-wifi-config</li>
+						<li class="collection-item">Navigate to root, <code>cd ~</code></li>
+						<li class="collection-item">Run <code>./whiite-ez-wifi-config</code></li>
+						<li class="collection-item">Follow the onscreen prompts to enter your network SSID and passkey</li>
+						<li class="collection-item">There will be an option to test your connection. TEST THE CONNECTION. If it doesn't work, don't worry. It might've worked anyway and the test is wrong.</li>
+						<li class="collection-item">Exit the installer. Back in the terminal, you can run <code>iwconfig</code> to see if you're connected to a network</li>
+						<li class="collection-item">You'll be looking for the wlan0 connection. If you can't connect to WiFi still, you can manually check the file by running <code>vi /etc/network/interfaces</code>. You can also restart at this time, that might help: <code>shutdown -h now</code></li>
+						<li class="collection-item">If everything looks like it's working, <code>ping</code> a website like Google and hopefully you'll see some action</li>
+					</ul>
 					<br>
 					
 					<h5>getting correct aptitude repositories</h5>
 					<p>
-						
+						Since the version of Linux that Whiite is based on (Debian Lenny) is from nearly a decade ago, the respository paths for Aptitude
+						are obviously broken. Luckily there's an easy fix.
 					</p>
+					<ul class="collection">
+						<li class="collection-item">Debian Lenny is now unsupported, so any <code>apt-get install</code> will fail due to the wrong repository source being used</li>
+						<li class="collection-item">To update this, use the following commands in order:
+							<ul class="collection">
+								<li class="collection-item"><code>deb http://archive.debian.org/debian/ lenny contrib main non-free</code></li>
+								<li class="collection-item"><code>deb http://archive.debian.org/debian-security lenny/updates main</code></li>
+								<li class="collection-item"><code>apt-get install debian-archive-keyring</code></li>
+							</ul>
+						</li>
+					</ul>
 					<br>
 					
 					<h5>upgrade and update aptitude</h5>
 					<p>
-						
+						If you got this far, I probably don't need to show you how to upgrade/update apt.
 					</p>
+					<ul class="collection">
+						<li class="collection-item"><s>Overall I think it was ~150MB</s> I have no idea how much it was to upgrade and update everything
+							<ul class="collection">
+								<li class="collection-item"><code>apt-get update</code></li>
+								<li class="collection-item"><code>apt-get upgrade</code></li>
+								<li class="collection-item"><code>apt-get update</code></li>
+							</ul>
+						</li>
+					</ul>
 					<br>
 					
 					<h5>trying apt</h5>
 					<p>
-						
+						If the previous step didn't fail, then you're all set up. You can't do much with the Wii, but you
+						can look at htop. Speaking of, you can download that.
 					</p>
+					<ul class="collection">
+						<li class="collection-item">htop is essentially a better version of top, which is your basic System Monitor</li>
+						<li class="collection-item"><code>apt-get install htop</code></li>
+						<li class="collection-item">Likewise, Debian Lenny comes with the Vi text editor. However, if you're planning to do any text editing at all just get Vim.</li>
+						<li class="collection-item"><code>apt-get install vim</code></li>
+					</ul>
 					<br>
 					
 					<hr>
 					<h3>finished</h3>
 					<p>
 						If you're here, you either skipped to the bottom to see what the last few steps were or if you have
-						legitimately gotten to this point, you should have a Wii with 100% working Linux. It's not fast, it's
-						not pretty, but it's pretty cool.
+						legitimately gotten to this point, you should have a Wii with 100% working Linux. <s>It's fast, it's
+						pretty, and</s> it's pretty cool.
 					</p>
 					<br>
 					
@@ -327,7 +393,7 @@
 					<p>
 						If you run into an issue that you can't figure out, I'd recommend just completely wiping the SD card and
 						the USB drive, and starting from scratch. If it locks up at the same step twice, try it a third time and if
-						it still doesn't work then contact me <a id="" href="../contactme.html">here</a>.
+						it still doesn't work then contact me <a id="link-contactme" href="../contactme.html">here</a>.
 					</p>
 					
 					<p class="link" id="back"><a href="../projects.html"><i class="medium material-icons">keyboard_return</i></a></p>
@@ -345,7 +411,8 @@
 					DOM_back,
 					DOM_link_homebrew,
 					DOM_link_kernel_image,
-					DOM_link_filesystem;
+					DOM_link_filesystem,
+					DOM_link_contactme;
 					
 					const default_text = "whiite linux";
 					const iteration_steps = 10;
@@ -386,6 +453,12 @@
 					DOM_link_filesystem.onclick = function(event) {
 						event.preventDefault();
 						changePageOnAnimation("http://downloads.sf.net/gc-linux/debian-lenny-5.0%2Bwhiite-1.10.tar.bz2");
+					}
+					
+					DOM_link_contactme = document.getElementById("link-contactme");
+					DOM_link_contactme.onclick = function(event) {
+						event.preventDefault();
+						changePageOnAnimation("../contactme.html");
 					}
 					
 					function changePageOnAnimation(path) {

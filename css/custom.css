@@ -25,6 +25,15 @@ li {
 	font-family: 'Share Tech Mono', monospace;
 }
 
+code {
+	background-color: #E2E2E2;
+	border-radius: 4px;
+}
+
+.nested-li {
+	background-color: black;
+}
+
 /* header styling */
 h3, h4, h5, h6 {
 	color: #ffab91;
