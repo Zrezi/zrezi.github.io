@@ -1,4 +1,4 @@
-const VERSION            = "0706171";
+const VERSION            = "0706172";
 const FADE_OUT_CSS_CLASS = "fade-out-wrapper";
 const FADE_IN_CSS_CLASS  = "fade-in-wrapper";
 const FOOTER_ID          = "footer-text";

@@ -1,9 +1,12 @@
 /* the vignette effect */
 html {
-	min-height: 100%;
-	box-shadow: 0 0 175px rgba(0,0,0,0.9) inset;
 	overflow-y: scroll;
 	background-color: #ffffef;
+	min-height: 100%;
+	box-shadow: 0 0 175px rgba(0,0,0,0.9) inset;
+}
+
+.shadowed {
 }
 
 .canvas-wrapper {
