@@ -105,10 +105,10 @@ p {
 
 .fade-in-wrapper {
 	opacity: 1;
-	animation: fadein 0.5s;
-	-moz-animation: fadein 0.5s; /* Firefox */
-	-webkit-animation: fadein 0.5s; /* Safari and Chrome */
-	-o-animation: fadein 0.5s; /* Opera */
+	animation: fadein 0.25s;
+	-moz-animation: fadein 0.25s; /* Firefox */
+	-webkit-animation: fadein 0.25s; /* Safari and Chrome */
+	-o-animation: fadein 0.25s; /* Opera */
 }
 @keyframes fadein {
 	from { opacity:0; }
@@ -129,10 +129,10 @@ p {
 
 .fade-out-wrapper {
 	opacity: 0;
-	animation: fadeout 0.5s;
-	-moz-animation: fadeout 0.5s; /* Firefox */
-	-webkit-animation: fadeout 0.5s; /* Safari and Chrome */
-	-o-animation: fadeout 0.5s; /* Opera */
+	animation: fadeout 0.25s;
+	-moz-animation: fadeout 0.25s; /* Firefox */
+	-webkit-animation: fadeout 0.25s; /* Safari and Chrome */
+	-o-animation: fadeout 0.25s; /* Opera */
 }
 @keyframes fadeout {
 	from { opacity:1; }

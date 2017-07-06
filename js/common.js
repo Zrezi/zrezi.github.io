@@ -142,7 +142,7 @@ var Common = (function() {
 			a.href = "";
 			a.onclick = function(event) {
 				event.preventDefault();
-				window.location = "/pages/programminglog.html";
+				Common.fadeToPage("/pages/programminglog.html");
 			}
 			document.getElementById(FOOTER_ID).appendChild(a);
 			
