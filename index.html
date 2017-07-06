@@ -17,6 +17,7 @@
 
 	<body class="canvas-wrapper" onload="WHIP.start()" onresize="WHIP.resize()">
 		<div>
+			<p style="position: fixed; left: 2em; bottom: 1em;">Press ~!</p>
 			<div class="container container-spaced">
 				<div class="row center-align">
 					<h3 id="name"></h3>
@@ -27,6 +28,7 @@
 					<p class="link" id="link-contact"><a href="pages/contactme.html"><i class="fa fa-envelope-o fa-4x fa-fw" aria-hidden="true"></i></a></p>
 					<br>
 					<p class="link" id="link-programming-log"><a href="pages/programminglog.html"><i class="fa fa-archive fa-4x fa-fw" aria-hidden="true"></i></a></p>
+					
 				<div>
 			</div>
 			<div class="footer">
@@ -275,6 +277,11 @@
 					
 					xMouseOffset = xMouseOffset + translationLerpAmount * (xOffsetTLT - xMouseOffset);
 					yMouseOffset = yMouseOffset + translationLerpAmount * (yOffsetTLT - yMouseOffset);
+					
+					if (TI.keyPressed("grave")) {
+						Common.htmlToggle();
+						console.log(localStorage.getItem("zrezi-background-type"));
+					}
 					
 					animate();
 					draw();

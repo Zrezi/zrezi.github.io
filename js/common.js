@@ -140,6 +140,7 @@ var Common = (function() {
 			var a = document.createElement("a");
 			a.innerHTML = VERSION;
 			a.href = "";
+			a.id = "link-log";
 			a.onclick = function(event) {
 				event.preventDefault();
 				Common.fadeToPage("/pages/programminglog.html");
@@ -147,6 +148,12 @@ var Common = (function() {
 			document.getElementById(FOOTER_ID).appendChild(a);
 			
 			wrapper = document.getElementById("fading-wrapper");
+			
+			if (localStorage.getItem("zrezi-background-type") === "dark") {
+				Common.htmlDark();
+			} else {
+				Common.htmlLight();
+			}
 		},
 		
 		fadeToPage: function(path) {
@@ -166,6 +173,26 @@ var Common = (function() {
 		fadePageOut: function() {
 			wrapper.classList.remove(FADE_IN_CSS_CLASS);
 			wrapper.classList.add(FADE_OUT_CSS_CLASS);
+		},
+		
+		htmlLight: function() {
+			localStorage.setItem("zrezi-background-type", "light");
+			wrapper.classList.remove("html-dark");
+			wrapper.classList.add("html-light");
+		},
+		
+		htmlDark: function() {
+			localStorage.setItem("zrezi-background-type", "dark");
+			wrapper.classList.remove("html-light");
+			wrapper.classList.add("html-dark");
+		},
+		
+		htmlToggle: function() {
+			if (localStorage.getItem("zrezi-background-type") === "dark") {
+				Common.htmlLight();
+			} else {
+				Common.htmlDark();
+			}
 		},
 		
 		geid: function(id) {
