@@ -9,11 +9,11 @@
 		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Share+Tech+Mono">
 		<link rel="stylesheet" href="../../css/custom.css">
 		<script src="../../js/materialize.min.js"></script>
-		<script src="../../js/interpolate.js"></script>
+		<script src="../../js/common.js"></script>
 	</head>
 
 	<body>
-		<div id="body-wrapper">
+		<div id="fading-wrapper">
 			<div class="container container-spaced">
 				<div class="row center-align">
 					<h3 id="name">tinyinput</h3>
@@ -71,41 +71,30 @@
 			</div>
 			<script>
 				(function() {
-					window.onunload = function() {};
 					
-					var DOM_body_wrapper, DOM_name, DOM_back;
+					Common.initPage();
+					Common.fadePageIn();
+					
+					var DOM_name,
+					DOM_back;
 					
 					const default_text = "tinyinput";
 					const iteration_steps = 10;
 					var interpolation_text = default_text;
-					var char_offset = 1;
-					
-					DOM_body_wrapper = document.getElementById("body-wrapper");
-					DOM_body_wrapper.classList.add("fade-in-wrapper");
 					
 					DOM_name = document.getElementById("name");
 					DOM_name.innerHTML = default_text;
 					
 					DOM_back = document.getElementById("back");
 					DOM_back.onmouseover = function() {
-						interpolation_text = "return";
+						interpolation_text = "projects";
 					}
 					DOM_back.onmouseleave = function() {
 						interpolation_text = default_text;
 					}
 					DOM_back.onclick = function(event) {
 						event.preventDefault();
-						changePageOnAnimation("../projects.html");
-					}
-					
-					function changePageOnAnimation(path) {
-						DOM_body_wrapper.style.opacity = 1;
-						DOM_body_wrapper.classList.remove("fade-in-wrapper");
-						DOM_body_wrapper.classList.add("fade-out-wrapper");
-						DOM_body_wrapper.onanimationend = function() {
-							DOM_body_wrapper.style.opacity = 0;
-							window.location = path;
-						};
+						Common.fadeToPage("../projects.html");
 					}
 					
 					requestAnimationFrame(update);
@@ -114,17 +103,15 @@
 					
 						requestAnimationFrame(update);
 						
-						interpolate.string({
+						Interpolate.string({
 							element: DOM_name,
-							interpolate: interpolation_text,
-							offset: char_offset,
+							stringToInterpolateTo: interpolation_text,
 							steps: iteration_steps
 						});
 						
 					} // end update
 				})();
 			</script>
-			<script src="../../js/footer-text.js"></script>
 		</div>
 	</body>
 </html>

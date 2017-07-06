@@ -9,14 +9,14 @@
 		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Share+Tech+Mono">
 		<link rel="stylesheet" href="css/custom.css">
 		<script src="js/materialize.min.js"></script>
-		<script src="js/interpolate.js"></script>
 		<script src="js/whip-0.0.9.js"></script>
 		<script src="js/tinyinput-min.js"></script>
 		<script src="js/gl-matrix-min.js"></script>
+		<script src="js/common.js"></script>
 	</head>
 
 	<body class="canvas-wrapper" onload="WHIP.start()" onresize="WHIP.resize()">
-		<div id="body-wrapper">
+		<div id="fading-wrapper">
 			<div class="container container-spaced">
 				<div class="row center-align">
 					<h3 id="name"></h3>
@@ -119,14 +119,23 @@
 				actual_color[2] = default_color[2];
 				
 				const colorLerpAmount = 0.08;
+					
+				Common.initPage();
+				Common.fadePageIn();
 			
 				var default_text = "zach reznicek";
 				const iteration_steps = 10;
 				var interpolation_text = default_text;
-				var char_offset = 1;
 				
-				var DOM_body_wrapper, DOM_name, DOM_link_about, DOM_link_code, DOM_link_contact, DOM_link_lifelog;
-				var update_about = false, update_code = false, update_contact = false;
+				var DOM_name,
+				DOM_link_about,
+				DOM_link_code,
+				DOM_link_contact,
+				DOM_link_lifelog;
+				
+				var update_about = false,
+				update_code = false,
+				update_contact = false;
 				
 				function WHIPPostInit() {
 				
@@ -187,20 +196,8 @@
 					
 					buffer_index = Math.round(Math.random() * (buffers.length - 1));
 				}
-					
-				function changePageOnAnimation(path) {
-					DOM_body_wrapper.style.opacity = 1;
-					DOM_body_wrapper.classList.remove("fade-in-wrapper");
-					DOM_body_wrapper.classList.add("fade-out-wrapper");
-					DOM_body_wrapper.onanimationend = function() {
-						DOM_body_wrapper.style.opacity = 0;
-						window.location = path;
-					};
-				}
 				
 				function initDOM() {
-					DOM_body_wrapper = document.getElementById("body-wrapper");
-					DOM_body_wrapper.classList.add("fade-in-wrapper");
 					
 					DOM_name = document.getElementById("name");
 					DOM_name.innerHTML = default_text;
@@ -216,7 +213,7 @@
 					}
 					DOM_link_about.onclick = function(event) {
 						event.preventDefault();
-						changePageOnAnimation("pages/about.html");
+						Common.fadeToPage("pages/about.html");
 					}
 					
 					DOM_link_code = document.getElementById("link-code");
@@ -230,7 +227,7 @@
 					}
 					DOM_link_code.onclick = function(event) {
 						event.preventDefault();
-						changePageOnAnimation("pages/projects.html");
+						Common.fadeToPage("pages/projects.html");
 					}
 					
 					DOM_link_contact = document.getElementById("link-contact");
@@ -244,7 +241,7 @@
 					}
 					DOM_link_contact.onclick = function(event) {
 						event.preventDefault();
-						changePageOnAnimation("pages/contactme.html");
+						Common.fadeToPage("pages/contactme.html");
 					}
 					
 					DOM_link_lifelog = document.getElementById("link-programming-log");
@@ -258,7 +255,7 @@
 					}
 					DOM_link_lifelog.onclick = function(event) {
 						event.preventDefault();
-						changePageOnAnimation("pages/programminglog.html");
+						Common.fadeToPage("pages/programminglog.html");
 					}
 					
 				}
@@ -267,12 +264,11 @@
 					
 					requestAnimationFrame(update);
 					
-					interpolate.string({
-						element: DOM_name,
-						interpolate: interpolation_text,
-						offset: char_offset,
-						steps: iteration_steps
-					});
+					Interpolate.string({
+							element: DOM_name,
+							stringToInterpolateTo: interpolation_text,
+							steps: iteration_steps
+						});
 					
 					var xOffsetTLT = ((TI.getMousePosition().x - WHIP.getCanvas().width) / (WHIP.getCanvas().width / 2.0) + 1) * 2;
 					var yOffsetTLT = -((TI.getMousePosition().y - WHIP.getCanvas().height) / (WHIP.getCanvas().height / 2.0) + 1) * 2;
@@ -371,7 +367,6 @@
 					zTranslationSpeed *= (Math.random() > 0.50) ? 1 : -1;
 				}
 			</script>
-			<script src="js/footer-text.js"></script>
 		</div>
 	</body>
 </html>
