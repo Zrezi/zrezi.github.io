@@ -32,7 +32,7 @@
 						<br>
 						<p class="link" id="link-whiite"><a href="projects/whiite.html">Whiite Linux Guide</a></p>
 						<br>
-						<p class="link" id="link-">coming soon...</p>
+						<p class="link" id="link-wireworld"><a href="wireworld/wireworld.html">WireWorld</a></p>
 					</div>
 					<div class="col s2"></div>
 					
@@ -60,7 +60,8 @@
 					DOM_link_tinyinput,
 					DOM_link_github,
 					DOM_link_jcr,
-					DOM_link_whiite;
+					DOM_link_whiite,
+					DOM_link_wireworld;
 					
 					const default_text = "my projects";
 					const iteration_steps = 10;
@@ -151,6 +152,18 @@
 					DOM_link_whiite.onclick = function(event) {
 						event.preventDefault();
 						Common.fadeToPage("projects/whiite.html");
+					}
+					
+					DOM_link_wireworld = document.getElementById("link-wireworld");
+					DOM_link_wireworld.onmouseover = function() {
+						interpolation_text = "wireworld";
+					}
+					DOM_link_wireworld.onmouseleave = function() {
+						interpolation_text = default_text;
+					}
+					DOM_link_wireworld.onclick = function(event) {
+						event.preventDefault();
+						Common.fadeToPage("wireworld/wireworld.html");
 					}
 					
 					requestAnimationFrame(update);

@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Wireworld</title>
+		<style>
+			html, body, canvas {
+				width: 100%;
+				height: 100%;
+				margin: 0;
+				padding: 0;
+				position: absolute;
+				overflow: hidden;
+			}
+			#toast-container {
+				bottom: auto !important;
+				left: auto !important;
+				top: 7%;
+				right: 7%;
+			}
+			.modal-content p {
+				color: #888888;
+			}
+		</style>
+		<script src="http://code.jquery.com/jquery-3.2.1.min.js"></script>
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.8/css/materialize.min.css">
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.8/js/materialize.min.js"></script>
+		<script>
+			class Camera {
+				constructor() {
+					this.offsetX = 0;
+					this.offsetY = 0;
+					this.moveSpeed = 12;
+					this.zoom = 1.0;
+					this.zoomSpeed = 0.025;
+					this.zoomInLimit = 5;
+					this.zoomOutLimit = 0.25;
+				}
+				moveLeft() { this.offsetX += this.moveSpeed / this.zoom; }
+				moveRight() { this.offsetX -= this.moveSpeed / this.zoom; }
+				moveUp() { this.offsetY += this.moveSpeed / this.zoom; }
+				moveDown() { this.offsetY -= this.moveSpeed / this.zoom; }
+				zoomIn() { this.zoom += this.zoomSpeed * this.zoom; if (this.zoom > this.zoomInLimit) { this.zoom = this.zoomInLimit; } }
+				zoomOut() { this.zoom -= this.zoomSpeed * this.zoom; if (this.zoom < this.zoomOutLimit) { this.zoom = this.zoomOutLimit; } }
+			}
+		</script>
+		<script>
+			var canvas;
+			var context;
+			
+			const CELL_SIZE = 20;
+			const WORLD_SIZE = 100;
+			const STATE_BACKGROUND = 0;
+			const STATE_HEAD = 1;
+			const STATE_TAIL = 2;
+			const STATE_WIRE = 3;
+			const COLOR_COPY = "rgba(255, 255, 255, 0.33)";
+			const COLOR_HEAD = "#FF2222";
+			const COLOR_TAIL = "#3333FF";
+			const COLOR_WIRE = "#FFFF66";
+			const TOAST_TIME = 2000;
+			
+			const HALF_CELL_SIZE = CELL_SIZE / 2;
+			const HALF_WORLD_SIZE = WORLD_SIZE / 2;
+			const WORLD_SIZE_MINUS_ONE = WORLD_SIZE - 1;
+			
+			var keys = [];
+			var keyFlags = [];
+			var mouse = { cellX: 0, cellY: 0, pressed: false, button: 0 };
+			var fillSelection = STATE_WIRE;
+			
+			var shouldDraw = true;
+			
+			var cells = [];
+			var saved;
+			
+			var isCopying = false;
+			var copiedSection = [];
+			var copyInitialPosition = { cellX: 0, cellY: 0 };
+			var copyEndingPosition = { cellX: 0, cellY: 0 };
+			
+			var camera = new Camera();
+			
+			var isModalOpen = false;
+			
+			function onload() {
+			
+				// Get the canvas element
+				canvas = document.getElementById("canvas");
+				
+				// Retrieve the 2d context from the canvas
+				context = canvas.getContext("2d");
+				
+				// Initialize the modals, and override their 'open' and 'close' functions to update
+				// the isModalOpen variable
+				$('.modal').modal({
+					ready: function() { isModalOpen = true; },
+					complete: function() { isModalOpen = false; }
+				});
+				
+				// Initially resize the canvas to fit the size of the screen
+				onresize();
+				
+				// Bind key and mouse events to document
+				bindEvents();
+				
+				// Set up click handlers for the buttons within the modals
+				initModalActions();
+				
+				// Initialize the key values all to false instead of undefined
+				for (var i = 0; i < 256; i++) {
+					keys[i] = false;
+					keyFlags[i] = false;
+				}
+				
+				// Initialize the world cells
+				initializeWorld();
+					
+				// Draw right away
+				draw();
+				
+				// Draw on the next animation frame
+				requestAnimationFrame(update);
+				
+				$("#helpModal").modal('open');
+			}
+			
+			function onresize() {
+				canvas.width = document.body.clientWidth;
+				canvas.height = document.body.clientHeight;
+				context.fillStyle = "#000000";
+				context.fillRect(0, 0, canvas.width, canvas.height);
+				shouldDraw = true;
+			}
+			
+			function bindEvents() {
+				document.onkeydown = handleKeyDown;
+				document.onkeyup = handleKeyUp;
+				document.onmousedown = handleMouseDown;
+				document.onmousemove = handleMouseMove;
+				document.onmouseup = handleMouseUp;
+			}
+			
+			function initModalActions() {
+				var importButtonObject = document.getElementById("importButton");
+				importButtonObject.onclick = function (event) {
+					event.preventDefault();
+					importWorld(document.getElementById("importString").value);
+					$("#importModal").modal("close");
+				}
+				
+				var exportButtonObject = document.getElementById("exportButton");
+				exportButtonObject.onclick = function (event) {
+					event.preventDefault();
+					$("#exportModal").modal("close");
+				}
+				
+				var helpButtonObject = document.getElementById("helpModal");
+				helpButtonObject.onclick = function (event) {
+					event.preventDefault();
+					$("#helpModal").modal("close");
+				}
+			}
+			
+			function initializeWorld() {
+				cells = [];
+				
+				for (var i = 0; i < WORLD_SIZE; i++) {
+					var subs = [];
+					for (var j = 0; j < WORLD_SIZE; j++) {
+						if ((i == 0 || j == 0 || i == WORLD_SIZE - 1 || j == WORLD_SIZE - 1)) {
+							subs.push(STATE_WIRE);
+						} else {
+							subs.push(STATE_BACKGROUND);
+						}
+					}
+					cells.push(subs);
+				}
+				
+				cells[WORLD_SIZE / 2][WORLD_SIZE / 2] = STATE_WIRE;
+			}
+			
+			function handleKeyDown(event) {
+				keys[event.keyCode] = true;
+			}
+			
+			function handleKeyUp(event) {
+				keys[event.keyCode] = false;
+				keyFlags[event.keyCode] = false;
+			}
+			
+			function handleMouseDown(event) {
+			
+				if (isModalOpen) {
+					return;
+				}
+			
+				mouse.button = event.button;
+					
+				if (!isCopying) {
+					if (mouse.button == 0) {
+						cells[mouse.cellY][mouse.cellX] = fillSelection; 
+					} else {
+						cells[mouse.cellY][mouse.cellX] = STATE_BACKGROUND;
+					}
+					mouse.pressed = true;
+					shouldDraw = true;
+				} else {
+					// do the copying
+					
+					var startingX = (copyInitialPosition.cellX <= copyEndingPosition.cellX ) ? copyInitialPosition.cellX : copyEndingPosition.cellX;
+					var endingX   = (copyEndingPosition.cellX  >= copyInitialPosition.cellX) ? copyEndingPosition.cellX : copyInitialPosition.cellX;
+					var startingY = (copyInitialPosition.cellY <= copyEndingPosition.cellY ) ? copyInitialPosition.cellY : copyEndingPosition.cellY;
+					var endingY   = (copyEndingPosition.cellY  >= copyInitialPosition.cellY) ? copyEndingPosition.cellY : copyInitialPosition.cellY;
+					
+					var copiedCells = [];
+					for (var i = startingY; i <= endingY; i++) {
+						var subrow = [];
+						for (var j = startingX; j <= endingX; j++) {
+							subrow.push(cells[i][j]);
+						}
+						copiedCells.push(subrow);
+					}
+					copiedSelection = copiedCells;
+					
+					Materialize.toast("(" + copyInitialPosition.cellX + ", " + copyInitialPosition.cellY + ") -> (" + copyEndingPosition.cellX + ", " + copyEndingPosition.cellY + ") ... Copied " + copiedSelection.length + " x " + copiedSelection[0].length, 2000);
+					
+					isCopying = false;
+				}
+				
+			}
+			
+			function pasteCopiedSelection() {
+				for (var i = 0; i < copiedSelection.length; i++) {
+					for (var j = 0; j < copiedSelection[0].length; j++) {
+					
+						// Make sure the copied selection won't go out of bounds
+						var pastedY = mouse.cellY + i;
+						var pastedX = mouse.cellX + j;
+						if (pastedY >= WORLD_SIZE || pastedX >= WORLD_SIZE) continue; 
+					
+						// Update the cell states
+						cells[pastedY][pastedX] = copiedSelection[i][j];
+					}
+				}
+			}
+			
+			function handleMouseMove(event) {
+				
+				// Calculate the cell position based on the mouse coordinates.
+				
+				var positionX = event.clientX - (canvas.width / 2);
+				var positionY = event.clientY - (canvas.height / 2);
+				
+				var scaledPositionX = positionX / camera.zoom;
+				var scaledPositionY = positionY / camera.zoom;
+				
+				var offsetScaledPositionX = scaledPositionX - camera.offsetX;
+				var offsetScaledPositionY = scaledPositionY - camera.offsetY;
+				
+				var offsetScaledCellPositionX = offsetScaledPositionX / CELL_SIZE;
+				var offsetScaledCellPositionY = offsetScaledPositionY / CELL_SIZE;
+				
+				mouse.cellX = Math.round(offsetScaledCellPositionX) + HALF_WORLD_SIZE;
+				mouse.cellY = Math.round(offsetScaledCellPositionY) + HALF_WORLD_SIZE;
+				
+				// Set a bound on the cell positions.
+				if (mouse.cellX > WORLD_SIZE_MINUS_ONE) { mouse.cellX = WORLD_SIZE_MINUS_ONE; }
+				if (mouse.cellX < 0) { mouse.cellX = 0; }
+				if (mouse.cellY > WORLD_SIZE_MINUS_ONE) { mouse.cellY = WORLD_SIZE_MINUS_ONE; }
+				if (mouse.cellY < 0) { mouse.cellY = 0; }
+			
+				if (mouse.pressed) {
+				
+						if (mouse.button == 0) {
+							cells[mouse.cellY][mouse.cellX] = fillSelection; 
+						} else {
+							cells[mouse.cellY][mouse.cellX] = STATE_BACKGROUND;
+						}
+						
+						shouldDraw = true;
+					
+				} else {
+				
+					if (isCopying) {
+						copyEndingPosition.cellX = mouse.cellX;
+						copyEndingPosition.cellY = mouse.cellY;
+						shouldDraw = true;
+					}
+				}
+				
+				
+			}
+			
+			function handleMouseUp(event) {
+				mouse.pressed = false;
+			}
+			
+			function update() {
+			
+				requestAnimationFrame(update);
+				
+				handleInput();
+				
+				// Only draw if necessary (an update occured of some sort)
+				if (shouldDraw) {
+					context.fillStyle = "#000000";
+					context.fillRect(0, 0, canvas.width, canvas.height);
+					draw();
+					shouldDraw = false;
+				}
+				
+				if (isCopying) {
+					
+					// If we're copying, need to draw the copy selection box but maintain it's 33% opacity
+					// which means we still need to redraw and clear the screen each frame.
+					shouldDraw = true;
+					context.fillStyle = COLOR_COPY;
+					
+					var copyWidth = (copyEndingPosition.cellX - copyInitialPosition.cellX);
+					var copyHeight = (copyEndingPosition.cellY - copyInitialPosition.cellY);
+					
+					var startCellX, startCellY;
+					
+					if (copyWidth >= 0) {
+						copyWidth++;
+						startCellX = copyInitialPosition.cellX;
+					} else {
+						copyWidth--;
+						startCellX = copyInitialPosition.cellX + 1;
+					}
+					
+					if (copyHeight >= 0) {
+						copyHeight++;
+						startCellY = copyInitialPosition.cellY;
+					} else {
+						copyHeight--;
+						startCellY = copyInitialPosition.cellY + 1;
+					}
+					
+					context.fillRect(	((CELL_SIZE * (startCellX - HALF_WORLD_SIZE) + camera.offsetX - HALF_CELL_SIZE) * camera.zoom) + (canvas.width / 2),
+										((CELL_SIZE * (startCellY - HALF_WORLD_SIZE) + camera.offsetY - HALF_CELL_SIZE) * camera.zoom) + (canvas.height / 2),
+										(CELL_SIZE * copyWidth) * camera.zoom,
+										(CELL_SIZE * copyHeight) * camera.zoom,
+									);
+				}
+				
+			}
+			
+			function handleInput() {
+				if (isModalOpen) {
+					return;
+				}
+				if (keys[65]) {
+					camera.moveLeft();
+					shouldDraw = true;
+				}
+				if (keys[68]) {
+					camera.moveRight();
+					shouldDraw = true;
+				}
+				if (keys[87]) {
+					camera.moveUp();
+					shouldDraw = true;
+				}
+				if (keys[83]) {
+					camera.moveDown();
+					shouldDraw = true;
+				}
+				if (keys[32] && !keyFlags[32]) {
+					updateWorld();
+					keyFlags[32] = true;
+					shouldDraw = true;
+				}
+				if (keys[16]) {
+					updateWorld();
+					shouldDraw = true;
+				}
+				if (keys[82] && !keyFlags[82]) {
+					groundWorld();
+					keyFlags[82] = true;
+					shouldDraw = true;
+					Materialize.toast("Grounded All Wires", TOAST_TIME);
+				}
+				if (keys[49] && !keyFlags[49]) {
+					fillSelection = STATE_HEAD;
+					keyFlags[49] = true;
+					Materialize.toast("Electron Head Selected", TOAST_TIME);
+				}
+				if (keys[50] && !keyFlags[50]) {
+					fillSelection = STATE_TAIL;
+					keyFlags[50] = true;
+					Materialize.toast("Electron Tail Selected", TOAST_TIME);
+				}
+				if (keys[51] && !keyFlags[51]) {
+					fillSelection = STATE_WIRE;
+					keyFlags[51] = true;
+					Materialize.toast("Wire Selected", TOAST_TIME);
+				}
+				if (keys[67] && !keyFlags[67]) {
+					initializeWorld();
+					keyFlags[67] = true;
+					shouldDraw = true;
+					Materialize.toast("Reinitialized the World", TOAST_TIME);
+				}
+				if (keys[219] && !keyFlags[219]) {
+					saveState();
+					keyFlags[219] = true;
+					Materialize.toast("Save State", TOAST_TIME);
+				}
+				if (keys[221] && !keyFlags[221]) {
+					loadState();
+					keyFlags[221] = true;
+					shouldDraw = true;
+					Materialize.toast("Load State", TOAST_TIME);
+				}
+				if (keys[17] && !keyFlags[17]) {
+					keyFlags[17] = true;
+					copyInitialPosition.cellX = mouse.cellX;
+					copyInitialPosition.cellY = mouse.cellY;
+					copyEndingPosition.cellX = mouse.cellX;
+					copyEndingPosition.cellY = mouse.cellY;
+					isCopying = true;
+					shouldDraw = true;
+				}
+				if (!keys[17] && isCopying) {
+					isCopying = false;
+					shouldDraw = true;
+				}
+				if (keys[69] && !keyFlags[69]) {
+					document.getElementById("exportString").value = exportWorld();
+					$("#exportModal").modal('open');
+					keyFlags[69] = true;
+				}
+				if (keys[72] && !keyFlags[72]) {
+					$("#helpModal").modal('open');
+					keyFlags[72] = true;
+				}
+				if (keys[73] && !keyFlags[73]) {
+					$("#importModal").modal('open');
+					document.getElementById("importString").value = "";
+					keyFlags[73] = true;
+				}
+				if (keys[79]) {
+					camera.zoomOut();
+					shouldDraw = true;
+				}
+				if (keys[80]) {
+					camera.zoomIn();
+					shouldDraw = true;
+				}
+				if (keys[66]) {
+					Materialize.toast("" + camera.offsetX + ", " + camera.offsetY, 2000);
+				}
+				if (keys[90] && !keyFlags[90]) {
+					keyFlags[90] = true;
+					toImage();
+				}
+				if (keys[86] && !keyFlags[86]) {
+					keyFlags[86] = true;
+					pasteCopiedSelection();
+					shouldDraw = true;
+				}
+			}
+			
+			function updateWorld() {
+			
+				// A temporary world grid
+				var updated_cells = [];
+				
+				// Loop through all of the cells
+				for (var i = 0; i < WORLD_SIZE; i++) {
+					var subs = [];
+					for (var j = 0; j < WORLD_SIZE; j++) {
+					
+						// If the cell is a background, push a new background cell since they don't change.
+						// Continue the for loop to skip unneeded calculations.
+						if (cells[i][j] == STATE_BACKGROUND) {
+							subs.push(STATE_BACKGROUND);
+							continue;
+						}
+						
+						// If the cell is an electron head, it always turns into a tail so push a tail cell.
+						// Continue the for loop to skip unneeded calculations.
+						if (cells[i][j] == STATE_HEAD) {
+							subs.push(STATE_TAIL);
+							continue;
+						}
+						
+						// If the cell is a tail, it always turns into a dead wire so push a wire cell.
+						// Continue the for loop to skip unneeded calculations.
+						if (cells[i][j] == STATE_TAIL) {
+							subs.push(STATE_WIRE);
+							continue;
+						}
+					
+						// Calculate the neighbor positions for a given cell.
+						// This implementation wraps. So cells on the borders affect each other.
+						var left = ((j - 1) + WORLD_SIZE) % WORLD_SIZE;
+						var right = (j + 1) % WORLD_SIZE;
+						var top = ((i - 1) + WORLD_SIZE) % WORLD_SIZE;
+						var bottom = (i + 1) % WORLD_SIZE;
+						
+						// Calculate the total number of neighbors.
+						var neighbors = 0;
+						neighbors += (cells[top][left] == STATE_HEAD) ? 1 : 0;
+						neighbors += (cells[top][j] == STATE_HEAD) ? 1 : 0;
+						neighbors += (cells[top][right] == STATE_HEAD) ? 1 : 0;
+						neighbors += (cells[i][left] == STATE_HEAD) ? 1 : 0;
+						neighbors += (cells[i][right] == STATE_HEAD) ? 1 : 0;
+						neighbors += (cells[bottom][left] == STATE_HEAD) ? 1 : 0;
+						neighbors += (cells[bottom][j] == STATE_HEAD) ? 1 : 0;
+						neighbors += (cells[bottom][right] == STATE_HEAD) ? 1 : 0;
+						
+						// If the neighbor count is correct (1 or 2), push a new electron head cell.
+						// Otherwise it remains a wire.
+						if (neighbors == 1 || neighbors == 2) {
+							subs.push(STATE_HEAD);
+						} else {
+							subs.push(STATE_WIRE);
+						}
+					}
+					
+					// Push the row of updated cells into the updated cells map.
+					updated_cells.push(subs);
+				}
+				
+				// Copy over the cells from the temporary world to the current world.
+				for (var i = 0; i < WORLD_SIZE; i++) {
+					for (var j = 0; j < WORLD_SIZE; j++) {
+						cells[i][j] = updated_cells[i][j];
+					}
+				}
+			}
+			
+			function draw() {
+				for (var i = 0; i < WORLD_SIZE; i++) {
+					for (var j = 0; j < WORLD_SIZE; j++) {
+					
+						if (cells[i][j] == STATE_BACKGROUND) continue;
+						
+						switch (cells[i][j]) {
+							case STATE_HEAD:
+								context.fillStyle = COLOR_HEAD;
+								break;
+							case STATE_TAIL: 
+								context.fillStyle = COLOR_TAIL;
+								break;
+							case STATE_WIRE:
+								context.fillStyle = COLOR_WIRE;
+								break;
+						}
+						
+						context.fillRect(	((CELL_SIZE * (j - HALF_WORLD_SIZE) + camera.offsetX - HALF_CELL_SIZE) * camera.zoom) + (canvas.width / 2),
+											((CELL_SIZE * (i - HALF_WORLD_SIZE) + camera.offsetY - HALF_CELL_SIZE) * camera.zoom) + (canvas.height / 2),
+											(CELL_SIZE - 1) * camera.zoom,
+											(CELL_SIZE - 1) * camera.zoom
+										);
+					}
+				}
+			}
+			
+			function groundWorld() {
+				for (var i = 0; i < WORLD_SIZE; i++) {
+					for (var j = 0; j < WORLD_SIZE; j++) {
+						if (cells[i][j] == STATE_BACKGROUND) continue;
+						cells[i][j] = STATE_WIRE;
+					}
+				}
+				shouldDraw = true;
+			}
+			
+			function exportWorld() {
+				keys[69] = false;
+				var string = "";
+				for (var i = 0; i < WORLD_SIZE; i++) {
+					for (var j = 0; j < WORLD_SIZE; j++) {
+						string += cells[i][j];
+					}
+				}
+				return string;
+			}
+			
+			function importWorld(string) {
+				keys[73] = false;
+				if (string.length != WORLD_SIZE * WORLD_SIZE) { 
+					console.log("Import string is not the correct length. Needs to be " + (WORLD_SIZE * WORLD_SIZE) + " characters long.");
+					return;
+				}
+				for (var i = 0; i < WORLD_SIZE; i++) {
+					for (var j = 0; j < WORLD_SIZE; j++) {
+						cells[i][j] = parseInt(string.charAt(i * WORLD_SIZE + j));
+					}
+				}
+				shouldDraw = true;
+			}
+			
+			/**
+			 * Saves the current state of the world.
+			*/
+			function saveState() {
+				saved = JSON.parse(JSON.stringify(cells));
+			}
+			
+			/**
+			 * Loads the saved state of the world if it exists, otherwise it does absolutely nothing.
+			*/
+			function loadState() {
+				if (saved === undefined) return;
+				cells = JSON.parse(JSON.stringify(saved));
+			}
+			
+			function toImage() {
+				var image = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+				window.location.href=image;
+			}
+		</script>
+	</head>
+	<body oncontextmenu="return false;" onload="onload()" onresize="onresize()">
+		<canvas id="canvas"></canvas>
+		
+		<div id="importModal" class="modal">
+			<div class="modal-content">
+				<h4>Import World</h4>
+				<p>Paste a World String into the field above, then click IMPORT</p>
+				<div class="row">
+					<form class="col s12">
+						<div class="row">
+							<div class="input-field col s12">
+								<input id="importString" type="text">
+							</div>
+						</div>
+					</form>
+				</div>
+				<a id="importButton" href="" class="waves-effect grey btn">Import</a>
+			</div>
+		</div>
+		
+		<div id="exportModal" class="modal">
+			<div class="modal-content">
+				<h4>Export World</h4>
+				<div class="row">
+					<form class="col s12">
+						<div class="row">
+							<div class="input-field col s12">
+								<input id="exportString" type="text">
+							</div>
+						</div>
+					</form>
+				</div>
+				<a id="exportButton" href="" class="waves-effect grey btn">Done</a>
+			</div>
+		</div>
+		
+		<div id="helpModal" class="modal">
+			<div class="modal-content">
+				<h4>Instructions</h4>
+				<p><b>WASD</b> = Move The Camera</p>
+				<p><b>O, P</b> = Zoom Out, Zoom In</p>
+				<p><b>Left Click</b> = Place Cell</p>
+				<p><b>Right Click</b> = Delete Cell</p>
+				<p><b>1, 2, 3</b> = Select HEAD, TAIL, WIRE</p>
+				<p><b>SPACE</b> = Simulate One Update</p>
+				<p><b>Holding SHIFT</b> = Simulate At 60 FPS</p>
+				<p><b>Holding CTRL</b> = Copy Select. Press Left Click To Copy The Selection</p>
+				<p><b>V</b> = Paste Selection At Mouse Position</p>
+				<p><b>R</b> = Ground All To WIRE</p>
+				<p><b>C</b> = Clear And Reset</p>
+				<p><b>E</b> = Export To String</p>
+				<p><b>I</b> = Import From String</p>
+				<p><b>H</b> = Bring Up This Menu</p>
+				<a id="helpButton" href="" class="waves-effect grey btn">Done</a>
+			</div>
+		</div>
+		
+	</body>
+</html>
