@@ -141,10 +141,10 @@ var Common = (function() {
 			a.innerHTML = VERSION;
 			a.href = "";
 			a.id = "link-log";
-			a.onclick = function(event) {
+			a.addEventListener("click", function(event) {
 				event.preventDefault();
 				Common.fadeToPage("/pages/programminglog.html");
-			}
+			});
 			document.getElementById(FOOTER_ID).appendChild(a);
 			
 			wrapper = document.getElementById("fading-wrapper");
@@ -159,10 +159,11 @@ var Common = (function() {
 		fadeToPage: function(path) {
 			wrapper.style.opacity = 1;
 			Common.fadePageOut();
-			wrapper.onanimationend = function() {
+			wrapper.addEventListener("animationend", function() {
+				console.log('on animation end');
 				wrapper.style.opacity = 0;
 				window.location = path;
-			};
+			});
 		},
 		
 		fadePageIn: function() {
