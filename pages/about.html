@@ -1,92 +1,130 @@
 <!DOCTYPE html>
 <html id="fading-wrapper">
-	<head>
-		<meta charset="utf-8">
-		<title>Zach Reznicek &mdash; About Me</title>
-		<link rel="shortcut icon" href="#"/>
-		<script src="../js/jquery-3.2.1.min.js"></script>
-		<link rel="stylesheet" href="../css/font-awesome-4.7.0/css/font-awesome.min.css">
-		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.99.0/css/materialize.min.css">
-		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Share+Tech+Mono">
-		<link rel="stylesheet" href="../css/custom.css">
-		<script src="../js/materialize.min.js"></script>
-		<script src="../js/common.js"></script>
-	</head>
 
-	<body>
-		<div>
-			<div class="container container-spaced">
-				<div class="row center-align">
-					<h3 id="name">about me</h3>
-					<img class="responsive-img circle" src="../img/me.jpg" style="width: 100px; height: 100px">
-					<p>Hello, I'm Zach.</p>
-					<p>I'm currently a senior in Software Engineering at Iowa State University.</p>
-					<p>I'm interested in low-level computing like what's found in the <a id="link-emulator" href="projects/emulator.html">Z80 Gameboy CPU</a>,</p>
-					<p>as well as heavily intrigued by computer graphics with <a href="">OpenGL</a> and <a href="">WebGL</a>.</p>
-					<p>In my free time I'm an avid musician, a runner, and a deliberate YouTube time-waster.</p>
-					<br>
-					<p class="link" id="back"><a href="../index.html"><i class="fa fa-reply fa-4x fa-fw" aria-hidden="true"></i></a></p>
-				</div>
+<head>
+	<meta charset="utf-8">
+	<title>Zach Reznicek &mdash; About Me</title>
+	<link rel="shortcut icon" href="#" />
+	<script src="../js/jquery-3.2.1.min.js"></script>
+	<link rel="stylesheet" href="../css/font-awesome-4.7.0/css/font-awesome.min.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.99.0/css/materialize.min.css">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Share+Tech+Mono">
+	<link rel="stylesheet" href="../css/custom.css">
+	<script src="../js/materialize.min.js"></script>
+	<script src="../js/common.js"></script>
+</head>
+
+<body>
+	<div>
+		<div class="container container-spaced">
+			<div class="row center-align">
+				<h3 id="name">about me</h3>
+				<img class="responsive-img circle" src="../img/me.jpg" style="width: 100px; height: 100px">
+				<p>Hello, I'm Zach.</p>
+				<p>I'm currently a senior in Software Engineering at Iowa State University.</p>
+				<p>I'm interested in low-level computing like what's found in the
+					<a id="link-emulator" href="projects/emulator.html">Z80 Gameboy CPU</a>,</p>
+				<p>as well as heavily intrigued by computer graphics with
+					<a href="">OpenGL</a> and
+					<a href="">WebGL</a>.</p>
+				<p>In my free time I'm an avid musician, a runner, and a deliberate YouTube time-waster.</p>
+				<p>You can learn more about me by visiting my
+					<a id="link-portfolio" href="./projects.html">Projects</a> or my
+					<a id="link-resume" href="./resume.pdf">Resume</a>.</p>
+				<br>
+				<p class="link" id="back">
+					<a href="../index.html">
+						<i class="fa fa-reply fa-4x fa-fw" aria-hidden="true"></i>
+					</a>
+				</p>
 			</div>
-			<div class="footer">
-				<p id="footer-text"></p>
-			</div>
-			<script>
-				(function() {
-					
-					Common.initPage();
-					Common.fadePageIn();
-					
-					var DOM_name,
-					DOM_back,
-					DOM_link_emulator;
-					
-					const default_text = "about me";
-					const iteration_steps = 10;
-					var interpolation_text = default_text;
-					
-					DOM_name = document.getElementById("name");
-					DOM_name.innerHTML = default_text;
-					
-					DOM_back = document.getElementById("back");
-					DOM_back.onmouseover = function() {
-						interpolation_text = "home";
-					}
-					DOM_back.onmouseleave = function() {
-						interpolation_text = default_text;
-					}
-					DOM_back.onclick = function(event) {
-						event.preventDefault();
-						Common.fadeToPage("../index.html");
-					}
-					
-					DOM_link_emulator = document.getElementById("link-emulator");
-					DOM_link_emulator.onmouseover = function() {
-						interpolation_text = "emulator";
-					}
-					DOM_link_emulator.onmouseleave = function() {
-						interpolation_text = default_text;
-					}
-					DOM_link_emulator.onclick = function(event) {
-						event.preventDefault();
-						Common.fadeToPage("projects/emulator.html");
-					}
-					
-					requestAnimationFrame(update);
-					
-					function update() {
-					
-						requestAnimationFrame(update);
-						
-						Interpolate.string({
-							element: DOM_name,
-							stringToInterpolateTo: interpolation_text,
-							steps: iteration_steps
-						});
-						
-					} // end update
-				})();
-			</script>
 		</div>
-	</body>
+		<div class="footer">
+			<p id="footer-text"></p>
+		</div>
+		<script>
+			(function () {
+
+				Common.initPage();
+				Common.fadePageIn();
+
+				var DOM_name,
+					DOM_back,
+					DOM_link_emulator,
+					DOM_link_portfolio,
+					DOM_link_resume;
+
+				const default_text = "about me";
+				const iteration_steps = 10;
+				var interpolation_text = default_text;
+
+				DOM_name = document.getElementById("name");
+				DOM_name.innerHTML = default_text;
+
+				DOM_back = document.getElementById("back");
+				DOM_back.onmouseover = function () {
+					interpolation_text = "home";
+				}
+				DOM_back.onmouseleave = function () {
+					interpolation_text = default_text;
+				}
+				DOM_back.onclick = function (event) {
+					event.preventDefault();
+					Common.fadeToPage("../index.html");
+				}
+
+				DOM_link_emulator = document.getElementById("link-emulator");
+				DOM_link_emulator.onmouseover = function () {
+					interpolation_text = "emulator";
+				}
+				DOM_link_emulator.onmouseleave = function () {
+					interpolation_text = default_text;
+				}
+				DOM_link_emulator.onclick = function (event) {
+					event.preventDefault();
+					Common.fadeToPage("projects/emulator.html");
+				}
+
+				DOM_link_portfolio = document.getElementById("link-portfolio");
+				DOM_link_portfolio.onmouseover = function () {
+					interpolation_text = "portfolio";
+				}
+				DOM_link_portfolio.onmouseleave = function () {
+					interpolation_text = default_text;
+				}
+				DOM_link_portfolio.onclick = function (event) {
+					event.preventDefault();
+					Common.fadeToPage("projects.html");
+				}
+
+				DOM_link_resume = document.getElementById("link-resume");
+				DOM_link_resume.onmouseover = function () {
+					interpolation_text = "resume";
+				}
+				DOM_link_resume.onmouseleave = function () {
+					interpolation_text = default_text;
+				}
+				DOM_link_resume.onclick = function (event) {
+					event.preventDefault();
+					Common.fadeToPage("resume.pdf");
+				}
+
+				requestAnimationFrame(update);
+
+				function update() {
+
+					requestAnimationFrame(update);
+
+					Interpolate.string({
+						element: DOM_name,
+						stringToInterpolateTo: interpolation_text,
+						steps: iteration_steps
+					});
+
+				} // end update
+			})();
+		</script>
+	</div>
+</body>
+
 </html>

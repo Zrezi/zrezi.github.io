@@ -2,7 +2,7 @@
 <html id="fading-wrapper">
 	<head>
 		<meta charset="utf-8">
-		<title>Zach Reznicek &mdash; Programming Log</title>
+		<title>Zach Reznicek &mdash; Reflections</title>
 		<link rel="shortcut icon" href="#"/>
 		<script src="../js/jquery-3.2.1.min.js"></script>
 		<link rel="stylesheet" href="../css/font-awesome-4.7.0/css/font-awesome.min.css">
@@ -18,7 +18,7 @@
 			<div class="container container-spaced">
 				<div class="row center-align">
 					<h3 id="name"></h3>
-					<br>
+					<!--<br>
 					<p>
 						Updates are represented by a 7+ digit number in the form MMDDYY# where the # stands for the current update
 						count per day. For example, if there were two updates on July 4th of 2017, the first one of the day would
@@ -138,9 +138,13 @@
 								<p>First update to include this page.</p>
 							</div>
 						</p>
-					</div>
+					</div>-->
 					<br>
-					<p class="link" id="back"><a href="../index.html"><i class="fa fa-reply fa-4x fa-fw" aria-hidden="true"></i></a></p>
+					<p><a id="link-generaleducation" href="./generaleducationreflection.pdf">General Education Reflection</a></p>
+					<p><a id="link-ethics" href="./ethicsreflection.pdf">Ethics Reflection</a></p>
+					<p><a id="link-cumulative" href="./cumulativereflection.pdf">Cumulative Reflection</a></p>
+					<br>
+					<p class="link" id="back"><a href="../index.html"><i class="fa fa-reply fa-4x fa-fw"></i></a></p>
 				</div>
 			</div>
 			<div class="footer">
@@ -154,10 +158,12 @@
 					Common.fadePageIn();
 					
 					var DOM_name,
-					DOM_back,
-					DOM_link_fa;
+					DOM_link_generaleducation,
+					DOM_link_ethics,
+					DOM_link_cumulative,
+					DOM_back;
 					
-					const default_text = "programming log";
+					const default_text = "reflections";
 					const iteration_steps = 10;
 					var interpolation_text = default_text;
 					
@@ -175,11 +181,41 @@
 						event.preventDefault();
 						Common.fadeToPage("../index.html");
 					}
-					
-					DOM_link_fa = document.getElementById("link-fa");
-					DOM_link_fa.onclick = function(event) {
+
+					DOM_link_generaleducation = document.getElementById("link-generaleducation");
+					DOM_link_generaleducation.onmouseover = function() {
+						interpolation_text = "general education";
+					}
+					DOM_link_generaleducation.onmouseleave = function() {
+						interpolation_text = default_text;
+					}
+					DOM_link_generaleducation.onclick = function(event) {
 						event.preventDefault();
-						Common.fadeToPage("http://fontawesome.io/");
+						Common.fadeToPage("./generaleducationreflection.pdf");
+					}
+
+					DOM_link_ethics = document.getElementById("link-ethics");
+					DOM_link_ethics.onmouseover = function() {
+						interpolation_text = "ethics";
+					}
+					DOM_link_ethics.onmouseleave = function() {
+						interpolation_text = default_text;
+					}
+					DOM_link_ethics.onclick = function(event) {
+						event.preventDefault();
+						Common.fadeToPage("./ethicsreflection.pdf");
+					}
+
+					DOM_link_cumulative = document.getElementById("link-cumulative");
+					DOM_link_cumulative.onmouseover = function() {
+						interpolation_text = "cumulative";
+					}
+					DOM_link_cumulative.onmouseleave = function() {
+						interpolation_text = default_text;
+					}
+					DOM_link_cumulative.onclick = function(event) {
+						event.preventDefault();
+						Common.fadeToPage("./cumulativereflection.pdf");
 					}
 					
 					requestAnimationFrame(update);
